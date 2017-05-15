@@ -60,7 +60,7 @@ namespace http
     {
         bool succeeded = false;
         std::vector<std::string> headers;
-        std::string body;
+        std::vector<uint8_t> body;
     };
 
     class Request
@@ -229,6 +229,34 @@ namespace http
                 sent += size;
             }
             while (remaining > 0);
+
+            uint8_t TEMP_BUFFER[65536];
+
+            do
+            {
+#ifdef _MSC_VER
+                int size = recv(socketFd, reinterpret_cast<char*>(TEMP_BUFFER), sizeof(TEMP_BUFFER), flags);
+#else
+                ssize_t size = recv(socketFd, reinterpret_cast<char*>(TEMP_BUFFER), sizeof(TEMP_BUFFER), flags);
+#endif
+
+                if (size < 0)
+                {
+                    int error = getLastError();
+                    std::cerr << "Failed to read data from " << domain << ":" << port << ", error: " << error << std::endl;
+                    return response;
+                }
+                else if (size == 0)
+                {
+                    // disconnected
+                    break;
+                }
+
+                response.body.insert(response.body.end(), std::begin(TEMP_BUFFER), std::end(TEMP_BUFFER) + size);
+            }
+            while (1);
+
+            response.succeeded = true;
 
             return response;
         }

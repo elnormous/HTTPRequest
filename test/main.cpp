@@ -33,7 +33,7 @@ int main(int argc, const char * argv[])
 
     if (response.succeeded)
     {
-        std::cout << response.body << std::endl;
+        std::cout << response.body.data() << std::endl;
     }
     else
     {
