@@ -191,19 +191,18 @@ namespace http
                 std::cerr << "Connected to to " << domain << ":" << port << std::endl;
             }
 
-            std::string data = method + " " + path + " HTTP/1.1\r\n";
+            std::string requestData = method + " " + path + " HTTP/1.1\r\n";
 
             for (const std::string& header : headers)
             {
-                data += header + "\r\n";
+                requestData += header + "\r\n";
             }
 
-            data += "Content-Length: " + std::to_string(body.size()) + "\r\n";
+            requestData += "Host: " + domain + "\r\n";
+            requestData += "Content-Length: " + std::to_string(body.size()) + "\r\n";
 
-            data += "\r\n";
-            data += body;
-
-            std::cout << data << std::endl;
+            requestData += "\r\n";
+            requestData += body;
 
 #if defined(__APPLE__)
             int flags = 0;
@@ -214,20 +213,18 @@ namespace http
 #endif
 
 #ifdef _MSC_VER
-            int remaining = static_cast<int>(data.size());
+            int remaining = static_cast<int>(requestData.size());
             int sent = 0;
+            int size;
 #else
-            ssize_t remaining = static_cast<ssize_t>(data.size());
+            ssize_t remaining = static_cast<ssize_t>(requestData.size());
             ssize_t sent = 0;
+            ssize_t size;
 #endif
 
             do
             {
-#ifdef _MSC_VER
-                int size = ::send(socketFd, data.data() + sent, remaining, flags);
-#else
-                ssize_t size = ::send(socketFd, data.data() + sent, remaining, flags);
-#endif
+                size = ::send(socketFd, requestData.data() + sent, remaining, flags);
 
                 if (size < 0)
                 {
@@ -242,14 +239,11 @@ namespace http
             while (remaining > 0);
 
             uint8_t TEMP_BUFFER[65536];
+            std::vector<uint8_t> responseData;
 
             do
             {
-#ifdef _MSC_VER
-                int size = recv(socketFd, reinterpret_cast<char*>(TEMP_BUFFER), sizeof(TEMP_BUFFER), flags);
-#else
-                ssize_t size = recv(socketFd, reinterpret_cast<char*>(TEMP_BUFFER), sizeof(TEMP_BUFFER), flags);
-#endif
+                size = recv(socketFd, reinterpret_cast<char*>(TEMP_BUFFER), sizeof(TEMP_BUFFER), flags);
 
                 if (size < 0)
                 {
@@ -263,11 +257,12 @@ namespace http
                     break;
                 }
 
-                response.body.insert(response.body.end(), std::begin(TEMP_BUFFER), std::end(TEMP_BUFFER) + size);
+                responseData.insert(responseData.end(), std::begin(TEMP_BUFFER), std::begin(TEMP_BUFFER) + size);
             }
-            while (1);
+            while (size > 0);
 
             response.succeeded = true;
+            response.body = responseData;
 
             return response;
         }
