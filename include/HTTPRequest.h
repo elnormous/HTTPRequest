@@ -1,14 +1,12 @@
 //
-//  HTTPRequest.h
-//  test
-//
-//  Created by Elviss Strazdins on 15/05/2017.
-//  Copyright © 2017 Elviss Strazdins. All rights reserved.
+//  HTTPRequest
 //
 
 #pragma once
 
 #include <iostream>
+#include <map>
+#include <vector>
 
 #ifdef _MSC_VER
 #define NOMINMAX
@@ -56,82 +54,190 @@ inline bool initWSA()
 }
 #endif
 
-class HTTPRequest
+namespace http
 {
-public:
-    HTTPRequest(std::string url)
+    struct Response
     {
-        auto protocolEndPosition = url.find("://");
+        bool succeeded = false;
+        std::vector<std::string> headers;
+        std::string body;
+    };
 
-        if (protocolEndPosition != std::string::npos)
+    class Request
+    {
+    public:
+        Request(const std::string& url)
         {
-            protocol = url.substr(0, protocolEndPosition);
+            size_t protocolEndPosition = url.find("://");
 
-            auto pathPosition = url.find('/', protocolEndPosition + 3);
-
-            if (pathPosition == std::string::npos)
+            if (protocolEndPosition != std::string::npos)
             {
-                domain = url.substr(protocolEndPosition + 3);
+                protocol = url.substr(0, protocolEndPosition);
+                std::transform(protocol.begin(), protocol.end(), protocol.begin(), ::tolower);
+
+                size_t pathPosition = url.find('/', protocolEndPosition + 3);
+
+                if (pathPosition == std::string::npos)
+                {
+                    domain = url.substr(protocolEndPosition + 3);
+                }
+                else
+                {
+                    domain = url.substr(protocolEndPosition + 3, pathPosition - protocolEndPosition - 3);
+                    path = url.substr(pathPosition);
+                }
+
+                size_t portPosition = domain.find(':');
+
+                if (portPosition != std::string::npos)
+                {
+                    port = domain.substr(portPosition + 1);
+                    domain.resize(portPosition);
+                }
+            }
+        }
+
+        ~Request()
+        {
+#ifdef _MSC_VER
+            if (socketFd != INVALID_SOCKET) closesocket(socketFd);
+#else
+            if (socketFd != INVALID_SOCKET) close(socketFd);
+#endif
+        }
+
+        Request(const Request& request) = delete;
+        Request(Request&& request) = delete;
+        Request& operator=(const Request& request) = delete;
+        Request& operator=(Request&& request) = delete;
+
+        Response send(const std::string& method,
+                      const std::string& body,
+                      const std::vector<std::string>& headers)
+        {
+            Response response;
+
+            if (protocol != "http")
+            {
+                std::cerr << "Only HTTP protocol is supported" << std::endl;
+                return response;
+            }
+
+            if (socketFd != INVALID_SOCKET)
+            {
+#ifdef _MSC_VER
+                int result = closesocket(socketFd);
+#else
+                int result = ::close(socketFd);
+#endif
+                socketFd = INVALID_SOCKET;
+
+                if (result < 0)
+                {
+                    int error = getLastError();
+                    std::cerr << "Failed to close socket, error: " << error << std::endl;
+                    return response;
+                }
+            }
+
+            socketFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+#ifdef _MSC_VER
+            if (socketFd == INVALID_SOCKET && WSAGetLastError() == WSANOTINITIALISED)
+            {
+                if (!initWSA()) return false;
+
+                socketFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+            }
+#endif
+
+            if (socketFd == INVALID_SOCKET)
+            {
+                int error = getLastError();
+                std::cerr << "Failed to create socket, error: " << error << std::endl;
+                return response;
+            }
+
+            addrinfo* info;
+            if (getaddrinfo(domain.c_str(), port.empty() ? nullptr : port.c_str(), nullptr, &info) != 0)
+            {
+                int error = getLastError();
+                std::cerr << "Failed to get address info of " << domain << ", error: " << error << std::endl;
+                return response;
+            }
+
+            sockaddr addr = *info->ai_addr;
+
+            freeaddrinfo(info);
+
+            if (::connect(socketFd, &addr, sizeof(addr)) < 0)
+            {
+                int error = getLastError();
+
+                std::cerr << "Failed to connect to " << domain << ":" << port << ", error: " << error << std::endl;
+                return response;
             }
             else
             {
-                domain = url.substr(protocolEndPosition + 3, pathPosition - protocolEndPosition - 3);
-                path = url.substr(pathPosition);
+                std::cerr << "Connected to to " << domain << ":" << port << std::endl;
             }
 
-            auto portPosition = domain.find(':');
+            std::string data = method + " " + path + " HTTP/1.1\r\n";
 
-            if (portPosition != std::string::npos)
+            for (const std::string& header : headers)
             {
-                port = static_cast<uint16_t>(std::stoi(domain.substr(portPosition + 1)));
-                domain.resize(portPosition);
+                data += header + "\r\n";
             }
-        }
-    }
 
-    ~HTTPRequest()
-    {
-#ifdef _MSC_VER
-        if (socketFd != INVALID_SOCKET) closesocket(socketFd);
+            data += "Content-Length:" + std::to_string(body.size()) + "\r\n";
+
+            data += "\r\n";
+            data += body + "\r\n";
+
+#if defined(__APPLE__)
+            int flags = 0;
+#elif defined(_MSC_VER)
+            int flags = 0;
 #else
-        if (socketFd != INVALID_SOCKET) close(socketFd);
+            int flags = MSG_NOSIGNAL;
 #endif
-    }
-
-    HTTPRequest(const HTTPRequest& httpRequest) = delete;
-    HTTPRequest(HTTPRequest&& httpRequest) = delete;
-    HTTPRequest& operator=(const HTTPRequest& httpRequest) = delete;
-    HTTPRequest& operator=(HTTPRequest&& httpRequest) = delete;
-
-    bool send()
-    {
-        socket_t socketFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 #ifdef _MSC_VER
-        if (socketFd == INVALID_SOCKET && WSAGetLastError() == WSANOTINITIALISED)
-        {
-            if (!initWSA()) return false;
-
-            socketFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-        }
+            int remaining = static_cast<int>(data.size());
+            int sent = 0;
+#else
+            ssize_t remaining = static_cast<ssize_t>(data.size());
+            ssize_t sent = 0;
 #endif
 
-        if (socketFd == INVALID_SOCKET)
-        {
-            int error = getLastError();
-            std::cerr << "Failed to create socket, error: " << error << std::endl;
-            return false;
+            do
+            {
+#ifdef _MSC_VER
+                int size = ::send(socketFd, data.data() + sent, remaining, flags);
+#else
+                ssize_t size = ::send(socketFd, data.data() + sent, remaining, flags);
+#endif
+
+                if (size < 0)
+                {
+                    int error = getLastError();
+                    std::cerr << "Failed to send data to " << domain << ":" << port << ", error: " << error << std::endl;
+                    return response;
+                }
+
+                remaining -= size;
+                sent += size;
+            }
+            while (remaining > 0);
+
+            return response;
         }
 
-
-
-        return true;
-    }
-
-private:
-    std::string protocol;
-    std::string domain;
-    uint16_t port = 80;
-    std::string path;
-    socket_t socketFd = INVALID_SOCKET;
-};
+    private:
+        std::string protocol;
+        std::string domain;
+        std::string port = "80";
+        std::string path;
+        socket_t socketFd = INVALID_SOCKET;
+    };
+}

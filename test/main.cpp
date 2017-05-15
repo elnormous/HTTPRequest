@@ -1,9 +1,5 @@
 //
-//  main.cpp
-//  test
-//
-//  Created by Elviss Strazdins on 15/05/2017.
-//  Copyright © 2017 Elviss Strazdins. All rights reserved.
+//  HTTPRequest
 //
 
 #include <iostream>
@@ -31,12 +27,18 @@ int main(int argc, const char * argv[])
         }
     }
 
-    HTTPRequest request(url);
-    if (!request.send())
+    http::Request request(url);
+
+    http::Response response = request.send(method, arguments, {});
+
+    if (response.succeeded)
     {
-        std::cerr << "Failed to send request" << std::endl;
+        std::cout << response.body << std::endl;
+    }
+    else
+    {
+        std::cout << "Request failed" << std::endl;
     }
 
-    std::cout << "Hello, World!\n";
     return 0;
 }
