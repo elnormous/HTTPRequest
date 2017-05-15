@@ -29,7 +29,11 @@ int main(int argc, const char * argv[])
 
     http::Request request(url);
 
-    http::Response response = request.send(method, arguments, {});
+    http::Response response = request.send(method, arguments, {
+        "Accept: */*",
+        "Content-Type: application/x-www-form-urlencoded",
+        "User-Agent: runscope/0.1"
+    });
 
     if (response.succeeded)
     {

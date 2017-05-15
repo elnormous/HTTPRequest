@@ -99,11 +99,20 @@ namespace http
 
         ~Request()
         {
+            if (socketFd != INVALID_SOCKET)
+            {
 #ifdef _MSC_VER
-            if (socketFd != INVALID_SOCKET) closesocket(socketFd);
+                int result = closesocket(socketFd);
 #else
-            if (socketFd != INVALID_SOCKET) close(socketFd);
+                int result = close(socketFd);
 #endif
+
+                if (result < 0)
+                {
+                    int error = getLastError();
+                    std::cerr << "Failed to close socket, error: " << error << std::endl;
+                }
+            }
         }
 
         Request(const Request& request) = delete;
@@ -189,10 +198,12 @@ namespace http
                 data += header + "\r\n";
             }
 
-            data += "Content-Length:" + std::to_string(body.size()) + "\r\n";
+            data += "Content-Length: " + std::to_string(body.size()) + "\r\n";
 
             data += "\r\n";
-            data += body + "\r\n";
+            data += body;
+
+            std::cout << data << std::endl;
 
 #if defined(__APPLE__)
             int flags = 0;
