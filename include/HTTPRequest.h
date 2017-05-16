@@ -4,13 +4,19 @@
 
 #pragma once
 
+#include <algorithm>
+#include <functional>
 #include <iostream>
 #include <map>
+#include <string>
 #include <vector>
+#include <cstdint>
+#include <cctype>
 
 #ifdef _WIN32
 #define NOMINMAX
 #include <winsock2.h>
+#include <ws2tcpip.h>
 typedef SOCKET socket_t;
 #else
 #include <sys/socket.h>
@@ -39,13 +45,13 @@ inline bool initWSA()
     int error = WSAStartup(sockVersion, &wsaData);
     if (error != 0)
     {
-        Log(Log::Level::ERR) << "WSAStartup failed, error: " << error << std::endl;
+        std::cerr << "WSAStartup failed, error: " << error << std::endl;
         return false;
     }
 
     if (wsaData.wVersion != sockVersion)
     {
-        Log(Log::Level::ERR) << "Incorrect Winsock version" << std::endl;
+        std::cerr << "Incorrect Winsock version" << std::endl;
         WSACleanup();
         return false;
     }
@@ -155,7 +161,7 @@ namespace http
 #ifdef _WIN32
             if (socketFd == INVALID_SOCKET && WSAGetLastError() == WSANOTINITIALISED)
             {
-                if (!initWSA()) return false;
+                if (!initWSA()) return response;
 
                 socketFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
             }
@@ -244,7 +250,7 @@ namespace http
             std::vector<int8_t> responseData;
             bool firstLine = true;
             bool parsedHeaders = false;
-            int contentSize = 0;
+            size_t contentSize = 0;
 
             do
             {
