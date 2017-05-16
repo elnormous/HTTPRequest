@@ -250,7 +250,7 @@ namespace http
             std::vector<int8_t> responseData;
             bool firstLine = true;
             bool parsedHeaders = false;
-            size_t contentSize = 0;
+            int contentSize = -1;
 
             do
             {
@@ -351,7 +351,7 @@ namespace http
                     responseData.clear();
 
                     // got the whole content
-                    if (contentSize && response.body.size() >= contentSize)
+                    if (contentSize == -1 || response.body.size() >= contentSize)
                     {
                         break;
                     }
