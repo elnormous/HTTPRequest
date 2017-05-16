@@ -67,7 +67,7 @@ namespace http
         bool succeeded = false;
         int code = 0;
         std::vector<std::string> headers;
-        std::vector<int8_t> body;
+        std::vector<uint8_t> body;
     };
 
     class Request
@@ -245,9 +245,9 @@ namespace http
             }
             while (remaining > 0);
 
-            char TEMP_BUFFER[65536];
+            uint8_t TEMP_BUFFER[65536];
             const std::vector<uint8_t> clrf = {'\r', '\n'};
-            std::vector<int8_t> responseData;
+            std::vector<uint8_t> responseData;
             bool firstLine = true;
             bool parsedHeaders = false;
             int contentSize = -1;
@@ -274,7 +274,7 @@ namespace http
                 {
                     for (;;)
                     {
-                        std::vector<int8_t>::iterator i = std::search(responseData.begin(), responseData.end(), clrf.begin(), clrf.end());
+                        std::vector<uint8_t>::iterator i = std::search(responseData.begin(), responseData.end(), clrf.begin(), clrf.end());
 
                         // didn't find a newline
                         if (i == responseData.end()) break;
