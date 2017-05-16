@@ -286,6 +286,7 @@ namespace http
                         if (line.empty())
                         {
                             parsedHeaders = true;
+                            break;
                         }
                         else if (firstLine) // first line
                         {
