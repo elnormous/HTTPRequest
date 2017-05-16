@@ -8,7 +8,7 @@
 #include <map>
 #include <vector>
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #define NOMINMAX
 #include <winsock2.h>
 typedef SOCKET socket_t;
@@ -24,14 +24,14 @@ typedef int socket_t;
 
 inline int getLastError()
 {
-#ifdef _MSC_VER
+#ifdef _WIN32
     return WSAGetLastError();
 #else
     return errno;
 #endif
 }
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 inline bool initWSA()
 {
     WORD sockVersion = MAKEWORD(2, 2);
@@ -102,7 +102,7 @@ namespace http
         {
             if (socketFd != INVALID_SOCKET)
             {
-#ifdef _MSC_VER
+#ifdef _WIN32
                 int result = closesocket(socketFd);
 #else
                 int result = close(socketFd);
@@ -135,7 +135,7 @@ namespace http
 
             if (socketFd != INVALID_SOCKET)
             {
-#ifdef _MSC_VER
+#ifdef _WIN32
                 int result = closesocket(socketFd);
 #else
                 int result = ::close(socketFd);
@@ -152,7 +152,7 @@ namespace http
 
             socketFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-#ifdef _MSC_VER
+#ifdef _WIN32
             if (socketFd == INVALID_SOCKET && WSAGetLastError() == WSANOTINITIALISED)
             {
                 if (!initWSA()) return false;
@@ -207,13 +207,13 @@ namespace http
 
 #if defined(__APPLE__)
             int flags = 0;
-#elif defined(_MSC_VER)
+#elif defined(_WIN32)
             int flags = 0;
 #else
             int flags = MSG_NOSIGNAL;
 #endif
 
-#ifdef _MSC_VER
+#ifdef _WIN32
             int remaining = static_cast<int>(requestData.size());
             int sent = 0;
             int size;
@@ -344,7 +344,7 @@ namespace http
                     responseData.clear();
 
                     // got the whole content
-                    if (response.body.size() >= contentSize)
+                    if (contentSize && response.body.size() >= contentSize)
                     {
                         break;
                     }
