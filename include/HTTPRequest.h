@@ -59,8 +59,9 @@ namespace http
     struct Response
     {
         bool succeeded = false;
+        int code = 0;
         std::vector<std::string> headers;
-        std::vector<uint8_t> body;
+        std::vector<int8_t> body;
     };
 
     class Request
@@ -75,7 +76,7 @@ namespace http
                 protocol = url.substr(0, protocolEndPosition);
                 std::transform(protocol.begin(), protocol.end(), protocol.begin(), ::tolower);
 
-                size_t pathPosition = url.find('/', protocolEndPosition + 3);
+                std::string::size_type pathPosition = url.find('/', protocolEndPosition + 3);
 
                 if (pathPosition == std::string::npos)
                 {
@@ -87,7 +88,7 @@ namespace http
                     path = url.substr(pathPosition);
                 }
 
-                size_t portPosition = domain.find(':');
+                std::string::size_type portPosition = domain.find(':');
 
                 if (portPosition != std::string::npos)
                 {
@@ -238,12 +239,16 @@ namespace http
             }
             while (remaining > 0);
 
-            uint8_t TEMP_BUFFER[65536];
-            std::vector<uint8_t> responseData;
+            char TEMP_BUFFER[65536];
+            const std::vector<uint8_t> clrf = {'\r', '\n'};
+            std::vector<int8_t> responseData;
+            bool firstLine = true;
+            bool parsedHeaders = false;
+            int contentSize = 0;
 
             do
             {
-                size = recv(socketFd, reinterpret_cast<char*>(TEMP_BUFFER), sizeof(TEMP_BUFFER), flags);
+                size = recv(socketFd, TEMP_BUFFER, sizeof(TEMP_BUFFER), flags);
 
                 if (size < 0)
                 {
@@ -258,11 +263,92 @@ namespace http
                 }
 
                 responseData.insert(responseData.end(), std::begin(TEMP_BUFFER), std::begin(TEMP_BUFFER) + size);
+
+                if (!parsedHeaders)
+                {
+                    for (;;)
+                    {
+                        std::vector<int8_t>::iterator i = std::search(responseData.begin(), responseData.end(), clrf.begin(), clrf.end());
+
+                        // didn't find a newline
+                        if (i == responseData.end()) break;
+
+                        std::string line(responseData.begin(), i);
+                        responseData.erase(responseData.begin(), i + 2);
+
+                        // empty line indicates the end of the header section
+                        if (line.empty())
+                        {
+                            parsedHeaders = true;
+                        }
+                        else if (firstLine) // first line
+                        {
+                            firstLine = false;
+
+                            std::string::size_type pos, lastPos = 0, length = line.length();
+                            std::vector<std::string> parts;
+
+                            // tokenize first line
+                            while (lastPos < length + 1)
+                            {
+                                pos = line.find(' ', lastPos);
+                                if (pos == std::string::npos) pos = length;
+
+                                if (pos != lastPos)
+                                {
+                                    parts.push_back(std::string(line.data() + lastPos,
+                                                                static_cast<std::vector<std::string>::size_type>(pos) - lastPos));
+                                }
+                                
+                                lastPos = pos + 1;
+                            }
+
+                            if (parts.size() >= 2)
+                            {
+                                response.code = std::stoi(parts[1]);
+                            }
+                        }
+                        else // headers
+                        {
+                            response.headers.push_back(line);
+
+                            std::string::size_type pos = line.find(':');
+
+                            if (pos != std::string::npos)
+                            {
+                                std::string headerName = line.substr(0, pos);
+                                std::string headerValue = line.substr(pos + 1);
+
+                                // ltrim
+                                headerValue.erase(headerValue.begin(),
+                                                  std::find_if(headerValue.begin(), headerValue.end(),
+                                                               std::not1(std::ptr_fun<int, int>(std::isspace))));
+
+                                // rtrim
+                                headerValue.erase(std::find_if(headerValue.rbegin(), headerValue.rend(),
+                                                               std::not1(std::ptr_fun<int, int>(std::isspace))).base(),
+                                                  headerValue.end());
+
+                                if (headerName == "Content-Length")
+                                {
+                                    contentSize = std::stoi(headerValue);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (parsedHeaders)
+                {
+                    response.body.insert(response.body.begin(), responseData.begin(), responseData.end());
+
+                    // got the whole content
+                    if (response.body.size() >= contentSize) break;
+                }
             }
             while (size > 0);
 
             response.succeeded = true;
-            response.body = responseData;
 
             return response;
         }
