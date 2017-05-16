@@ -340,10 +340,14 @@ namespace http
 
                 if (parsedHeaders)
                 {
-                    response.body.insert(response.body.begin(), responseData.begin(), responseData.end());
+                    response.body.insert(response.body.end(), responseData.begin(), responseData.end());
+                    responseData.clear();
 
                     // got the whole content
-                    if (response.body.size() >= contentSize) break;
+                    if (response.body.size() >= contentSize)
+                    {
+                        break;
+                    }
                 }
             }
             while (size > 0);
