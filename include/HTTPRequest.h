@@ -254,7 +254,7 @@ namespace http
 
             do
             {
-                size = recv(socketFd, TEMP_BUFFER, sizeof(TEMP_BUFFER), flags);
+                size = recv(socketFd, reinterpret_cast<char*>(TEMP_BUFFER), sizeof(TEMP_BUFFER), flags);
 
                 if (size < 0)
                 {
