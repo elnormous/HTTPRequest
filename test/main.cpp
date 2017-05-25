@@ -3,6 +3,7 @@
 //
 
 #include <iostream>
+#include <fstream>
 #include "HTTPRequest.h"
 
 int main(int argc, const char * argv[])
@@ -10,6 +11,7 @@ int main(int argc, const char * argv[])
     std::string url;
     std::string method;
     std::string arguments;
+    std::string output;
 
     for (int i = 1; i < argc; ++i)
     {
@@ -25,6 +27,10 @@ int main(int argc, const char * argv[])
         {
             if (++i < argc) arguments = argv[i];
         }
+        else if (std::string(argv[i]) == "--output")
+        {
+            if (++i < argc) output = argv[i];
+        }
     }
 
     http::Request request(url);
@@ -36,7 +42,16 @@ int main(int argc, const char * argv[])
 
     if (response.succeeded)
     {
-        std::cout << response.body.data() << std::endl;
+        if (!output.empty())
+        {
+            std::ofstream outfile(output, std::ofstream::binary);
+            outfile.write(reinterpret_cast<const char*>(response.body.data()),
+                          response.body.size());
+        }
+        else
+        {
+            std::cout << response.body.data() << std::endl;
+        }
     }
     else
     {
