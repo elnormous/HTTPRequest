@@ -251,6 +251,9 @@ namespace http
             bool firstLine = true;
             bool parsedHeaders = false;
             int contentSize = -1;
+            bool chunkedResponse = false;
+            size_t expectedChunkSize = 0;
+            bool removeCLRFAfterChunk = false;
 
             do
             {
@@ -340,6 +343,11 @@ namespace http
                                 {
                                     contentSize = std::stoi(headerValue);
                                 }
+
+                                if (headerName == "Transfer-Encoding" && headerValue == "chunked")
+                                {
+                                    chunkedResponse = true;
+                                }
                             }
                         }
                     }
@@ -347,13 +355,65 @@ namespace http
 
                 if (parsedHeaders)
                 {
-                    response.body.insert(response.body.end(), responseData.begin(), responseData.end());
-                    responseData.clear();
-
-                    // got the whole content
-                    if (contentSize == -1 || response.body.size() >= contentSize)
+                    if (chunkedResponse)
                     {
-                        break;
+                        bool dataReceived = false;
+                        for (;;)
+                        {
+                            if (expectedChunkSize > 0)
+                            {
+                                auto toWrite = std::min(expectedChunkSize, responseData.size());
+                                response.body.insert(response.body.end(), responseData.begin(), responseData.begin() + toWrite);
+                                responseData.erase(responseData.begin(), responseData.begin() + toWrite);
+                                expectedChunkSize -= toWrite;
+
+                                if (expectedChunkSize == 0) removeCLRFAfterChunk = true;
+                                if (responseData.empty()) break;
+                            }
+                            else
+                            {
+                                if (removeCLRFAfterChunk)
+                                {
+                                    if (responseData.size() >= 2)
+                                    {
+                                        removeCLRFAfterChunk = false;
+                                        responseData.erase(responseData.begin(), responseData.begin() + 2);
+                                    }
+                                    else break;
+                                }
+
+                                auto i = std::search(responseData.begin(), responseData.end(), clrf.begin(), clrf.end());
+
+                                if (i == responseData.end()) break;
+
+                                std::string line(responseData.begin(), i);
+                                responseData.erase(responseData.begin(), i + 2);
+
+                                expectedChunkSize = std::stoul(line, 0, 16);
+
+                                if (expectedChunkSize == 0)
+                                {
+                                    dataReceived = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (dataReceived)
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        response.body.insert(response.body.end(), responseData.begin(), responseData.end());
+                        responseData.clear();
+
+                        // got the whole content
+                        if (contentSize == -1 || response.body.size() >= contentSize)
+                        {
+                            break;
+                        }
                     }
                 }
             }
