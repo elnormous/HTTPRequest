@@ -343,8 +343,7 @@ namespace http
                                 {
                                     contentSize = std::stoi(headerValue);
                                 }
-
-                                if (headerName == "Transfer-Encoding" && headerValue == "chunked")
+                                else if (headerName == "Transfer-Encoding" && headerValue == "chunked")
                                 {
                                     chunkedResponse = true;
                                 }
