@@ -1,6 +1,6 @@
 # HTTPRequest
 
-HTTPRequest is a class for making HTTP requests
+HTTPRequest is a single-header library for making HTTP requests. You can just drop it in your project and use it.
 
 Usage:
 ```
