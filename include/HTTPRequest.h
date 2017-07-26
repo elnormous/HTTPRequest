@@ -195,7 +195,7 @@ namespace http
             }
             else
             {
-                std::cerr << "Connected to to " << domain << ":" << port << std::endl;
+                std::cerr << "Connected to " << domain << ":" << port << std::endl;
             }
 
             std::string requestData = method + " " + path + " HTTP/1.1\r\n";
