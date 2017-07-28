@@ -97,15 +97,52 @@ namespace http
             {'~', "%7E"}
         };
 
+        static const char hexChars[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+
         std::string result;
 
-        for (char c : str)
+        for (auto i = str.begin(); i != str.end(); ++i)
         {
-            auto i = entities.find(c);
+            uint32_t cp = *i & 0xff;
 
-            if (i == entities.end()) result += c; else result += i->second;
+            if (cp <= 0x7f) // length = 1
+            {
+                auto entity = entities.find(*i);
+                if (entity == entities.end())
+                {
+                    result += static_cast<char>(cp);
+                }
+                else
+                {
+                    result += entity->second;
+                }
+            }
+            else if ((cp >> 5) == 0x6) // length = 2
+            {
+                result += std::string("%") + hexChars[(*i & 0xf0) >> 4] + hexChars[*i & 0x0f];
+                if (++i == str.end()) break;
+                result += std::string("%") + hexChars[(*i & 0xf0) >> 4] + hexChars[*i & 0x0f];
+            }
+            else if ((cp >> 4) == 0xe) // length = 3
+            {
+                result += std::string("%") + hexChars[(*i & 0xf0) >> 4] + hexChars[*i & 0x0f];
+                if (++i == str.end()) break;
+                result += std::string("%") + hexChars[(*i & 0xf0) >> 4] + hexChars[*i & 0x0f];
+                if (++i == str.end()) break;
+                result += std::string("%") + hexChars[(*i & 0xf0) >> 4] + hexChars[*i & 0x0f];
+            }
+            else if ((cp >> 3) == 0x1e) // length = 4
+            {
+                result += std::string("%") + hexChars[(*i & 0xf0) >> 4] + hexChars[*i & 0x0f];
+                if (++i == str.end()) break;
+                result += std::string("%") + hexChars[(*i & 0xf0) >> 4] + hexChars[*i & 0x0f];
+                if (++i == str.end()) break;
+                result += std::string("%") + hexChars[(*i & 0xf0) >> 4] + hexChars[*i & 0x0f];
+                if (++i == str.end()) break;
+                result += std::string("%") + hexChars[(*i & 0xf0) >> 4] + hexChars[*i & 0x0f];
+            }
         }
-
+        
         return result;
     }
 
