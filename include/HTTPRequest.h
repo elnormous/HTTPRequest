@@ -128,8 +128,26 @@ namespace http
         Request& operator=(Request&& request) = delete;
 
         Response send(const std::string& method,
-                      const std::string& body,
-                      const std::vector<std::string>& headers)
+                      const std::map<std::string, std::string>& parameters,
+                      const std::vector<std::string>& headers = {})
+        {
+            std::string body;
+            bool first = true;
+
+            for (const auto& parameter : parameters)
+            {
+                if (!first) body += "&";
+                first = false;
+
+                body += parameter.first + "=" + parameter.second;
+            }
+
+            return send(method, body, headers);
+        }
+
+        Response send(const std::string& method,
+                      const std::string& body = "",
+                      const std::vector<std::string>& headers = {})
         {
             Response response;
 
