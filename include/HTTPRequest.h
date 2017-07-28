@@ -28,40 +28,87 @@ typedef int socket_t;
 #define INVALID_SOCKET -1
 #endif
 
-inline int getLastError()
-{
-#ifdef _WIN32
-    return WSAGetLastError();
-#else
-    return errno;
-#endif
-}
-
-#ifdef _WIN32
-inline bool initWSA()
-{
-    WORD sockVersion = MAKEWORD(2, 2);
-    WSADATA wsaData;
-    int error = WSAStartup(sockVersion, &wsaData);
-    if (error != 0)
-    {
-        std::cerr << "WSAStartup failed, error: " << error << std::endl;
-        return false;
-    }
-
-    if (wsaData.wVersion != sockVersion)
-    {
-        std::cerr << "Incorrect Winsock version" << std::endl;
-        WSACleanup();
-        return false;
-    }
-
-    return true;
-}
-#endif
-
 namespace http
 {
+    inline int getLastError()
+    {
+#ifdef _WIN32
+        return WSAGetLastError();
+#else
+        return errno;
+#endif
+    }
+
+#ifdef _WIN32
+    inline bool initWSA()
+    {
+        WORD sockVersion = MAKEWORD(2, 2);
+        WSADATA wsaData;
+        int error = WSAStartup(sockVersion, &wsaData);
+        if (error != 0)
+        {
+            std::cerr << "WSAStartup failed, error: " << error << std::endl;
+            return false;
+        }
+
+        if (wsaData.wVersion != sockVersion)
+        {
+            std::cerr << "Incorrect Winsock version" << std::endl;
+            WSACleanup();
+            return false;
+        }
+        
+        return true;
+    }
+#endif
+    
+    inline std::string urlEncode(const std::string& str)
+    {
+        static const std::map<char, std::string> entities = {
+            {' ', "%20"},
+            {'!', "%21"},
+            {'"', "%22"},
+            {'*', "%2A"},
+            {'\'', "%27"},
+            {'(', "%28"},
+            {')', "%29"},
+            {';', "%3B"},
+            {':', "%3A"},
+            {'@', "%40"},
+            {'&', "%26"},
+            {'=', "%3D"},
+            {'+', "%2B"},
+            {'$', "%24"},
+            {',', "%2C"},
+            {'/', "%2F"},
+            {'?', "%3F"},
+            {'%', "%25"},
+            {'#', "%23"},
+            {'<', "%3C"},
+            {'>', "%3E"},
+            {'[', "%5B"},
+            {'\\', "%5C"},
+            {']', "%5D"},
+            {'^', "%5E"},
+            {'`', "%60"},
+            {'{', "%7B"},
+            {'|', "%7C"},
+            {'}', "%7D"},
+            {'~', "%7E"}
+        };
+
+        std::string result;
+
+        for (char c : str)
+        {
+            auto i = entities.find(c);
+
+            if (i == entities.end()) result += c; else result += i->second;
+        }
+
+        return result;
+    }
+
     struct Response
     {
         bool succeeded = false;
@@ -139,7 +186,7 @@ namespace http
                 if (!first) body += "&";
                 first = false;
 
-                body += parameter.first + "=" + parameter.second;
+                body += urlEncode(parameter.first) + "=" + urlEncode(parameter.second);
             }
 
             return send(method, body, headers);
