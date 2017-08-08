@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <fstream>
-#include "HTTPRequest.h"
+#include "HTTPRequest.hpp"
 
 int main(int argc, const char * argv[])
 {

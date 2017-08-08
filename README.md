@@ -4,6 +4,8 @@ HTTPRequest is a single-header library for making HTTP requests. You can just in
 
 Usage:
 ```
+#include "HTTPRequest.hpp"
+
 http::Request request("http://test.com/test");
 
 // send a get request
