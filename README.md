@@ -3,7 +3,7 @@
 HTTPRequest is a single-header library for making HTTP requests. You can just include it in your project and use it.
 
 Usage:
-```
+```cpp
 #include "HTTPRequest.hpp"
 
 http::Request request("http://test.com/test");
