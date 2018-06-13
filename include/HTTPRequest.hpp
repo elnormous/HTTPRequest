@@ -6,7 +6,7 @@
 
 #include <algorithm>
 #include <functional>
-#include <iostream>
+#include <stdexcept>
 #include <map>
 #include <string>
 #include <vector>
@@ -40,25 +40,16 @@ namespace http
     }
 
 #ifdef _WIN32
-    inline bool initWSA()
+    inline void initWSA()
     {
         WORD sockVersion = MAKEWORD(2, 2);
         WSADATA wsaData;
         int error = WSAStartup(sockVersion, &wsaData);
         if (error != 0)
-        {
-            std::cerr << "WSAStartup failed, error: " << error << std::endl;
-            return false;
-        }
+            throw std::runtime_error("WSAStartup failed, error: " + std::to_string(error));
 
         if (wsaData.wVersion != sockVersion)
-        {
-            std::cerr << "Incorrect Winsock version" << std::endl;
-            WSACleanup();
-            return false;
-        }
-        
-        return true;
+            throw std::runtime_error("Incorrect Winsock version");
     }
 #endif
     
@@ -109,13 +100,9 @@ namespace http
             {
                 auto entity = entities.find(*i);
                 if (entity == entities.end())
-                {
                     result += static_cast<char>(cp);
-                }
                 else
-                {
                     result += entity->second;
-                }
             }
             else if ((cp >> 5) == 0x6) // length = 2
             {
@@ -148,7 +135,6 @@ namespace http
 
     struct Response
     {
-        bool succeeded = false;
         int code = 0;
         std::vector<std::string> headers;
         std::vector<uint8_t> body;
@@ -169,9 +155,7 @@ namespace http
                 std::string::size_type pathPosition = url.find('/', protocolEndPosition + 3);
 
                 if (pathPosition == std::string::npos)
-                {
                     domain = url.substr(protocolEndPosition + 3);
-                }
                 else
                 {
                     domain = url.substr(protocolEndPosition + 3, pathPosition - protocolEndPosition - 3);
@@ -193,16 +177,10 @@ namespace http
             if (socketFd != INVALID_SOCKET)
             {
 #ifdef _WIN32
-                int result = closesocket(socketFd);
+                closesocket(socketFd);
 #else
-                int result = close(socketFd);
+                close(socketFd);
 #endif
-
-                if (result < 0)
-                {
-                    int error = getLastError();
-                    std::cerr << "Failed to close socket, error: " << error << std::endl;
-                }
             }
         }
 
@@ -236,10 +214,7 @@ namespace http
             Response response;
 
             if (protocol != "http")
-            {
-                std::cerr << "Only HTTP protocol is supported" << std::endl;
-                return response;
-            }
+                throw std::runtime_error("Only HTTP protocol is supported");
 
             if (socketFd != INVALID_SOCKET)
             {
@@ -253,8 +228,7 @@ namespace http
                 if (result < 0)
                 {
                     int error = getLastError();
-                    std::cerr << "Failed to close socket, error: " << error << std::endl;
-                    return response;
+                    throw std::runtime_error("Failed to close socket, error: " + std::to_string(error));
                 }
             }
 
@@ -263,8 +237,7 @@ namespace http
 #ifdef _WIN32
             if (socketFd == INVALID_SOCKET && WSAGetLastError() == WSANOTINITIALISED)
             {
-                if (!initWSA()) return response;
-
+                initWSA();
                 socketFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
             }
 #endif
@@ -272,16 +245,14 @@ namespace http
             if (socketFd == INVALID_SOCKET)
             {
                 int error = getLastError();
-                std::cerr << "Failed to create socket, error: " << error << std::endl;
-                return response;
+                throw std::runtime_error("Failed to create socket, error: " + std::to_string(error));
             }
 
             addrinfo* info;
             if (getaddrinfo(domain.c_str(), port.empty() ? nullptr : port.c_str(), nullptr, &info) != 0)
             {
                 int error = getLastError();
-                std::cerr << "Failed to get address info of " << domain << ", error: " << error << std::endl;
-                return response;
+                throw std::runtime_error("Failed to get address info of " + domain + ", error: " + std::to_string(error));
             }
 
             sockaddr addr = *info->ai_addr;
@@ -291,21 +262,13 @@ namespace http
             if (::connect(socketFd, &addr, sizeof(addr)) < 0)
             {
                 int error = getLastError();
-
-                std::cerr << "Failed to connect to " << domain << ":" << port << ", error: " << error << std::endl;
-                return response;
-            }
-            else
-            {
-                std::cerr << "Connected to " << domain << ":" << port << std::endl;
+                throw std::runtime_error("Failed to connect to " + domain + ":" + port + ", error: " + std::to_string(error));
             }
 
             std::string requestData = method + " " + path + " HTTP/1.1\r\n";
 
             for (const std::string& header : headers)
-            {
                 requestData += header + "\r\n";
-            }
 
             requestData += "Host: " + domain + "\r\n";
             requestData += "Content-Length: " + std::to_string(body.size()) + "\r\n";
@@ -338,8 +301,7 @@ namespace http
                 if (size < 0)
                 {
                     int error = getLastError();
-                    std::cerr << "Failed to send data to " << domain << ":" << port << ", error: " << error << std::endl;
-                    return response;
+                    throw std::runtime_error("Failed to send data to " + domain + ":" + port + ", error: " + std::to_string(error));
                 }
 
                 remaining -= size;
@@ -364,8 +326,7 @@ namespace http
                 if (size < 0)
                 {
                     int error = getLastError();
-                    std::cerr << "Failed to read data from " << domain << ":" << port << ", error: " << error << std::endl;
-                    return response;
+                    throw std::runtime_error("Failed to read data from " + domain + ":" + port + ", error: " + std::to_string(error));
                 }
                 else if (size == 0)
                 {
@@ -407,18 +368,14 @@ namespace http
                                 if (pos == std::string::npos) pos = length;
 
                                 if (pos != lastPos)
-                                {
                                     parts.push_back(std::string(line.data() + lastPos,
                                                                 static_cast<std::vector<std::string>::size_type>(pos) - lastPos));
-                                }
                                 
                                 lastPos = pos + 1;
                             }
 
                             if (parts.size() >= 2)
-                            {
                                 response.code = std::stoi(parts[1]);
-                            }
                         }
                         else // headers
                         {
@@ -442,13 +399,9 @@ namespace http
                                                   headerValue.end());
 
                                 if (headerName == "Content-Length")
-                                {
                                     contentSize = std::stoi(headerValue);
-                                }
                                 else if (headerName == "Transfer-Encoding" && headerValue == "chunked")
-                                {
                                     chunkedResponse = true;
-                                }
                             }
                         }
                     }
@@ -501,9 +454,7 @@ namespace http
                         }
 
                         if (dataReceived)
-                        {
                             break;
-                        }
                     }
                     else
                     {
@@ -512,15 +463,11 @@ namespace http
 
                         // got the whole content
                         if (contentSize == -1 || response.body.size() >= contentSize)
-                        {
                             break;
-                        }
                     }
                 }
             }
             while (size > 0);
-
-            response.succeeded = true;
 
             return response;
         }

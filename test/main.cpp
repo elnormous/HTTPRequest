@@ -33,15 +33,15 @@ int main(int argc, const char * argv[])
         }
     }
 
-    http::Request request(url);
-
-    http::Response response = request.send(method, arguments, {
-        "Content-Type: application/x-www-form-urlencoded",
-        "User-Agent: runscope/0.1"
-    });
-
-    if (response.succeeded)
+    try
     {
+        http::Request request(url);
+
+        http::Response response = request.send(method, arguments, {
+            "Content-Type: application/x-www-form-urlencoded",
+            "User-Agent: runscope/0.1"
+        });
+
         if (!output.empty())
         {
             std::ofstream outfile(output, std::ofstream::binary);
@@ -49,13 +49,11 @@ int main(int argc, const char * argv[])
                           response.body.size());
         }
         else
-        {
             std::cout << response.body.data() << std::endl;
-        }
     }
-    else
+    catch (const std::exception& e)
     {
-        std::cout << "Request failed" << std::endl;
+        std::cerr << "Request failed, error: " << e.what() << std::endl;
     }
 
     return 0;
