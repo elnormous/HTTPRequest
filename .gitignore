@@ -6,3 +6,5 @@ test/x64/
 test/test.opensdf
 test/test.sdf
 test/test.VC.db
+*.o
+test/test

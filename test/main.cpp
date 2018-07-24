@@ -9,13 +9,18 @@
 int main(int argc, const char * argv[])
 {
     std::string url;
-    std::string method;
+    std::string method = "GET";
     std::string arguments;
     std::string output;
 
     for (int i = 1; i < argc; ++i)
     {
-        if (std::string(argv[i]) == "--url")
+        if (std::string(argv[i]) == "--help")
+        {
+            std::cout << "test --url <url> --method <method> --arguments <arguments> --output <output>" << std::endl;
+            return EXIT_SUCCESS;
+        }
+        else if (std::string(argv[i]) == "--url")
         {
             if (++i < argc) url = argv[i];
         }
@@ -54,7 +59,8 @@ int main(int argc, const char * argv[])
     catch (const std::exception& e)
     {
         std::cerr << "Request failed, error: " << e.what() << std::endl;
+        return EXIT_FAILURE;
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
