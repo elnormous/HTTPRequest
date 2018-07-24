@@ -12,10 +12,16 @@ endif
 ifeq ($(shell uname -s),Darwin)
 platform=macos
 endif
+ifeq ($(shell uname -s),Haiku)
+platform=haiku
+endif
 endif
 
 CXXFLAGS=-c -std=c++11 -Wall -O2 -I$(ROOT_DIR)/../include
 LDFLAGS=-O2
+ifeq ($(platform),haiku)
+LDFLAGS+=-lnetwork
+endif
 SOURCES=$(ROOT_DIR)/main.cpp
 BASE_NAMES=$(basename $(SOURCES))
 OBJECTS=$(BASE_NAMES:=.o)
