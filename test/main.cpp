@@ -51,7 +51,7 @@ int main(int argc, const char * argv[])
         {
             std::ofstream outfile(output, std::ofstream::binary);
             outfile.write(reinterpret_cast<const char*>(response.body.data()),
-                          response.body.size());
+                          static_cast<std::streamsize>(response.body.size()));
         }
         else
             std::cout << response.body.data() << std::endl;

@@ -296,7 +296,7 @@ namespace http
 
             do
             {
-                size = ::send(socketFd, requestData.data() + sent, remaining, flags);
+                size = ::send(socketFd, requestData.data() + sent, static_cast<size_t>(remaining), flags);
 
                 if (size < 0)
                 {
@@ -417,8 +417,8 @@ namespace http
                             if (expectedChunkSize > 0)
                             {
                                 auto toWrite = std::min(expectedChunkSize, responseData.size());
-                                response.body.insert(response.body.end(), responseData.begin(), responseData.begin() + toWrite);
-                                responseData.erase(responseData.begin(), responseData.begin() + toWrite);
+                                response.body.insert(response.body.end(), responseData.begin(), responseData.begin() + static_cast<ssize_t>(toWrite));
+                                responseData.erase(responseData.begin(), responseData.begin() + static_cast<ssize_t>(toWrite));
                                 expectedChunkSize -= toWrite;
 
                                 if (expectedChunkSize == 0) removeCLRFAfterChunk = true;
@@ -462,7 +462,7 @@ namespace http
                         responseData.clear();
 
                         // got the whole content
-                        if (contentSize == -1 || response.body.size() >= contentSize)
+                        if (contentSize == -1 || response.body.size() >= static_cast<size_t>(contentSize))
                             break;
                     }
                 }
