@@ -2,7 +2,8 @@
 //  HTTPRequest
 //
 
-#pragma once
+#ifndef HTTPREQUEST_HPP
+#define HTTPREQUEST_HPP
 
 #include <algorithm>
 #include <functional>
@@ -471,3 +472,4 @@ namespace http
         socket_t socketFd = NULL_SOCKET;
     };
 }
+#endif
