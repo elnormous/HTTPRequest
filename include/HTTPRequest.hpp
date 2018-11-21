@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <functional>
 #include <stdexcept>
+#include <system_error>
 #include <map>
 #include <string>
 #include <vector>
@@ -18,6 +19,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 typedef SOCKET socket_t;
+static const socket_t NULL_SOCKET = INVALID_SOCKET;
 #else
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -25,7 +27,7 @@ typedef SOCKET socket_t;
 #include <unistd.h>
 #include <errno.h>
 typedef int socket_t;
-#define INVALID_SOCKET -1
+static const socket_t NULL_SOCKET = -1;
 #endif
 
 namespace http
@@ -46,10 +48,10 @@ namespace http
         WSADATA wsaData;
         int error = WSAStartup(sockVersion, &wsaData);
         if (error != 0)
-            throw std::runtime_error("WSAStartup failed, error: " + std::to_string(error));
+            throw std::system_error(error, std::system_category(), "WSAStartup failed");
 
-        if (wsaData.wVersion != sockVersion)
-            throw std::runtime_error("Incorrect Winsock version");
+        if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2)
+            throw std::runtime_error("Invalid WinSock version");
     }
 #endif
     
@@ -174,14 +176,12 @@ namespace http
 
         ~Request()
         {
-            if (socketFd != INVALID_SOCKET)
-            {
+            if (socketFd != NULL_SOCKET)
 #ifdef _WIN32
                 closesocket(socketFd);
 #else
                 close(socketFd);
 #endif
-            }
         }
 
         Request(const Request& request) = delete;
@@ -216,54 +216,51 @@ namespace http
             if (protocol != "http")
                 throw std::runtime_error("Only HTTP protocol is supported");
 
-            if (socketFd != INVALID_SOCKET)
+            if (socketFd != NULL_SOCKET)
             {
 #ifdef _WIN32
                 int result = closesocket(socketFd);
 #else
                 int result = ::close(socketFd);
 #endif
-                socketFd = INVALID_SOCKET;
+                socketFd = NULL_SOCKET;
 
                 if (result < 0)
-                {
-                    int error = getLastError();
-                    throw std::runtime_error("Failed to close socket, error: " + std::to_string(error));
-                }
+                    throw std::system_error(getLastError(), std::system_category(), "Failed to close socket");
             }
-
-            socketFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 #ifdef _WIN32
-            if (socketFd == INVALID_SOCKET && WSAGetLastError() == WSANOTINITIALISED)
+            for (;;)
             {
-                initWSA();
-                socketFd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-            }
-#endif
+                socketFd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-            if (socketFd == INVALID_SOCKET)
-            {
-                int error = getLastError();
-                throw std::runtime_error("Failed to create socket, error: " + std::to_string(error));
+                if (socketFd == INVALID_SOCKET)
+                {
+                    int error = WSAGetLastError();
+                    if (error == WSANOTINITIALISED) initWSA();
+                    else
+                        throw std::system_error(error, std::system_category(), "Failed to get address info of " + address);
+                }
+                else
+                    break;
             }
+#else
+            socketFd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+            if (socketFd == -1)
+                throw std::system_error(errno, std::system_category(), "Failed to create socket");
+#endif
 
             addrinfo* info;
             if (getaddrinfo(domain.c_str(), port.empty() ? nullptr : port.c_str(), nullptr, &info) != 0)
-            {
-                int error = getLastError();
-                throw std::runtime_error("Failed to get address info of " + domain + ", error: " + std::to_string(error));
-            }
+                throw std::system_error(getLastError(), std::system_category(), "Failed to get address info of " + domain);
 
             sockaddr addr = *info->ai_addr;
 
             freeaddrinfo(info);
 
             if (::connect(socketFd, &addr, sizeof(addr)) < 0)
-            {
-                int error = getLastError();
-                throw std::runtime_error("Failed to connect to " + domain + ":" + port + ", error: " + std::to_string(error));
-            }
+                throw std::system_error(getLastError(), std::system_category(), "Failed to connect to " + domain + ":" + port);
 
             std::string requestData = method + " " + path + " HTTP/1.1\r\n";
 
@@ -299,10 +296,7 @@ namespace http
                 size = ::send(socketFd, requestData.data() + sent, static_cast<size_t>(remaining), flags);
 
                 if (size < 0)
-                {
-                    int error = getLastError();
-                    throw std::runtime_error("Failed to send data to " + domain + ":" + port + ", error: " + std::to_string(error));
-                }
+                    throw std::system_error(getLastError(), std::system_category(), "Failed to send data to " + domain + ":" + port);
 
                 remaining -= size;
                 sent += size;
@@ -324,10 +318,7 @@ namespace http
                 size = recv(socketFd, reinterpret_cast<char*>(TEMP_BUFFER), sizeof(TEMP_BUFFER), flags);
 
                 if (size < 0)
-                {
-                    int error = getLastError();
-                    throw std::runtime_error("Failed to read data from " + domain + ":" + port + ", error: " + std::to_string(error));
-                }
+                    throw std::system_error(getLastError(), std::system_category(), "Failed to read data from " + domain + ":" + port);
                 else if (size == 0)
                 {
                     // disconnected
@@ -477,6 +468,6 @@ namespace http
         std::string domain;
         std::string port = "80";
         std::string path;
-        socket_t socketFd = INVALID_SOCKET;
+        socket_t socketFd = NULL_SOCKET;
     };
 }
