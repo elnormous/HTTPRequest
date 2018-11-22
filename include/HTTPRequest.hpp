@@ -391,8 +391,8 @@ namespace http
                             if (expectedChunkSize > 0)
                             {
                                 auto toWrite = std::min(expectedChunkSize, responseData.size());
-                                response.body.insert(response.body.end(), responseData.begin(), responseData.begin() + static_cast<ssize_t>(toWrite));
-                                responseData.erase(responseData.begin(), responseData.begin() + static_cast<ssize_t>(toWrite));
+                                response.body.insert(response.body.end(), responseData.begin(), responseData.begin() + static_cast<ptrdiff_t>(toWrite));
+                                responseData.erase(responseData.begin(), responseData.begin() + static_cast<ptrdiff_t>(toWrite));
                                 expectedChunkSize -= toWrite;
 
                                 if (expectedChunkSize == 0) removeCLRFAfterChunk = true;
