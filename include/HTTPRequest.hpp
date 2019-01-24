@@ -16,17 +16,20 @@
 #include <cctype>
 
 #ifdef _WIN32
-#define NOMINMAX
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#  define WIN32_LEAN_AND_MEAN
+#  define NOMINMAX
+#  include <winsock2.h>
+#  include <ws2tcpip.h>
+#  undef NOMINMAX
+#  undef WIN32_LEAN_AND_MEAN
 typedef SOCKET socket_t;
 static const socket_t NULL_SOCKET = INVALID_SOCKET;
 #else
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <errno.h>
+#  include <sys/socket.h>
+#  include <netinet/in.h>
+#  include <netdb.h>
+#  include <unistd.h>
+#  include <errno.h>
 typedef int socket_t;
 static const socket_t NULL_SOCKET = -1;
 #endif

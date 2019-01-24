@@ -8,3 +8,4 @@ test/test.sdf
 test/test.VC.db
 *.o
 test/test
+test/test.VC.VC.opendb
