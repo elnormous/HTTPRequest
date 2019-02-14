@@ -2,7 +2,7 @@
 
 HTTPRequest is a single-header library for making HTTP requests. You can just include it in your project and use it. HTTPRequest was tested on macOS, Windows and Linux, but it should work on most of the Linux-based platforms.
 
-Usage:
+## Usage
 ```cpp
 #include "HTTPRequest.hpp"
 
