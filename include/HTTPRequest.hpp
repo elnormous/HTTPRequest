@@ -22,20 +22,65 @@
 #  include <ws2tcpip.h>
 #  undef NOMINMAX
 #  undef WIN32_LEAN_AND_MEAN
-typedef SOCKET socket_t;
-static const socket_t NULL_SOCKET = INVALID_SOCKET;
 #else
 #  include <sys/socket.h>
 #  include <netinet/in.h>
 #  include <netdb.h>
 #  include <unistd.h>
 #  include <errno.h>
-typedef int socket_t;
-static const socket_t NULL_SOCKET = -1;
 #endif
 
 namespace http
 {
+#ifdef _WIN32
+    class WinSock
+    {
+    public:
+        WinSock()
+        {
+            WORD sockVersion = MAKEWORD(2, 2);
+            WSADATA wsaData;
+            int error = WSAStartup(sockVersion, &wsaData);
+            if (error != 0)
+                throw std::system_error(error, std::system_category(), "WSAStartup failed");
+
+            if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2)
+                throw std::runtime_error("Invalid WinSock version");
+
+            started = true;
+        }
+
+        ~WinSock()
+        {
+            if (started) WSACleanup();
+        }
+
+        Socket(const Socket&) = delete;
+        Socket& operator=(const Socket&) = delete;
+
+        Socket(Socket&& other):
+            started(other.started)
+        {
+            other.started = false;
+        }
+
+        Socket& operator=(Socket&& other)
+        {
+            if (&other != this)
+            {
+                if (started) WSACleanup();
+                started = other.started;
+                other.started = false;
+            }
+
+            return *this;
+        }
+
+    private:
+        bool started = false;
+    };
+#endif
+
     inline int getLastError()
     {
 #ifdef _WIN32
@@ -44,7 +89,96 @@ namespace http
         return errno;
 #endif
     }
-    
+
+    class Socket final
+    {
+    public:
+        Socket():
+            endpoint(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP))
+        {
+#ifdef _WIN32
+            if (endpoint == INVALID_SOCKET)
+                throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to create socket");
+#else
+            if (endpoint == -1)
+                throw std::system_error(errno, std::system_category(), "Failed to create socket");
+#endif
+        }
+
+#ifdef _WIN32
+        Socket(SOCKET s):
+            endpoint(s)
+        {
+        }
+#else
+        Socket(int s):
+            endpoint(s)
+        {
+        }
+#endif
+        ~Socket()
+        {
+#ifdef _WIN32
+            if (endpoint != INVALID_SOCKET) closesocket(endpoint);
+#else
+            if (endpoint != -1) close(endpoint);
+#endif
+        }
+
+        Socket(const Socket&) = delete;
+        Socket& operator=(const Socket&) = delete;
+
+        Socket(Socket&& other):
+#ifdef _WIN32
+            winSock(std::move(other.winSock)),
+#endif
+            endpoint(other.endpoint)
+        {
+#ifdef _WIN32
+            other.endpoint = INVALID_SOCKET;
+#else
+            other.endpoint = -1;
+#endif
+        }
+
+        Socket& operator=(Socket&& other)
+        {
+            if (&other != this)
+            {
+#ifdef _WIN32
+                winSock = std::move(other.winSock);
+                if (endpoint != INVALID_SOCKET) closesocket(endpoint);
+#else
+                if (endpoint != -1) close(endpoint);
+#endif
+
+                endpoint = other.endpoint;
+
+#ifdef _WIN32
+                other.endpoint = INVALID_SOCKET;
+#else
+                other.endpoint = -1;
+#endif
+            }
+
+            return *this;
+        }
+
+#ifdef _WIN32
+        operator SOCKET() const { return endpoint; }
+#else
+        operator int() const { return endpoint; }
+#endif
+
+    private:
+#ifdef _WIN32
+        WinSock winSock;
+        SOCKET endpoint = INVALID_SOCKET;
+#else
+        int endpoint = -1;
+#endif
+    };
+
     inline std::string urlEncode(const std::string& str)
     {
         static const std::map<char, std::string> entities = {
@@ -137,19 +271,6 @@ namespace http
     public:
         Request(const std::string& url)
         {
-#ifdef _WIN32
-            WORD sockVersion = MAKEWORD(2, 2);
-            WSADATA wsaData;
-            int error = WSAStartup(sockVersion, &wsaData);
-            if (error != 0)
-                throw std::system_error(error, std::system_category(), "WSAStartup failed");
-
-            wsaStarted = true;
-
-            if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2)
-                throw std::runtime_error("Invalid WinSock version");
-#endif
-
             size_t protocolEndPosition = url.find("://");
 
             if (protocolEndPosition != std::string::npos)
@@ -176,21 +297,6 @@ namespace http
                 }
             }
         }
-
-        ~Request()
-        {
-#ifdef _WIN32
-            if (socketFd != NULL_SOCKET) closesocket(socketFd);
-            if (wsaStarted) WSACleanup();
-#else
-            if (socketFd != NULL_SOCKET) close(socketFd);
-#endif
-        }
-
-        Request(const Request& request) = delete;
-        Request(Request&& request) = delete;
-        Request& operator=(const Request& request) = delete;
-        Request& operator=(Request&& request) = delete;
 
         Response send(const std::string& method,
                       const std::map<std::string, std::string>& parameters,
@@ -219,23 +325,7 @@ namespace http
             if (protocol != "http")
                 throw std::runtime_error("Only HTTP protocol is supported");
 
-            if (socketFd != NULL_SOCKET)
-            {
-#ifdef _WIN32
-                int result = closesocket(socketFd);
-#else
-                int result = close(socketFd);
-#endif
-                socketFd = NULL_SOCKET;
-
-                if (result < 0)
-                    throw std::system_error(getLastError(), std::system_category(), "Failed to close socket");
-            }
-
-            socketFd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-            if (socketFd == NULL_SOCKET)
-                throw std::system_error(getLastError(), std::system_category(), "Failed to create socket");
+            Socket socket;
 
             addrinfo* info;
             if (getaddrinfo(domain.c_str(), port.empty() ? nullptr : port.c_str(), nullptr, &info) != 0)
@@ -245,7 +335,7 @@ namespace http
 
             freeaddrinfo(info);
 
-            if (::connect(socketFd, &addr, sizeof(addr)) < 0)
+            if (::connect(socket, &addr, sizeof(addr)) < 0)
                 throw std::system_error(getLastError(), std::system_category(), "Failed to connect to " + domain + ":" + port);
 
             std::string requestData = method + " " + path + " HTTP/1.1\r\n";
@@ -279,7 +369,7 @@ namespace http
 
             do
             {
-                size = ::send(socketFd, requestData.data() + sent, static_cast<size_t>(remaining), flags);
+                size = ::send(socket, requestData.data() + sent, static_cast<size_t>(remaining), flags);
 
                 if (size < 0)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to send data to " + domain + ":" + port);
@@ -301,7 +391,7 @@ namespace http
 
             do
             {
-                size = recv(socketFd, reinterpret_cast<char*>(TEMP_BUFFER), sizeof(TEMP_BUFFER), flags);
+                size = recv(socket, reinterpret_cast<char*>(TEMP_BUFFER), sizeof(TEMP_BUFFER), flags);
 
                 if (size < 0)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to read data from " + domain + ":" + port);
@@ -450,14 +540,10 @@ namespace http
         }
 
     private:
-#ifdef _WIN32
-        bool wsaStarted = false;
-#endif
         std::string protocol;
         std::string domain;
         std::string port = "80";
         std::string path;
-        socket_t socketFd = NULL_SOCKET;
     };
 }
 #endif
