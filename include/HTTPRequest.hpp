@@ -55,16 +55,16 @@ namespace http
             if (started) WSACleanup();
         }
 
-        Socket(const Socket&) = delete;
-        Socket& operator=(const Socket&) = delete;
+        WinSock(const WinSock&) = delete;
+        WinSock& operator=(const WinSock&) = delete;
 
-        Socket(Socket&& other):
+        WinSock(WinSock&& other):
             started(other.started)
         {
             other.started = false;
         }
 
-        Socket& operator=(Socket&& other)
+        WinSock& operator=(WinSock&& other)
         {
             if (&other != this)
             {
