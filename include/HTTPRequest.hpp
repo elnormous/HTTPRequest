@@ -181,78 +181,44 @@ namespace http
 
     inline std::string urlEncode(const std::string& str)
     {
-        static const std::map<char, std::string> entities = {
-            {' ', "%20"},
-            {'!', "%21"},
-            {'"', "%22"},
-            {'*', "%2A"},
-            {'\'', "%27"},
-            {'(', "%28"},
-            {')', "%29"},
-            {';', "%3B"},
-            {':', "%3A"},
-            {'@', "%40"},
-            {'&', "%26"},
-            {'=', "%3D"},
-            {'+', "%2B"},
-            {'$', "%24"},
-            {',', "%2C"},
-            {'/', "%2F"},
-            {'?', "%3F"},
-            {'%', "%25"},
-            {'#', "%23"},
-            {'<', "%3C"},
-            {'>', "%3E"},
-            {'[', "%5B"},
-            {'\\', "%5C"},
-            {']', "%5D"},
-            {'^', "%5E"},
-            {'`', "%60"},
-            {'{', "%7B"},
-            {'|', "%7C"},
-            {'}', "%7D"},
-            {'~', "%7E"}
-        };
-
         static const char hexChars[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
         std::string result;
 
         for (auto i = str.begin(); i != str.end(); ++i)
         {
-            uint32_t cp = *i & 0xff;
+            uint8_t cp = *i & 0xFF;
 
-            if (cp <= 0x7f) // length = 1
-            {
-                auto entity = entities.find(*i);
-                if (entity == entities.end())
-                    result += static_cast<char>(cp);
-                else
-                    result += entity->second;
-            }
+            if ((cp >= 0x30 && cp <= 0x39) || // 0-9
+                (cp >= 0x41 && cp <= 0x5A) || // A-Z
+                (cp >= 0x61 && cp <= 0x7A) || // a-z
+                cp == 0x2D || cp == 0x2E || cp == 0x5F) // - . _
+                result += static_cast<char>(cp);
+            else if (cp <= 0x7F) // length = 1
+                result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
             else if ((cp >> 5) == 0x6) // length = 2
             {
-                result += std::string("%") + hexChars[(*i & 0xf0) >> 4] + hexChars[*i & 0x0f];
+                result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
                 if (++i == str.end()) break;
-                result += std::string("%") + hexChars[(*i & 0xf0) >> 4] + hexChars[*i & 0x0f];
+                result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
             }
             else if ((cp >> 4) == 0xe) // length = 3
             {
-                result += std::string("%") + hexChars[(*i & 0xf0) >> 4] + hexChars[*i & 0x0f];
+                result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
                 if (++i == str.end()) break;
-                result += std::string("%") + hexChars[(*i & 0xf0) >> 4] + hexChars[*i & 0x0f];
+                result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
                 if (++i == str.end()) break;
-                result += std::string("%") + hexChars[(*i & 0xf0) >> 4] + hexChars[*i & 0x0f];
+                result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
             }
             else if ((cp >> 3) == 0x1e) // length = 4
             {
-                result += std::string("%") + hexChars[(*i & 0xf0) >> 4] + hexChars[*i & 0x0f];
+                result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
                 if (++i == str.end()) break;
-                result += std::string("%") + hexChars[(*i & 0xf0) >> 4] + hexChars[*i & 0x0f];
+                result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
                 if (++i == str.end()) break;
-                result += std::string("%") + hexChars[(*i & 0xf0) >> 4] + hexChars[*i & 0x0f];
+                result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
                 if (++i == str.end()) break;
-                result += std::string("%") + hexChars[(*i & 0xf0) >> 4] + hexChars[*i & 0x0f];
+                result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
             }
         }
         
@@ -410,7 +376,7 @@ namespace http
                 {
                     for (;;)
                     {
-                        std::vector<uint8_t>::iterator i = std::search(responseData.begin(), responseData.end(), clrf.begin(), clrf.end());
+                        auto i = std::search(responseData.begin(), responseData.end(), clrf.begin(), clrf.end());
 
                         // didn't find a newline
                         if (i == responseData.end()) break;
