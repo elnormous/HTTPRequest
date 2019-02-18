@@ -281,7 +281,10 @@ namespace http
                 std::string::size_type pathPosition = url.find('/', protocolEndPosition + 3);
 
                 if (pathPosition == std::string::npos)
+                {
                     domain = url.substr(protocolEndPosition + 3);
+                    path = "/";
+                }
                 else
                 {
                     domain = url.substr(protocolEndPosition + 3, pathPosition - protocolEndPosition - 3);
@@ -316,7 +319,7 @@ namespace http
             return send(method, body, headers);
         }
 
-        Response send(const std::string& method,
+        Response send(const std::string& method = "GET",
                       const std::string& body = "",
                       const std::vector<std::string>& headers = {})
         {
@@ -328,7 +331,7 @@ namespace http
             Socket socket;
 
             addrinfo* info;
-            if (getaddrinfo(domain.c_str(), port.empty() ? nullptr : port.c_str(), nullptr, &info) != 0)
+            if (getaddrinfo(domain.c_str(), port.empty() ? "80" : port.c_str(), nullptr, &info) != 0)
                 throw std::system_error(getLastError(), std::system_category(), "Failed to get address info of " + domain);
 
             sockaddr addr = *info->ai_addr;
@@ -542,8 +545,9 @@ namespace http
     private:
         std::string protocol;
         std::string domain;
-        std::string port = "80";
+        std::string port;
         std::string path;
     };
 }
+
 #endif
