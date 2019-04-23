@@ -54,7 +54,7 @@ int main(int argc, const char * argv[])
                           static_cast<std::streamsize>(response.body.size()));
         }
         else
-            std::cout << response.body.data() << std::endl;
+            std::cout << std::string(response.body.begin(), response.body.end()) << std::endl;
     }
     catch (const std::exception& e)
     {

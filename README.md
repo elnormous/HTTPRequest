@@ -25,7 +25,7 @@ try
     response = request.send("POST", parameters, {
         "Content-Type: application/x-www-form-urlencoded"
     });
-    std::cout << response.body.data() << std::endl; // print the result
+    std::cout << std::string(response.body.begin(), response.body.end()) << std::endl; // print the result
 }
 catch (const std::exception& e)
 {
