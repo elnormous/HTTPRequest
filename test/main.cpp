@@ -17,7 +17,7 @@ int main(int argc, const char * argv[])
     {
         if (std::string(argv[i]) == "--help")
         {
-            std::cout << "test --url <url> --method <method> --arguments <arguments> --output <output>" << std::endl;
+            std::cout << "test --url <url> [--method <method>] [--arguments <arguments>] [--output <output>]" << std::endl;
             return EXIT_SUCCESS;
         }
         else if (std::string(argv[i]) == "--url")
