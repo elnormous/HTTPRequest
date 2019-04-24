@@ -295,10 +295,21 @@ namespace http
 
             Socket socket;
 
+            addrinfo hints;
+            hints.ai_flags = AI_DEFAULT;
+            hints.ai_family = AF_INET;
+            hints.ai_socktype = SOCK_STREAM;
+            hints.ai_protocol = 0;
+            hints.ai_addrlen = 0;
+            hints.ai_addr = nullptr;
+            hints.ai_canonname = nullptr;
+            hints.ai_next = nullptr;
+
             addrinfo* info;
-            if (getaddrinfo(domain.c_str(), port.empty() ? "80" : port.c_str(), nullptr, &info) != 0)
+            if (getaddrinfo(domain.c_str(), port.empty() ? "80" : port.c_str(), &hints, &info) != 0)
                 throw std::system_error(getLastError(), std::system_category(), "Failed to get address info of " + domain);
 
+            // take the first address from the list
             sockaddr addr = *info->ai_addr;
 
             freeaddrinfo(info);
