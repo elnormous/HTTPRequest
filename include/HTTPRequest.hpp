@@ -89,11 +89,26 @@ namespace http
 #endif
     }
 
+    enum class InternetProtocol
+    {
+        V4,
+        V6
+    };
+
+    inline int getAddressFamily(InternetProtocol internetProtocol)
+    {
+        switch (internetProtocol)
+        {
+            case InternetProtocol::V4: return AF_INET;
+            case InternetProtocol::V6: return AF_INET6;
+        }
+    }
+
     class Socket final
     {
     public:
-        Socket():
-            endpoint(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP))
+        Socket(InternetProtocol internetProtocol):
+            endpoint(socket(getAddressFamily(internetProtocol), SOCK_STREAM, IPPROTO_TCP))
         {
 #ifdef _WIN32
             if (endpoint == INVALID_SOCKET)
@@ -234,25 +249,26 @@ namespace http
     class Request final
     {
     public:
-        Request(const std::string& url)
+        Request(const std::string& url, InternetProtocol protocol = InternetProtocol::V4):
+            internetProtocol(protocol)
         {
-            size_t protocolEndPosition = url.find("://");
+            size_t schemeEndPosition = url.find("://");
 
-            if (protocolEndPosition != std::string::npos)
+            if (schemeEndPosition != std::string::npos)
             {
-                protocol = url.substr(0, protocolEndPosition);
-                std::transform(protocol.begin(), protocol.end(), protocol.begin(), ::tolower);
+                scheme = url.substr(0, schemeEndPosition);
+                std::transform(scheme.begin(), scheme.end(), scheme.begin(), ::tolower);
 
-                std::string::size_type pathPosition = url.find('/', protocolEndPosition + 3);
+                std::string::size_type pathPosition = url.find('/', schemeEndPosition + 3);
 
                 if (pathPosition == std::string::npos)
                 {
-                    domain = url.substr(protocolEndPosition + 3);
+                    domain = url.substr(schemeEndPosition + 3);
                     path = "/";
                 }
                 else
                 {
-                    domain = url.substr(protocolEndPosition + 3, pathPosition - protocolEndPosition - 3);
+                    domain = url.substr(schemeEndPosition + 3, pathPosition - schemeEndPosition - 3);
                     path = url.substr(pathPosition);
                 }
 
@@ -263,6 +279,8 @@ namespace http
                     port = domain.substr(portPosition + 1);
                     domain.resize(portPosition);
                 }
+                else
+                    port = "80";
             }
         }
 
@@ -290,12 +308,12 @@ namespace http
         {
             Response response;
 
-            if (protocol != "http")
-                throw std::runtime_error("Only HTTP protocol is supported");
+            if (scheme != "http")
+                throw std::runtime_error("Only HTTP scheme is supported");
 
             addrinfo hints;
             hints.ai_flags = AI_DEFAULT;
-            hints.ai_family = AF_INET;
+            hints.ai_family = getAddressFamily(internetProtocol);
             hints.ai_socktype = SOCK_STREAM;
             hints.ai_protocol = 0;
             hints.ai_addrlen = 0;
@@ -304,17 +322,19 @@ namespace http
             hints.ai_next = nullptr;
 
             addrinfo* info;
-            if (getaddrinfo(domain.c_str(), port.empty() ? "80" : port.c_str(), &hints, &info) != 0)
+            if (getaddrinfo(domain.c_str(), port.c_str(), &hints, &info) != 0)
                 throw std::system_error(getLastError(), std::system_category(), "Failed to get address info of " + domain);
 
+            Socket socket(internetProtocol);
+
             // take the first address from the list
-            sockaddr addr = *info->ai_addr;
+            if (::connect(socket, info->ai_addr, info->ai_addrlen) < 0)
+            {
+                freeaddrinfo(info);
+                throw std::system_error(getLastError(), std::system_category(), "Failed to connect to " + domain + ":" + port);
+            }
 
             freeaddrinfo(info);
-
-            Socket socket;
-            if (::connect(socket, &addr, sizeof(addr)) < 0)
-                throw std::system_error(getLastError(), std::system_category(), "Failed to connect to " + domain + ":" + port);
 
             std::string requestData = method + " " + path + " HTTP/1.1\r\n";
 
@@ -513,7 +533,8 @@ namespace http
         }
 
     private:
-        std::string protocol;
+        InternetProtocol internetProtocol;
+        std::string scheme;
         std::string domain;
         std::string port;
         std::string path;
