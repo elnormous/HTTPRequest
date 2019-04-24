@@ -33,14 +33,13 @@
 namespace http
 {
 #ifdef _WIN32
-    class WinSock
+    class WinSock final
     {
     public:
         WinSock()
         {
-            WORD sockVersion = MAKEWORD(2, 2);
             WSADATA wsaData;
-            int error = WSAStartup(sockVersion, &wsaData);
+            int error = WSAStartup(MAKEWORD(2, 2), &wsaData);
             if (error != 0)
                 throw std::system_error(error, std::system_category(), "WSAStartup failed");
 
@@ -232,7 +231,7 @@ namespace http
         std::vector<uint8_t> body;
     };
 
-    class Request
+    class Request final
     {
     public:
         Request(const std::string& url)
