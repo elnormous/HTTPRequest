@@ -293,8 +293,6 @@ namespace http
             if (protocol != "http")
                 throw std::runtime_error("Only HTTP protocol is supported");
 
-            Socket socket;
-
             addrinfo hints;
             hints.ai_flags = AI_DEFAULT;
             hints.ai_family = AF_INET;
@@ -314,6 +312,7 @@ namespace http
 
             freeaddrinfo(info);
 
+            Socket socket;
             if (::connect(socket, &addr, sizeof(addr)) < 0)
                 throw std::system_error(getLastError(), std::system_category(), "Failed to connect to " + domain + ":" + port);
 
@@ -328,9 +327,7 @@ namespace http
             requestData += "\r\n";
             requestData += body;
 
-#if defined(__APPLE__)
-            int flags = 0;
-#elif defined(_WIN32)
+#if defined(__APPLE__) || defined(_WIN32)
             int flags = 0;
 #else
             int flags = MSG_NOSIGNAL;
@@ -359,7 +356,7 @@ namespace http
             while (remaining > 0);
 
             uint8_t TEMP_BUFFER[65536];
-            const std::vector<uint8_t> clrf = {'\r', '\n'};
+            static const uint8_t clrf[] = {'\r', '\n'};
             std::vector<uint8_t> responseData;
             bool firstLine = true;
             bool parsedHeaders = false;
@@ -375,18 +372,15 @@ namespace http
                 if (size < 0)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to read data from " + domain + ":" + port);
                 else if (size == 0)
-                {
-                    // disconnected
-                    break;
-                }
+                    break; // disconnected
 
-                responseData.insert(responseData.end(), std::begin(TEMP_BUFFER), std::begin(TEMP_BUFFER) + size);
+                responseData.insert(responseData.end(), TEMP_BUFFER, TEMP_BUFFER + size);
 
                 if (!parsedHeaders)
                 {
                     for (;;)
                     {
-                        auto i = std::search(responseData.begin(), responseData.end(), clrf.begin(), clrf.end());
+                        auto i = std::search(responseData.begin(), responseData.end(), std::begin(clrf), std::end(clrf));
 
                         // didn't find a newline
                         if (i == responseData.end()) break;
@@ -482,7 +476,7 @@ namespace http
                                     else break;
                                 }
 
-                                auto i = std::search(responseData.begin(), responseData.end(), clrf.begin(), clrf.end());
+                                auto i = std::search(responseData.begin(), responseData.end(), std::begin(clrf), std::end(clrf));
 
                                 if (i == responseData.end()) break;
 
