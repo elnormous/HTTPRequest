@@ -235,7 +235,7 @@ namespace http
                 result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
             }
         }
-        
+
         return result;
     }
 
@@ -430,7 +430,7 @@ namespace http
                                 if (pos != lastPos)
                                     parts.push_back(std::string(line.data() + lastPos,
                                                                 static_cast<std::vector<std::string>::size_type>(pos) - lastPos));
-                                
+
                                 lastPos = pos + 1;
                             }
 

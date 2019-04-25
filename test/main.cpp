@@ -52,7 +52,7 @@ int main(int argc, const char * argv[])
                 if (++i < argc) output = argv[i];
             }
         }
-        
+
         http::Request request(url, protocol);
 
         http::Response response = request.send(method, arguments, {
