@@ -89,7 +89,7 @@ namespace http
 #endif
     }
 
-    enum class InternetProtocol
+    enum class InternetProtocol: uint8_t
     {
         V4,
         V6
@@ -239,7 +239,7 @@ namespace http
         return result;
     }
 
-    struct Response
+    struct Response final
     {
         int code = 0;
         std::vector<std::string> headers;
