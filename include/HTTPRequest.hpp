@@ -311,15 +311,9 @@ namespace http
             if (scheme != "http")
                 throw std::runtime_error("Only HTTP scheme is supported");
 
-            addrinfo hints;
-            hints.ai_flags = AI_DEFAULT;
+            addrinfo hints = {};
             hints.ai_family = getAddressFamily(internetProtocol);
             hints.ai_socktype = SOCK_STREAM;
-            hints.ai_protocol = 0;
-            hints.ai_addrlen = 0;
-            hints.ai_addr = nullptr;
-            hints.ai_canonname = nullptr;
-            hints.ai_next = nullptr;
 
             addrinfo* info;
             if (getaddrinfo(domain.c_str(), port.c_str(), &hints, &info) != 0)
