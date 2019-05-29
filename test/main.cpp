@@ -60,7 +60,8 @@ int main(int argc, const char * argv[])
             "User-Agent: runscope/0.1"
         });
 
-        if (!output.empty())
+        if (response.status == http::Response::STATUS_OK &&
+            !output.empty())
         {
             std::ofstream outfile(output, std::ofstream::binary);
             outfile.write(reinterpret_cast<const char*>(response.body.data()),

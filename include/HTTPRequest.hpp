@@ -241,7 +241,75 @@ namespace http
 
     struct Response final
     {
-        int code = 0;
+        enum Status
+        {
+            STATUS_CONTINUE = 100,
+            STATUS_SWITCHINGPROTOCOLS = 101,
+            STATUS_PROCESSING = 102,
+            STATUS_EARLYHINTS = 103,
+
+            STATUS_OK = 200,
+            STATUS_CREATED = 201,
+            STATUS_ACCEPTED = 202,
+            STATUS_NONAUTHORITATIVEINFORMATION = 203,
+            STATUS_NOCONTENT = 204,
+            STATUS_RESETCONTENT = 205,
+            STATUS_PARTIALCONTENT = 206,
+            STATUS_MULTISTATUS = 207,
+            STATUS_ALREADYREPORTED = 208,
+            STATUS_IMUSED = 226,
+
+            STATUS_MULTIPLECHOICES = 300,
+            STATUS_MOVEDPERMANENTLY = 301,
+            STATUS_FOUND = 302,
+            STATUS_SEEOTHER = 303,
+            STATUS_NOTMODIFIED = 304,
+            STATUS_USEPROXY = 305,
+            STATUS_TEMPORARYREDIRECT = 307,
+            STATUS_PERMANENTREDIRECT = 308,
+
+            STATUS_BADREQUEST = 400,
+            STATUS_UNAUTHORIZED = 401,
+            STATUS_PAYMENTREQUIRED = 402,
+            STATUS_FORBIDDEN = 403,
+            STATUS_NOTFOUND = 404,
+            STATUS_METHODNOTALLOWED = 405,
+            STATUS_NOTACCEPTABLE = 406,
+            STATUS_PROXYAUTHENTICATIONREQUIRED = 407,
+            STATUS_REQUESTTIMEOUT = 408,
+            STATUS_CONFLICT = 409,
+            STATUS_GONE = 410,
+            STATUS_LENGTHREQUIRED = 411,
+            STATUS_PRECONDITIONFAILED = 412,
+            STATUS_PAYLOADTOOLARGE = 413,
+            STATUS_URITOOLONG = 414,
+            STATUS_UNSUPPORTEDMEDIATYPE = 415,
+            STATUS_RANGENOTSATISFIABLE = 416,
+            STATUS_EXPECTATIONFAILED = 417,
+            STATUS_IMATEAPOT = 418,
+            STATUS_UNPROCESSABLEENTITY = 422,
+            STATUS_LOCKED = 423,
+            STATUS_FAILEDDEPENDENCY = 424,
+            STATUS_UPGRADEREQUIRED = 426,
+            STATUS_PRECONDITIONREQUIRED = 428,
+            STATUS_TOOMANYREQUESTS = 429,
+            STATUS_REQUESTHEADERFIELDSTOOLARGE = 431,
+            STATUS_UNAVAILABLEFORLEGALREASONS = 451,
+
+            STATUS_INTERNALSERVERERROR = 500,
+            STATUS_NOTIMPLEMENTED = 501,
+            STATUS_BADGATEWAY = 502,
+            STATUS_SERVICEUNAVAILABLE = 503,
+            STATUS_GATEWAYTIMEOUT = 504,
+            STATUS_HTTPVERSIONNOTSUPPORTED = 505,
+            STATUS_VARIANTALSONEGOTIATES = 506,
+            STATUS_INSUFFICIENTSTORAGE = 507,
+            STATUS_LOOPDETECTED = 508,
+            STATUS_NOTEXTENDED = 510,
+            STATUS_NETWORKAUTHENTICATIONREQUIRED = 511
+        };
+
+        int status = 0;
         std::vector<std::string> headers;
         std::vector<uint8_t> body;
     };
@@ -429,7 +497,7 @@ namespace http
                             }
 
                             if (parts.size() >= 2)
-                                response.code = std::stoi(parts[1]);
+                                response.status = std::stoi(parts[1]);
                         }
                         else // headers
                         {
