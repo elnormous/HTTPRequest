@@ -12,6 +12,8 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <cctype>
+#include <cstddef>
 #include <cstdint>
 
 #ifdef _WIN32
