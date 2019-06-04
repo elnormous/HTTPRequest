@@ -1,0 +1,23 @@
+trigger:
+- master
+
+jobs:
+- job: Linux
+  pool:
+    vmImage: 'Ubuntu-16.04'
+
+  steps:
+  - script: |
+      cd test
+      make -j2
+    displayName: 'make'
+
+- job: Windows
+  pool:
+    vmImage: 'vs2017-win2016'
+
+  steps:
+  - task: MSBuild@1
+    inputs:
+      solution: test/test.vcxproj
+      configuration: Release
