@@ -13,7 +13,6 @@
 #include <string>
 #include <vector>
 #include <cstdint>
-#include <cctype>
 
 #ifdef _WIN32
 #  pragma push_macro("WIN32_LEAN_AND_MEAN")
@@ -333,31 +332,42 @@ namespace http
             if (schemeEndPosition != std::string::npos)
             {
                 scheme = url.substr(0, schemeEndPosition);
-                std::transform(scheme.begin(), scheme.end(), scheme.begin(), ::tolower);
-
-                std::string::size_type pathPosition = url.find('/', schemeEndPosition + 3);
-
-                if (pathPosition == std::string::npos)
-                {
-                    domain = url.substr(schemeEndPosition + 3);
-                    path = "/";
-                }
-                else
-                {
-                    domain = url.substr(schemeEndPosition + 3, pathPosition - schemeEndPosition - 3);
-                    path = url.substr(pathPosition);
-                }
-
-                std::string::size_type portPosition = domain.find(':');
-
-                if (portPosition != std::string::npos)
-                {
-                    port = domain.substr(portPosition + 1);
-                    domain.resize(portPosition);
-                }
-                else
-                    port = "80";
+                path = url.substr(schemeEndPosition + 3);
             }
+            else
+            {
+                scheme = "http";
+                path = url;
+            }
+
+            size_t fragmentPosition = path.find('#');
+
+            // remove the fragment part
+            if (fragmentPosition != std::string::npos)
+                path = path.substr(0, fragmentPosition);
+
+            std::string::size_type pathPosition = path.find('/');
+
+            if (pathPosition == std::string::npos)
+            {
+                domain = path.substr(0, fragmentPosition);
+                path = "/";
+            }
+            else
+            {
+                domain = path.substr(0, pathPosition);
+                path = path.substr(pathPosition, fragmentPosition);
+            }
+
+            std::string::size_type portPosition = domain.find(':');
+
+            if (portPosition != std::string::npos)
+            {
+                port = domain.substr(portPosition + 1);
+                domain.resize(portPosition);
+            }
+            else
+                port = "80";
         }
 
         Response send(const std::string& method,
