@@ -5,7 +5,6 @@ jobs:
 - job: Linux
   pool:
     vmImage: 'Ubuntu-16.04'
-
   steps:
   - script: |
       cd test
@@ -15,9 +14,17 @@ jobs:
 - job: Windows
   pool:
     vmImage: 'vs2015-win2012r2'
-
   steps:
   - task: MSBuild@1
     inputs:
       solution: test/test.vcxproj
       configuration: Release
+
+- job: macOS
+  pool:
+    vmImage: 'macOS-10.14'
+  steps:
+  - script: |
+      cd test
+      make -j2
+    displayName: 'make'
