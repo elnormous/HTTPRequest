@@ -106,6 +106,8 @@ namespace http
         {
             case InternetProtocol::V4: return AF_INET;
             case InternetProtocol::V6: return AF_INET6;
+            default:
+                throw std::runtime_error("Unsupported protocol");
         }
     }
 
