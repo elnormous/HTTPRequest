@@ -148,9 +148,6 @@ namespace http
         Socket& operator=(const Socket&) = delete;
 
         Socket(Socket&& other):
-#ifdef _WIN32
-            winSock(std::move(other.winSock)),
-#endif
             endpoint(other.endpoint)
         {
 #ifdef _WIN32
@@ -165,7 +162,6 @@ namespace http
             if (&other != this)
             {
 #ifdef _WIN32
-                winSock = std::move(other.winSock);
                 if (endpoint != INVALID_SOCKET) closesocket(endpoint);
 #else
                 if (endpoint != -1) close(endpoint);
@@ -191,7 +187,6 @@ namespace http
 
     private:
 #ifdef _WIN32
-        WinSock winSock;
         SOCKET endpoint = INVALID_SOCKET;
 #else
         int endpoint = -1;
@@ -613,6 +608,9 @@ namespace http
         }
 
     private:
+#ifdef _WIN32
+        WinSock winSock;
+#endif
         InternetProtocol internetProtocol;
         std::string scheme;
         std::string domain;
