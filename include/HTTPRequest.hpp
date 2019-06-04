@@ -344,7 +344,7 @@ namespace http
 
             // remove the fragment part
             if (fragmentPosition != std::string::npos)
-                path = path.substr(0, fragmentPosition);
+                path.resize(fragmentPosition);
 
             std::string::size_type pathPosition = path.find('/');
 
