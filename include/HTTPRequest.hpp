@@ -350,13 +350,13 @@ namespace http
 
             if (pathPosition == std::string::npos)
             {
-                domain = path.substr(0, fragmentPosition);
+                domain = path;
                 path = "/";
             }
             else
             {
                 domain = path.substr(0, pathPosition);
-                path = path.substr(pathPosition, fragmentPosition);
+                path = path.substr(pathPosition);
             }
 
             std::string::size_type portPosition = domain.find(':');
