@@ -530,11 +530,11 @@ namespace http
                                 // ltrim
                                 headerValue.erase(headerValue.begin(),
                                                   std::find_if(headerValue.begin(), headerValue.end(),
-                                                               std::not1(std::ptr_fun<int, int>(std::isspace))));
+                                                               [](int c) {return !std::isspace(c);}));
 
                                 // rtrim
                                 headerValue.erase(std::find_if(headerValue.rbegin(), headerValue.rend(),
-                                                               std::not1(std::ptr_fun<int, int>(std::isspace))).base(),
+                                                               [](int c) {return !std::isspace(c);}).base(),
                                                   headerValue.end());
 
                                 if (headerName == "Content-Length")
