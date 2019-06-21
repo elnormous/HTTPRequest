@@ -199,7 +199,7 @@ namespace http
 
     inline std::string urlEncode(const std::string& str)
     {
-        static const char hexChars[16] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+        static const char hexChars[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
         std::string result;
 
@@ -326,7 +326,7 @@ namespace http
         Request(const std::string& url, InternetProtocol protocol = InternetProtocol::V4):
             internetProtocol(protocol)
         {
-            size_t schemeEndPosition = url.find("://");
+            const size_t schemeEndPosition = url.find("://");
 
             if (schemeEndPosition != std::string::npos)
             {
@@ -339,13 +339,13 @@ namespace http
                 path = url;
             }
 
-            size_t fragmentPosition = path.find('#');
+            const size_t fragmentPosition = path.find('#');
 
             // remove the fragment part
             if (fragmentPosition != std::string::npos)
                 path.resize(fragmentPosition);
 
-            std::string::size_type pathPosition = path.find('/');
+            const std::string::size_type pathPosition = path.find('/');
 
             if (pathPosition == std::string::npos)
             {
@@ -358,7 +358,7 @@ namespace http
                 path = path.substr(pathPosition);
             }
 
-            std::string::size_type portPosition = domain.find(':');
+            const std::string::size_type portPosition = domain.find(':');
 
             if (portPosition != std::string::npos)
             {
@@ -427,9 +427,9 @@ namespace http
             requestData += body;
 
 #if defined(__APPLE__) || defined(_WIN32)
-            int flags = 0;
+            const int flags = 0;
 #else
-            int flags = MSG_NOSIGNAL;
+            const int flags = MSG_NOSIGNAL;
 #endif
 
 #ifdef _WIN32
