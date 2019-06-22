@@ -19,7 +19,7 @@ try
     response = request.send("POST", "foo=1&bar=baz", {
         "Content-Type: application/x-www-form-urlencoded"
     });
-    std::cout << response.body.data() << std::endl; // print the result
+    std::cout << std::string(response.body.begin(), response.body.end()) << std::endl; // print the result
 
     // pass parameters as a map
     std::map<std::string, std::string> parameters = {{"foo", "1"}, {"bar", "baz"}};
