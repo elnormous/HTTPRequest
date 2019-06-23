@@ -507,8 +507,8 @@ namespace http
                                 if (pos == std::string::npos) pos = length;
 
                                 if (pos != lastPos)
-                                    parts.push_back(std::string(line.data() + lastPos,
-                                                                static_cast<std::vector<std::string>::size_type>(pos) - lastPos));
+                                    parts.emplace_back(line.data() + lastPos,
+                                                       static_cast<std::vector<std::string>::size_type>(pos) - lastPos);
 
                                 lastPos = pos + 1;
                             }
