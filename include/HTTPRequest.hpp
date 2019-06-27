@@ -582,7 +582,7 @@ namespace http
                                 std::string line(responseData.begin(), i);
                                 responseData.erase(responseData.begin(), i + 2);
 
-                                expectedChunkSize = std::stoul(line, 0, 16);
+                                expectedChunkSize = std::stoul(line, nullptr, 16);
 
                                 if (expectedChunkSize == 0)
                                 {
