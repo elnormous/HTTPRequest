@@ -102,15 +102,11 @@ namespace http
         V6
     };
 
-    inline int getAddressFamily(InternetProtocol internetProtocol)
+    constexpr int getAddressFamily(InternetProtocol internetProtocol)
     {
-        switch (internetProtocol)
-        {
-            case InternetProtocol::V4: return AF_INET;
-            case InternetProtocol::V6: return AF_INET6;
-            default:
-                throw std::runtime_error("Unsupported protocol");
-        }
+        return (internetProtocol == InternetProtocol::V4) ? AF_INET :
+            (internetProtocol == InternetProtocol::V6) ? AF_INET6 :
+            throw std::runtime_error("Unsupported protocol");
     }
 
     class Socket final
