@@ -322,7 +322,7 @@ namespace http
         Request(const std::string& url, InternetProtocol protocol = InternetProtocol::V4):
             internetProtocol(protocol)
         {
-            const size_t schemeEndPosition = url.find("://");
+            const auto schemeEndPosition = url.find("://");
 
             if (schemeEndPosition != std::string::npos)
             {
@@ -335,13 +335,13 @@ namespace http
                 path = url;
             }
 
-            const size_t fragmentPosition = path.find('#');
+            const auto fragmentPosition = path.find('#');
 
             // remove the fragment part
             if (fragmentPosition != std::string::npos)
                 path.resize(fragmentPosition);
 
-            const std::string::size_type pathPosition = path.find('/');
+            const auto pathPosition = path.find('/');
 
             if (pathPosition == std::string::npos)
             {
@@ -354,7 +354,7 @@ namespace http
                 path = path.substr(pathPosition);
             }
 
-            const std::string::size_type portPosition = domain.find(':');
+            const auto portPosition = domain.find(':');
 
             if (portPosition != std::string::npos)
             {
@@ -431,16 +431,15 @@ namespace http
 #ifdef _WIN32
             int remaining = static_cast<int>(requestData.size());
             int sent = 0;
-            int size;
 #else
             ssize_t remaining = static_cast<ssize_t>(requestData.size());
             ssize_t sent = 0;
-            ssize_t size;
 #endif
 
+            // send the request
             do
             {
-                size = ::send(socket, requestData.data() + sent, static_cast<size_t>(remaining), flags);
+                auto size = ::send(socket, requestData.data() + sent, static_cast<size_t>(remaining), flags);
 
                 if (size < 0)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to send data to " + domain + ":" + port);
@@ -450,7 +449,7 @@ namespace http
             }
             while (remaining > 0);
 
-            uint8_t TEMP_BUFFER[65536];
+            uint8_t TEMP_BUFFER[4096];
             static const uint8_t clrf[] = {'\r', '\n'};
             std::vector<uint8_t> responseData;
             bool firstLine = true;
@@ -460,9 +459,10 @@ namespace http
             size_t expectedChunkSize = 0;
             bool removeCLRFAfterChunk = false;
 
-            do
+            // read the response
+            for (;;)
             {
-                size = recv(socket, reinterpret_cast<char*>(TEMP_BUFFER), sizeof(TEMP_BUFFER), flags);
+                auto size = recv(socket, reinterpret_cast<char*>(TEMP_BUFFER), sizeof(TEMP_BUFFER), flags);
 
                 if (size < 0)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to read data from " + domain + ":" + port);
@@ -493,13 +493,14 @@ namespace http
                         {
                             firstLine = false;
 
-                            std::string::size_type pos, lastPos = 0, length = line.length();
+                            std::string::size_type lastPos = 0;
+                            const auto length = line.length();
                             std::vector<std::string> parts;
 
                             // tokenize first line
                             while (lastPos < length + 1)
                             {
-                                pos = line.find(' ', lastPos);
+                                auto pos = line.find(' ', lastPos);
                                 if (pos == std::string::npos) pos = length;
 
                                 if (pos != lastPos)
@@ -516,7 +517,7 @@ namespace http
                         {
                             response.headers.push_back(line);
 
-                            std::string::size_type pos = line.find(':');
+                            auto pos = line.find(':');
 
                             if (pos != std::string::npos)
                             {
@@ -602,7 +603,6 @@ namespace http
                     }
                 }
             }
-            while (size > 0);
 
             return response;
         }
