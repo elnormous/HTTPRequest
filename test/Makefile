@@ -2,10 +2,8 @@ MAKEFILE_PATH:=$(abspath $(lastword $(MAKEFILE_LIST)))
 ROOT_DIR:=$(realpath $(dir $(MAKEFILE_PATH)))
 debug=0
 ifeq ($(OS),Windows_NT)
-	platform=windows
+platform=windows
 else
-architecture=$(shell uname -m)
-
 ifeq ($(shell uname -s),Linux)
 platform=linux
 endif
