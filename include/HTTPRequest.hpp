@@ -87,7 +87,7 @@ namespace http
     };
 #endif
 
-    inline int getLastError()
+    inline int getLastError() noexcept
     {
 #ifdef _WIN32
         return WSAGetLastError();
