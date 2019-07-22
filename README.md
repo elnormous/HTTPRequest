@@ -13,7 +13,7 @@ try
 
     // send a get request
     http::Response response = request.send("GET");
-    std::cout << response.body.data() << std::endl; // print the result
+    std::cout << std::string(response.body.begin(), response.body.end()) << std::endl; // print the result
 
     // send a post request
     response = request.send("POST", "foo=1&bar=baz", {
