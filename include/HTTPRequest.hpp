@@ -64,13 +64,13 @@ namespace http
         WinSock(const WinSock&) = delete;
         WinSock& operator=(const WinSock&) = delete;
 
-        WinSock(WinSock&& other):
+        WinSock(WinSock&& other) noexcept:
             started(other.started)
         {
             other.started = false;
         }
 
-        WinSock& operator=(WinSock&& other)
+        WinSock& operator=(WinSock&& other) noexcept
         {
             if (&other != this)
             {
@@ -87,7 +87,7 @@ namespace http
     };
 #endif
 
-    inline int getLastError()
+    inline int getLastError() noexcept
     {
 #ifdef _WIN32
         return WSAGetLastError();
@@ -112,85 +112,65 @@ namespace http
     class Socket final
     {
     public:
+#ifdef _WIN32
+        using Type = SOCKET;
+        static constexpr Type INVALID = INVALID_SOCKET;
+#else
+        using Type = int;
+        static constexpr Type INVALID = -1;
+#endif
+
         Socket(InternetProtocol internetProtocol):
             endpoint(socket(getAddressFamily(internetProtocol), SOCK_STREAM, IPPROTO_TCP))
         {
-#ifdef _WIN32
-            if (endpoint == INVALID_SOCKET)
-                throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to create socket");
-#else
-            if (endpoint == -1)
-                throw std::system_error(errno, std::system_category(), "Failed to create socket");
-#endif
+            if (endpoint == INVALID)
+                throw std::system_error(getLastError(), std::system_category(), "Failed to create socket");
         }
 
-#ifdef _WIN32
-        Socket(SOCKET s):
+        Socket(Type s) noexcept:
             endpoint(s)
         {
         }
-#else
-        Socket(int s):
-            endpoint(s)
-        {
-        }
-#endif
+
         ~Socket()
         {
-#ifdef _WIN32
-            if (endpoint != INVALID_SOCKET) closesocket(endpoint);
-#else
-            if (endpoint != -1) close(endpoint);
-#endif
+            if (endpoint != INVALID) close();
         }
 
         Socket(const Socket&) = delete;
         Socket& operator=(const Socket&) = delete;
 
-        Socket(Socket&& other):
+        Socket(Socket&& other) noexcept:
             endpoint(other.endpoint)
         {
-#ifdef _WIN32
-            other.endpoint = INVALID_SOCKET;
-#else
-            other.endpoint = -1;
-#endif
+            other.endpoint = INVALID;
         }
 
-        Socket& operator=(Socket&& other)
+        Socket& operator=(Socket&& other) noexcept
         {
             if (&other != this)
             {
-#ifdef _WIN32
-                if (endpoint != INVALID_SOCKET) closesocket(endpoint);
-#else
-                if (endpoint != -1) close(endpoint);
-#endif
-
+                if (endpoint != INVALID) close();
                 endpoint = other.endpoint;
-
-#ifdef _WIN32
-                other.endpoint = INVALID_SOCKET;
-#else
-                other.endpoint = -1;
-#endif
+                other.endpoint = INVALID;
             }
 
             return *this;
         }
 
-#ifdef _WIN32
-        operator SOCKET() const { return endpoint; }
-#else
-        operator int() const { return endpoint; }
-#endif
+        inline operator Type() const noexcept { return endpoint; }
 
     private:
+        inline void close() noexcept
+        {
 #ifdef _WIN32
-        SOCKET endpoint = INVALID_SOCKET;
+            closesocket(endpoint);
 #else
-        int endpoint = -1;
+            ::close(endpoint);
 #endif
+        }
+
+        Type endpoint = INVALID;
     };
 
     inline std::string urlEncode(const std::string& str)
@@ -423,9 +403,9 @@ namespace http
             requestData += body;
 
 #if defined(__APPLE__) || defined(_WIN32)
-            const int flags = 0;
+            constexpr int flags = 0;
 #else
-            const int flags = MSG_NOSIGNAL;
+            constexpr int flags = MSG_NOSIGNAL;
 #endif
 
 #ifdef _WIN32
