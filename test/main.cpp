@@ -20,12 +20,13 @@ int main(int argc, const char * argv[])
         {
             if (std::string(argv[i]) == "--help")
             {
-                std::cout << "test --url <url> [--protocol <protocol>] [--method <method>] [--arguments <arguments>] [--output <output>]" << std::endl;
+                std::cout << "test --url <url> [--protocol <protocol>] [--method <method>] [--arguments <arguments>] [--output <output>]\n";
                 return EXIT_SUCCESS;
             }
             else if (std::string(argv[i]) == "--url")
             {
                 if (++i < argc) url = argv[i];
+                else throw std::runtime_error("Missing argument for --url");
             }
             else if (std::string(argv[i]) == "--protocol")
             {
@@ -38,18 +39,22 @@ int main(int argc, const char * argv[])
                     else
                         throw std::runtime_error("Invalid protocol");
                 }
+                else throw std::runtime_error("Missing argument for --protocol");
             }
             else if (std::string(argv[i]) == "--method")
             {
                 if (++i < argc) method = argv[i];
+                else throw std::runtime_error("Missing argument for --method");
             }
             else if (std::string(argv[i]) == "--arguments")
             {
                 if (++i < argc) arguments = argv[i];
+                else throw std::runtime_error("Missing argument for --arguments");
             }
             else if (std::string(argv[i]) == "--output")
             {
                 if (++i < argc) output = argv[i];
+                else throw std::runtime_error("Missing argument for --output");
             }
         }
 
@@ -68,11 +73,11 @@ int main(int argc, const char * argv[])
                           static_cast<std::streamsize>(response.body.size()));
         }
         else
-            std::cout << std::string(response.body.begin(), response.body.end()) << std::endl;
+            std::cout << std::string(response.body.begin(), response.body.end()) << "\n";
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Request failed, error: " << e.what() << std::endl;
+        std::cerr << "Request failed, error: " << e.what() << "\n";
         return EXIT_FAILURE;
     }
 
