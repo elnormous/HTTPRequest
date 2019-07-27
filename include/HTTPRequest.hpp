@@ -181,7 +181,7 @@ namespace http
 
         for (auto i = str.begin(); i != str.end(); ++i)
         {
-            uint8_t cp = *i & 0xFF;
+            const uint8_t cp = *i & 0xFF;
 
             if ((cp >= 0x30 && cp <= 0x39) || // 0-9
                 (cp >= 0x41 && cp <= 0x5A) || // A-Z
@@ -409,17 +409,17 @@ namespace http
 #endif
 
 #ifdef _WIN32
-            int remaining = static_cast<int>(requestData.size());
+            auto remaining = static_cast<int>(requestData.size());
             int sent = 0;
 #else
-            ssize_t remaining = static_cast<ssize_t>(requestData.size());
+            auto remaining = static_cast<ssize_t>(requestData.size());
             ssize_t sent = 0;
 #endif
 
             // send the request
             do
             {
-                auto size = ::send(socket, requestData.data() + sent, static_cast<size_t>(remaining), flags);
+                const auto size = ::send(socket, requestData.data() + sent, static_cast<size_t>(remaining), flags);
 
                 if (size < 0)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to send data to " + domain + ":" + port);
@@ -442,7 +442,7 @@ namespace http
             // read the response
             for (;;)
             {
-                auto size = recv(socket, reinterpret_cast<char*>(TEMP_BUFFER), sizeof(TEMP_BUFFER), flags);
+                const auto size = recv(socket, reinterpret_cast<char*>(TEMP_BUFFER), sizeof(TEMP_BUFFER), flags);
 
                 if (size < 0)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to read data from " + domain + ":" + port);
@@ -455,12 +455,12 @@ namespace http
                 {
                     for (;;)
                     {
-                        auto i = std::search(responseData.begin(), responseData.end(), std::begin(clrf), std::end(clrf));
+                        const auto i = std::search(responseData.begin(), responseData.end(), std::begin(clrf), std::end(clrf));
 
                         // didn't find a newline
                         if (i == responseData.end()) break;
 
-                        std::string line(responseData.begin(), i);
+                        const std::string line(responseData.begin(), i);
                         responseData.erase(responseData.begin(), i + 2);
 
                         // empty line indicates the end of the header section
@@ -497,7 +497,7 @@ namespace http
                         {
                             response.headers.push_back(line);
 
-                            auto pos = line.find(':');
+                            const auto pos = line.find(':');
 
                             if (pos != std::string::npos)
                             {
@@ -532,7 +532,7 @@ namespace http
                         {
                             if (expectedChunkSize > 0)
                             {
-                                auto toWrite = std::min(expectedChunkSize, responseData.size());
+                                const auto toWrite = std::min(expectedChunkSize, responseData.size());
                                 response.body.insert(response.body.end(), responseData.begin(), responseData.begin() + static_cast<ptrdiff_t>(toWrite));
                                 responseData.erase(responseData.begin(), responseData.begin() + static_cast<ptrdiff_t>(toWrite));
                                 expectedChunkSize -= toWrite;
@@ -552,11 +552,11 @@ namespace http
                                     else break;
                                 }
 
-                                auto i = std::search(responseData.begin(), responseData.end(), std::begin(clrf), std::end(clrf));
+                                const auto i = std::search(responseData.begin(), responseData.end(), std::begin(clrf), std::end(clrf));
 
                                 if (i == responseData.end()) break;
 
-                                std::string line(responseData.begin(), i);
+                                const std::string line(responseData.begin(), i);
                                 responseData.erase(responseData.begin(), i + 2);
 
                                 expectedChunkSize = std::stoul(line, nullptr, 16);
