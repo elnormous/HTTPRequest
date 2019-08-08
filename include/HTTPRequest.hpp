@@ -417,7 +417,7 @@ namespace http
 #endif
 
             // send the request
-            do
+            while (remaining > 0)
             {
                 const auto size = ::send(socket, requestData.data() + sent, static_cast<size_t>(remaining), flags);
 
@@ -427,7 +427,6 @@ namespace http
                 remaining -= size;
                 sent += size;
             }
-            while (remaining > 0);
 
             uint8_t TEMP_BUFFER[4096];
             static const uint8_t clrf[] = {'\r', '\n'};
