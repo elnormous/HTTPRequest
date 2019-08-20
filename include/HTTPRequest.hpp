@@ -120,14 +120,14 @@ namespace http
         static constexpr Type INVALID = -1;
 #endif
 
-        Socket(InternetProtocol internetProtocol):
+        explicit Socket(InternetProtocol internetProtocol):
             endpoint(socket(getAddressFamily(internetProtocol), SOCK_STREAM, IPPROTO_TCP))
         {
             if (endpoint == INVALID)
                 throw std::system_error(getLastError(), std::system_category(), "Failed to create socket");
         }
 
-        Socket(Type s) noexcept:
+        explicit Socket(Type s) noexcept:
             endpoint(s)
         {
         }
@@ -299,7 +299,8 @@ namespace http
     class Request final
     {
     public:
-        Request(const std::string& url, InternetProtocol protocol = InternetProtocol::V4):
+        explicit Request(const std::string& url,
+                         InternetProtocol protocol = InternetProtocol::V4):
             internetProtocol(protocol)
         {
             const auto schemeEndPosition = url.find("://");
