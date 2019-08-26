@@ -114,16 +114,16 @@ namespace http
     public:
 #ifdef _WIN32
         using Type = SOCKET;
-        static constexpr Type INVALID = INVALID_SOCKET;
+        static constexpr Type Invalid = INVALID_SOCKET;
 #else
         using Type = int;
-        static constexpr Type INVALID = -1;
+        static constexpr Type Invalid = -1;
 #endif
 
         explicit Socket(InternetProtocol internetProtocol):
             endpoint(socket(getAddressFamily(internetProtocol), SOCK_STREAM, IPPROTO_TCP))
         {
-            if (endpoint == INVALID)
+            if (endpoint == Invalid)
                 throw std::system_error(getLastError(), std::system_category(), "Failed to create socket");
         }
 
@@ -134,7 +134,7 @@ namespace http
 
         ~Socket()
         {
-            if (endpoint != INVALID) close();
+            if (endpoint != Invalid) close();
         }
 
         Socket(const Socket&) = delete;
@@ -143,16 +143,16 @@ namespace http
         Socket(Socket&& other) noexcept:
             endpoint(other.endpoint)
         {
-            other.endpoint = INVALID;
+            other.endpoint = Invalid;
         }
 
         Socket& operator=(Socket&& other) noexcept
         {
             if (&other != this)
             {
-                if (endpoint != INVALID) close();
+                if (endpoint != Invalid) close();
                 endpoint = other.endpoint;
-                other.endpoint = INVALID;
+                other.endpoint = Invalid;
             }
 
             return *this;
@@ -170,7 +170,7 @@ namespace http
 #endif
         }
 
-        Type endpoint = INVALID;
+        Type endpoint = Invalid;
     };
 
     inline std::string urlEncode(const std::string& str)
