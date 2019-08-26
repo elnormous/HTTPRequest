@@ -50,10 +50,10 @@ namespace http
             if (error != 0)
                 throw std::system_error(error, std::system_category(), "WSAStartup failed");
 
+            started = true;
+
             if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2)
                 throw std::runtime_error("Invalid WinSock version");
-
-            started = true;
         }
 
         ~WinSock()
