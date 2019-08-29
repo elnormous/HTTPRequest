@@ -72,13 +72,10 @@ namespace http
 
         WinSock& operator=(WinSock&& other) noexcept
         {
-            if (&other != this)
-            {
-                if (started) WSACleanup();
-                started = other.started;
-                other.started = false;
-            }
-
+            if (&other == this) return *this;
+            if (started) WSACleanup();
+            started = other.started;
+            other.started = false;
             return *this;
         }
 
@@ -148,13 +145,10 @@ namespace http
 
         Socket& operator=(Socket&& other) noexcept
         {
-            if (&other != this)
-            {
-                if (endpoint != Invalid) close();
-                endpoint = other.endpoint;
-                other.endpoint = Invalid;
-            }
-
+            if (&other == this) return *this;
+            if (endpoint != Invalid) close();
+            endpoint = other.endpoint;
+            other.endpoint = Invalid;
             return *this;
         }
 
