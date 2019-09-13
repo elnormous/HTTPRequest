@@ -42,7 +42,7 @@
 		30DAD9771ECA117100E9F3D7 = {
 			isa = PBXGroup;
 			children = (
-				30DAD98D1ECA11BC00E9F3D7 /* httprequest */,
+				30DAD98D1ECA11BC00E9F3D7 /* include */,
 				30DAD98C1ECA11B600E9F3D7 /* test */,
 				30DAD9811ECA117100E9F3D7 /* Products */,
 			);
@@ -64,12 +64,13 @@
 			name = test;
 			sourceTree = "<group>";
 		};
-		30DAD98D1ECA11BC00E9F3D7 /* httprequest */ = {
+		30DAD98D1ECA11BC00E9F3D7 /* include */ = {
 			isa = PBXGroup;
 			children = (
 				30DAD98E1ECA180B00E9F3D7 /* HTTPRequest.hpp */,
 			);
-			name = httprequest;
+			name = include;
+			path = ../include;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
