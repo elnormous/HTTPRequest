@@ -169,7 +169,7 @@ namespace http
 
     inline std::string urlEncode(const std::string& str)
     {
-        static constexpr char hexChars[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+        constexpr char hexChars[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
         std::string result;
 
@@ -424,7 +424,7 @@ namespace http
             }
 
             uint8_t TEMP_BUFFER[4096];
-            static const uint8_t clrf[] = {'\r', '\n'};
+            constexpr uint8_t crlf[] = {'\r', '\n'};
             std::vector<uint8_t> responseData;
             bool firstLine = true;
             bool parsedHeaders = false;
@@ -449,7 +449,7 @@ namespace http
                 {
                     for (;;)
                     {
-                        const auto i = std::search(responseData.begin(), responseData.end(), std::begin(clrf), std::end(clrf));
+                        const auto i = std::search(responseData.begin(), responseData.end(), std::begin(crlf), std::end(crlf));
 
                         // didn't find a newline
                         if (i == responseData.end()) break;
@@ -546,7 +546,7 @@ namespace http
                                     else break;
                                 }
 
-                                const auto i = std::search(responseData.begin(), responseData.end(), std::begin(clrf), std::end(clrf));
+                                const auto i = std::search(responseData.begin(), responseData.end(), std::begin(crlf), std::end(crlf));
 
                                 if (i == responseData.end()) break;
 
