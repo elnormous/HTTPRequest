@@ -184,13 +184,13 @@ namespace http
                 result += static_cast<char>(cp);
             else if (cp <= 0x7F) // length = 1
                 result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
-            else if ((cp >> 5) == 0x6) // length = 2
+            else if ((cp >> 5) == 0x06) // length = 2
             {
                 result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
                 if (++i == str.end()) break;
                 result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
             }
-            else if ((cp >> 4) == 0xe) // length = 3
+            else if ((cp >> 4) == 0x0E) // length = 3
             {
                 result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
                 if (++i == str.end()) break;
@@ -198,7 +198,7 @@ namespace http
                 if (++i == str.end()) break;
                 result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
             }
-            else if ((cp >> 3) == 0x1e) // length = 4
+            else if ((cp >> 3) == 0x1E) // length = 4
             {
                 result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
                 if (++i == str.end()) break;
@@ -431,7 +431,7 @@ namespace http
             int contentSize = -1;
             bool chunkedResponse = false;
             size_t expectedChunkSize = 0;
-            bool removeCLRFAfterChunk = false;
+            bool removeCrlfAfterChunk = false;
 
             // read the response
             for (;;)
@@ -531,16 +531,16 @@ namespace http
                                 responseData.erase(responseData.begin(), responseData.begin() + static_cast<ptrdiff_t>(toWrite));
                                 expectedChunkSize -= toWrite;
 
-                                if (expectedChunkSize == 0) removeCLRFAfterChunk = true;
+                                if (expectedChunkSize == 0) removeCrlfAfterChunk = true;
                                 if (responseData.empty()) break;
                             }
                             else
                             {
-                                if (removeCLRFAfterChunk)
+                                if (removeCrlfAfterChunk)
                                 {
                                     if (responseData.size() >= 2)
                                     {
-                                        removeCLRFAfterChunk = false;
+                                        removeCrlfAfterChunk = false;
                                         responseData.erase(responseData.begin(), responseData.begin() + 2);
                                     }
                                     else break;
