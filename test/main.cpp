@@ -73,11 +73,11 @@ int main(int argc, const char * argv[])
                           static_cast<std::streamsize>(response.body.size()));
         }
         else
-            std::cout << std::string(response.body.begin(), response.body.end()) << "\n";
+            std::cout << std::string(response.body.begin(), response.body.end()) << '\n';
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Request failed, error: " << e.what() << "\n";
+        std::cerr << "Request failed, error: " << e.what() << '\n';
         return EXIT_FAILURE;
     }
 
