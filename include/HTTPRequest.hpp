@@ -423,7 +423,7 @@ namespace http
                 sent += size;
             }
 
-            uint8_t TEMP_BUFFER[4096];
+            uint8_t tempBuffer[4096];
             constexpr uint8_t crlf[] = {'\r', '\n'};
             std::vector<uint8_t> responseData;
             bool firstLine = true;
@@ -436,14 +436,14 @@ namespace http
             // read the response
             for (;;)
             {
-                const auto size = recv(socket, reinterpret_cast<char*>(TEMP_BUFFER), sizeof(TEMP_BUFFER), flags);
+                const auto size = recv(socket, reinterpret_cast<char*>(tempBuffer), sizeof(tempBuffer), flags);
 
                 if (size < 0)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to read data from " + domain + ":" + port);
                 else if (size == 0)
                     break; // disconnected
 
-                responseData.insert(responseData.end(), TEMP_BUFFER, TEMP_BUFFER + size);
+                responseData.insert(responseData.end(), tempBuffer, tempBuffer + size);
 
                 if (!parsedHeaders)
                 {
