@@ -375,16 +375,13 @@ namespace http
             if (getaddrinfo(domain.c_str(), port.c_str(), &hints, &info) != 0)
                 throw std::system_error(getLastError(), std::system_category(), "Failed to get address info of " + domain);
 
+            std::unique_ptr<addrinfo, void(*)(addrinfo*)> addressInfo(info, freeaddrinfo);
+
             Socket socket(internetProtocol);
 
             // take the first address from the list
-            if (::connect(socket, info->ai_addr, info->ai_addrlen) < 0)
-            {
-                freeaddrinfo(info);
+            if (::connect(socket, addressInfo->ai_addr, addressInfo->ai_addrlen) < 0)
                 throw std::system_error(getLastError(), std::system_category(), "Failed to connect to " + domain + ":" + port);
-            }
-
-            freeaddrinfo(info);
 
             std::string requestData = method + " " + path + " HTTP/1.1\r\n";
 
