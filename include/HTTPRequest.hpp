@@ -510,6 +510,7 @@ namespace http
                                 {
                                     contentLength = std::stoul(headerValue);
                                     contentLengthReceived = true;
+                                    response.body.reserve(contentLength);
                                 }
                                 else if (headerName == "Transfer-Encoding")
                                 {
