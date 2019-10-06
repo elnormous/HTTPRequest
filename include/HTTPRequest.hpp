@@ -425,7 +425,8 @@ namespace http
             std::vector<uint8_t> responseData;
             bool firstLine = true;
             bool parsedHeaders = false;
-            int contentSize = -1;
+            bool contentLengthReceived = false;
+            unsigned long contentLength = 0;
             bool chunkedResponse = false;
             size_t expectedChunkSize = 0;
             bool removeCrlfAfterChunk = false;
@@ -506,9 +507,15 @@ namespace http
                                                   headerValue.end());
 
                                 if (headerName == "Content-Length")
-                                    contentSize = std::stoi(headerValue);
+                                {
+                                    contentLength = std::stoul(headerValue);
+                                    contentLengthReceived = true;
+                                }
                                 else if (headerName == "Transfer-Encoding" && headerValue == "chunked")
+                                {
                                     chunkedResponse = true;
+                                    contentLengthReceived = false; // Content-Length must be ignored if Transfer-Encoding is received
+                                }
                             }
                         }
                     }
@@ -569,7 +576,7 @@ namespace http
                         responseData.clear();
 
                         // got the whole content
-                        if (contentSize == -1 || response.body.size() >= static_cast<size_t>(contentSize))
+                        if (!contentLengthReceived || response.body.size() >= contentLength)
                             break;
                     }
                 }
