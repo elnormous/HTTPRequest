@@ -375,7 +375,7 @@ namespace http
             if (getaddrinfo(domain.c_str(), port.c_str(), &hints, &info) != 0)
                 throw std::system_error(getLastError(), std::system_category(), "Failed to get address info of " + domain);
 
-            std::unique_ptr<addrinfo, void(*)(addrinfo*)> addressInfo(info, freeaddrinfo);
+            std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> addressInfo(info, freeaddrinfo);
 
             Socket socket(internetProtocol);
 
