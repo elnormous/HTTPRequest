@@ -580,7 +580,7 @@ namespace http
                         responseData.clear();
 
                         // got the whole content
-                        if (!contentLengthReceived || response.body.size() >= contentLength)
+                        if (contentLengthReceived && response.body.size() >= contentLength)
                             break;
                     }
                 }
