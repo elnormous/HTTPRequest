@@ -511,10 +511,12 @@ namespace http
                                     contentLength = std::stoul(headerValue);
                                     contentLengthReceived = true;
                                 }
-                                else if (headerName == "Transfer-Encoding" && headerValue == "chunked")
+                                else if (headerName == "Transfer-Encoding")
                                 {
-                                    chunkedResponse = true;
-                                    contentLengthReceived = false; // Content-Length must be ignored if Transfer-Encoding is received
+                                    if (headerValue == "chunked")
+                                        chunkedResponse = true;
+                                    else
+                                        throw std::runtime_error("Unsupported transfer encoding: " + headerValue);
                                 }
                             }
                         }
@@ -523,6 +525,7 @@ namespace http
 
                 if (parsedHeaders)
                 {
+                    // Content-Length must be ignored if Transfer-Encoding is received
                     if (chunkedResponse)
                     {
                         bool dataReceived = false;
