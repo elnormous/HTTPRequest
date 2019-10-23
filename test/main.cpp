@@ -60,7 +60,7 @@ int main(int argc, const char* argv[])
 
         http::Request request(url, protocol);
 
-        http::Response response = request.send(method, arguments, {
+        const http::Response response = request.send(method, arguments, {
             "Content-Type: application/x-www-form-urlencoded",
             "User-Agent: runscope/0.1"
         });

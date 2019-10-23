@@ -12,25 +12,25 @@ try
     http::Request request("http://test.com/test");
 
     // send a get request
-    http::Response response = request.send("GET");
-    std::cout << std::string(response.body.begin(), response.body.end()) << std::endl; // print the result
+    const http::Response getResponse = request.send("GET");
+    std::cout << std::string(getResponse.body.begin(), getResponse.body.end()) << '\n'; // print the result
 
     // send a post request
-    response = request.send("POST", "foo=1&bar=baz", {
+    const http::Response postResponse = request.send("POST", "foo=1&bar=baz", {
         "Content-Type: application/x-www-form-urlencoded"
     });
-    std::cout << std::string(response.body.begin(), response.body.end()) << std::endl; // print the result
+    std::cout << std::string(postResponse.body.begin(), postResponse.body.end()) << '\n'; // print the result
 
     // pass parameters as a map
     std::map<std::string, std::string> parameters = {{"foo", "1"}, {"bar", "baz"}};
-    response = request.send("POST", parameters, {
+    const http::Response response = request.send("POST", parameters, {
         "Content-Type: application/x-www-form-urlencoded"
     });
-    std::cout << std::string(response.body.begin(), response.body.end()) << std::endl; // print the result
+    std::cout << std::string(response.body.begin(), response.body.end()) << '\n'; // print the result
 }
 catch (const std::exception& e)
 {
-    std::cerr << "Request failed, error: " << e.what() << std::endl;
+    std::cerr << "Request failed, error: " << e.what() << '\n';
 }
 ```
 
