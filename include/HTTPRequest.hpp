@@ -46,7 +46,7 @@ namespace http
         WinSock()
         {
             WSADATA wsaData;
-            int error = WSAStartup(MAKEWORD(2, 2), &wsaData);
+            const int error = WSAStartup(MAKEWORD(2, 2), &wsaData);
             if (error != 0)
                 throw std::system_error(error, std::system_category(), "WSAStartup failed");
 
