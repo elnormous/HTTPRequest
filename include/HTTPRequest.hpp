@@ -382,9 +382,9 @@ namespace http
             std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> addressInfo(info, freeaddrinfo);
 
             Socket socket(internetProtocol);
-
+			
             // take the first address from the list
-            if (::connect(socket, addressInfo->ai_addr, addressInfo->ai_addrlen) < 0)
+            if (::connect(socket, addressInfo->ai_addr, static_cast<socklen_t>(addressInfo->ai_addrlen)) < 0)
                 throw std::system_error(getLastError(), std::system_category(), "Failed to connect to " + domain + ":" + port);
 
             std::string requestData = method + " " + path + " HTTP/1.1\r\n";
