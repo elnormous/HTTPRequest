@@ -1,7 +1,7 @@
 test/test.xcodeproj/project.xcworkspace
 test/test.xcodeproj/xcuserdata
-test/Debug/
-test/Release/
+test/.vs
+test/Win32
 test/x64/
 test/test.opensdf
 test/test.sdf
