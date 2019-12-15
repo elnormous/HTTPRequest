@@ -40,6 +40,20 @@
 
 namespace http
 {
+    class RequestError: public std::logic_error
+    {
+    public:
+        explicit RequestError(const char* str): std::logic_error(str) {}
+        explicit RequestError(const std::string& str): std::logic_error(str) {}
+    };
+
+    class ResponseError: public std::runtime_error
+    {
+    public:
+        explicit ResponseError(const char* str): std::runtime_error(str) {}
+        explicit ResponseError(const std::string& str): std::runtime_error(str) {}
+    };
+
 #ifdef _WIN32
     class WinSock final
     {
@@ -107,7 +121,7 @@ namespace http
     {
         return (internetProtocol == InternetProtocol::V4) ? AF_INET :
             (internetProtocol == InternetProtocol::V6) ? AF_INET6 :
-            throw std::runtime_error("Unsupported protocol");
+            throw RequestError("Unsupported protocol");
     }
 
     class Socket final
@@ -369,7 +383,7 @@ namespace http
             Response response;
 
             if (scheme != "http")
-                throw std::runtime_error("Only HTTP scheme is supported");
+                throw RequestError("Only HTTP scheme is supported");
 
             addrinfo hints = {};
             hints.ai_family = getAddressFamily(internetProtocol);
@@ -521,7 +535,7 @@ namespace http
                                     if (headerValue == "chunked")
                                         chunkedResponse = true;
                                     else
-                                        throw std::runtime_error("Unsupported transfer encoding: " + headerValue);
+                                        throw ResponseError("Unsupported transfer encoding: " + headerValue);
                                 }
                             }
                         }
