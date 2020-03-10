@@ -5,17 +5,18 @@
 #ifndef HTTPREQUEST_HPP
 #define HTTPREQUEST_HPP
 
-#include <algorithm>
-#include <functional>
-#include <memory>
-#include <stdexcept>
-#include <system_error>
-#include <map>
-#include <string>
-#include <vector>
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
+#include <algorithm>
+#include <functional>
+#include <map>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <system_error>
+#include <type_traits>
+#include <vector>
 
 #ifdef _WIN32
 #  pragma push_macro("WIN32_LEAN_AND_MEAN")
@@ -55,7 +56,7 @@ namespace http
     };
 
 
-    enum class InternetProtocol: uint8_t
+    enum class InternetProtocol: std::uint8_t
     {
         V4,
         V6
@@ -197,7 +198,7 @@ namespace http
 
         for (auto i = str.begin(); i != str.end(); ++i)
         {
-            const uint8_t cp = *i & 0xFF;
+            const std::uint8_t cp = *i & 0xFF;
 
             if ((cp >= 0x30 && cp <= 0x39) || // 0-9
                 (cp >= 0x41 && cp <= 0x5A) || // A-Z
@@ -309,7 +310,7 @@ namespace http
 
         int status = 0;
         std::vector<std::string> headers;
-        std::vector<uint8_t> body;
+        std::vector<std::uint8_t> body;
     };
 
     class Request final
@@ -422,13 +423,9 @@ namespace http
             constexpr int flags = MSG_NOSIGNAL;
 #endif
 
-#ifdef _WIN32
-            auto remaining = static_cast<int>(requestData.size());
-            int sent = 0;
-#else
-            auto remaining = static_cast<ssize_t>(requestData.size());
-            ssize_t sent = 0;
-#endif
+            using SizeType = decltype(::send(int{}, nullptr, size_t{}, int{}));
+            auto remaining = static_cast<SizeType>(requestData.size());
+            SizeType sent = 0;
 
             // send the request
             while (remaining > 0)
@@ -442,15 +439,15 @@ namespace http
                 sent += size;
             }
 
-            uint8_t tempBuffer[4096];
-            constexpr uint8_t crlf[] = {'\r', '\n'};
-            std::vector<uint8_t> responseData;
+            std::uint8_t tempBuffer[4096];
+            constexpr std::uint8_t crlf[] = {'\r', '\n'};
+            std::vector<std::uint8_t> responseData;
             bool firstLine = true;
             bool parsedHeaders = false;
             bool contentLengthReceived = false;
             unsigned long contentLength = 0;
             bool chunkedResponse = false;
-            size_t expectedChunkSize = 0;
+            std::size_t expectedChunkSize = 0;
             bool removeCrlfAfterChunk = false;
 
             // read the response
