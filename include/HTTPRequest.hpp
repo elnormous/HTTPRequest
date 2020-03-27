@@ -31,7 +31,7 @@
 #  if _WIN32_WINNT < _WIN32_WINNT_WINXP
 char* strdup(const char* src)
 {
-    int length = 0;
+    std::size_t length = 0;
     while (src[length]) ++length;
     char* result = static_cast<char*>(malloc(length + 1));
     char* p = result;
