@@ -28,6 +28,19 @@
 #    define NOMINMAX
 #  endif
 #  include <winsock2.h>
+#  if _WIN32_WINNT < _WIN32_WINNT_WINXP
+char* strdup(const char* src)
+{
+    int length = 0;
+    while (src[length]) ++length;
+    char* result = static_cast<char*>(malloc(length + 1));
+    char* p = result;
+    while (*src) *p++ = *src++;
+    *p = '\0';
+    return result;
+}
+#    include <wspiapi.h>
+#  endif
 #  include <ws2tcpip.h>
 #  pragma pop_macro("WIN32_LEAN_AND_MEAN")
 #  pragma pop_macro("NOMINMAX")
