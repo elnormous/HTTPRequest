@@ -398,6 +398,15 @@ namespace http
                       const std::string& body = "",
                       const std::vector<std::string>& headers = {})
         {
+            return send(method,
+                        std::vector<uint8_t>(body.begin(), body.end()),
+                        headers);
+        }
+
+        Response send(const std::string& method,
+                      const std::vector<uint8_t>& body,
+                      const std::vector<std::string>& headers)
+        {
             Response response;
 
             if (scheme != "http")
@@ -419,16 +428,18 @@ namespace http
             if (::connect(socket, addressInfo->ai_addr, static_cast<socklen_t>(addressInfo->ai_addrlen)) < 0)
                 throw std::system_error(getLastError(), std::system_category(), "Failed to connect to " + domain + ":" + port);
 
-            std::string requestData = method + " " + path + " HTTP/1.1\r\n";
+            std::string headerData = method + " " + path + " HTTP/1.1\r\n";
 
             for (const std::string& header : headers)
-                requestData += header + "\r\n";
+                headerData += header + "\r\n";
 
-            requestData += "Host: " + domain + "\r\n";
-            requestData += "Content-Length: " + std::to_string(body.size()) + "\r\n";
+            headerData += "Host: " + domain + "\r\n";
+            headerData += "Content-Length: " + std::to_string(body.size()) + "\r\n";
 
-            requestData += "\r\n";
-            requestData += body;
+            headerData += "\r\n";
+
+            std::vector<uint8_t> requestData(headerData.begin(), headerData.end());
+            requestData.insert(requestData.end(), body.begin(), body.end());
 
 #if defined(__APPLE__) || defined(_WIN32)
             constexpr int flags = 0;
