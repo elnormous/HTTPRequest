@@ -142,6 +142,12 @@ namespace http
         }
     }
 
+#ifdef _WIN32
+    constexpr auto closeSocket = closesocket;
+#else
+    constexpr auto closeSocket = ::close;
+#endif
+
     class Socket final
     {
     public:
@@ -167,7 +173,7 @@ namespace http
 
         ~Socket()
         {
-            if (endpoint != invalid) close();
+            if (endpoint != invalid) closeSocket(endpoint);
         }
 
         Socket(const Socket&) = delete;
@@ -182,7 +188,7 @@ namespace http
         Socket& operator=(Socket&& other) noexcept
         {
             if (&other == this) return *this;
-            if (endpoint != invalid) close();
+            if (endpoint != invalid) closeSocket(endpoint);
             endpoint = other.endpoint;
             other.endpoint = invalid;
             return *this;
@@ -191,15 +197,6 @@ namespace http
         inline operator Type() const noexcept { return endpoint; }
 
     private:
-        inline void close() noexcept
-        {
-#ifdef _WIN32
-            closesocket(endpoint);
-#else
-            ::close(endpoint);
-#endif
-        }
-
         Type endpoint = invalid;
     };
 
