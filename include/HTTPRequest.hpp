@@ -446,18 +446,18 @@ namespace http
 
             using SizeType = decltype(::send(int{}, nullptr, size_t{}, int{}));
             auto remaining = static_cast<SizeType>(requestData.size());
-            SizeType sent = 0;
+            auto sendData = reinterpret_cast<const char*>(requestData.data());
 
             // send the request
             while (remaining > 0)
             {
-                const auto size = ::send(socket, requestData.data() + sent, static_cast<size_t>(remaining), flags);
+                const auto size = ::send(socket, sendData, static_cast<size_t>(remaining), flags);
 
                 if (size < 0)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to send data to " + domain + ":" + port);
 
                 remaining -= size;
-                sent += size;
+                sendData += size;
             }
 
             std::uint8_t tempBuffer[4096];
