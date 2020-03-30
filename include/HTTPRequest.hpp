@@ -140,65 +140,65 @@ namespace http
                 (internetProtocol == InternetProtocol::V6) ? AF_INET6 :
                 throw RequestError("Unsupported protocol");
         }
+
+#ifdef _WIN32
+        constexpr auto closeSocket = closesocket;
+#else
+        constexpr auto closeSocket = ::close;
+#endif
+
+        class Socket final
+        {
+        public:
+#ifdef _WIN32
+            using Type = SOCKET;
+            static constexpr Type invalid = INVALID_SOCKET;
+#else
+            using Type = int;
+            static constexpr Type invalid = -1;
+#endif
+
+            explicit Socket(InternetProtocol internetProtocol):
+                endpoint(socket(getAddressFamily(internetProtocol), SOCK_STREAM, IPPROTO_TCP))
+            {
+                if (endpoint == invalid)
+                    throw std::system_error(getLastError(), std::system_category(), "Failed to create socket");
+            }
+
+            explicit Socket(Type s) noexcept:
+                endpoint(s)
+            {
+            }
+
+            ~Socket()
+            {
+                if (endpoint != invalid) closeSocket(endpoint);
+            }
+
+            Socket(const Socket&) = delete;
+            Socket& operator=(const Socket&) = delete;
+
+            Socket(Socket&& other) noexcept:
+                endpoint(other.endpoint)
+            {
+                other.endpoint = invalid;
+            }
+
+            Socket& operator=(Socket&& other) noexcept
+            {
+                if (&other == this) return *this;
+                if (endpoint != invalid) closeSocket(endpoint);
+                endpoint = other.endpoint;
+                other.endpoint = invalid;
+                return *this;
+            }
+
+            inline operator Type() const noexcept { return endpoint; }
+
+        private:
+            Type endpoint = invalid;
+        };
     }
-
-#ifdef _WIN32
-    constexpr auto closeSocket = closesocket;
-#else
-    constexpr auto closeSocket = ::close;
-#endif
-
-    class Socket final
-    {
-    public:
-#ifdef _WIN32
-        using Type = SOCKET;
-        static constexpr Type invalid = INVALID_SOCKET;
-#else
-        using Type = int;
-        static constexpr Type invalid = -1;
-#endif
-
-        explicit Socket(InternetProtocol internetProtocol):
-            endpoint(socket(getAddressFamily(internetProtocol), SOCK_STREAM, IPPROTO_TCP))
-        {
-            if (endpoint == invalid)
-                throw std::system_error(getLastError(), std::system_category(), "Failed to create socket");
-        }
-
-        explicit Socket(Type s) noexcept:
-            endpoint(s)
-        {
-        }
-
-        ~Socket()
-        {
-            if (endpoint != invalid) closeSocket(endpoint);
-        }
-
-        Socket(const Socket&) = delete;
-        Socket& operator=(const Socket&) = delete;
-
-        Socket(Socket&& other) noexcept:
-            endpoint(other.endpoint)
-        {
-            other.endpoint = invalid;
-        }
-
-        Socket& operator=(Socket&& other) noexcept
-        {
-            if (&other == this) return *this;
-            if (endpoint != invalid) closeSocket(endpoint);
-            endpoint = other.endpoint;
-            other.endpoint = invalid;
-            return *this;
-        }
-
-        inline operator Type() const noexcept { return endpoint; }
-
-    private:
-        Type endpoint = invalid;
-    };
 
     inline std::string urlEncode(const std::string& str)
     {
