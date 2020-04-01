@@ -168,6 +168,12 @@ namespace http
             {
                 if (endpoint == invalid)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to create socket");
+
+#if defined(__APPLE__)
+                const int value = 1;
+                if (setsockopt(endpoint, SOL_SOCKET, SO_NOSIGPIPE, &value, sizeof(value)) == -1)
+                    throw std::system_error(getLastError(), std::system_category(), "Failed to set socket option");
+#endif
             }
 
             explicit Socket(Type s) noexcept:
