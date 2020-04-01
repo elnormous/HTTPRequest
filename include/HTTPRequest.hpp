@@ -144,7 +144,7 @@ namespace http
 #ifdef _WIN32
         constexpr auto closeSocket = closesocket;
 #else
-        constexpr auto closeSocket = ::close;
+        constexpr auto closeSocket = close;
 #endif
 
         class Socket final
@@ -422,7 +422,7 @@ namespace http
             Socket socket(internetProtocol);
 			
             // take the first address from the list
-            if (::connect(socket, addressInfo->ai_addr, static_cast<socklen_t>(addressInfo->ai_addrlen)) < 0)
+            if (connect(socket, addressInfo->ai_addr, static_cast<socklen_t>(addressInfo->ai_addrlen)) < 0)
                 throw std::system_error(getLastError(), std::system_category(), "Failed to connect to " + domain + ":" + port);
 
             std::string headerData = method + " " + path + " HTTP/1.1\r\n";
