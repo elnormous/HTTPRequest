@@ -68,7 +68,6 @@ namespace http
         explicit ResponseError(const std::string& str): std::runtime_error(str) {}
     };
 
-
     enum class InternetProtocol: std::uint8_t
     {
         V4,
@@ -145,6 +144,12 @@ namespace http
         constexpr auto closeSocket = closesocket;
 #else
         constexpr auto closeSocket = close;
+#endif
+
+#if defined(__APPLE__) || defined(_WIN32)
+        constexpr int noSignal = 0;
+#else
+        constexpr int noSignal = MSG_NOSIGNAL;
 #endif
 
         class Socket final
@@ -457,19 +462,13 @@ namespace http
             if (socket.connect(addressInfo->ai_addr, static_cast<socklen_t>(addressInfo->ai_addrlen)) < 0)
                 throw std::system_error(getLastError(), std::system_category(), "Failed to connect to " + domain + ":" + port);
 
-#if defined(__APPLE__) || defined(_WIN32)
-            constexpr int flags = 0;
-#else
-            constexpr int flags = MSG_NOSIGNAL;
-#endif
-
             auto remaining = requestData.size();
             auto sendData = requestData.data();
 
             // send the request
             while (remaining > 0)
             {
-                const auto size = socket.send(sendData, remaining, flags);
+                const auto size = socket.send(sendData, remaining, noSignal);
 
                 if (size < 0)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to send data to " + domain + ":" + port);
@@ -492,7 +491,7 @@ namespace http
             // read the response
             for (;;)
             {
-                const auto size = socket.recv(tempBuffer, sizeof(tempBuffer), flags);
+                const auto size = socket.recv(tempBuffer, sizeof(tempBuffer), noSignal);
 
                 if (size < 0)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to read data from " + domain + ":" + port);
