@@ -193,19 +193,19 @@ namespace http
                 return *this;
             }
 
-            int connect(const struct sockaddr* address, socklen_t addressSize)
+            int connect(const struct sockaddr* address, socklen_t addressSize) noexcept
             {
                 return ::connect(endpoint, address, addressSize);
             }
 
-            int send(const void* buffer, size_t length, int flags)
+            int send(const void* buffer, size_t length, int flags) noexcept
             {
                 return static_cast<int>(::send(endpoint,
                                                reinterpret_cast<const char*>(buffer),
                                                length, flags));
             }
 
-            int recv(void* buffer, size_t length, int flags)
+            int recv(void* buffer, size_t length, int flags) noexcept
             {
                 return static_cast<int>(::recv(endpoint,
                                                reinterpret_cast<char*>(buffer),
@@ -438,12 +438,6 @@ namespace http
 
             std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> addressInfo(info, freeaddrinfo);
 
-            Socket socket(internetProtocol);
-			
-            // take the first address from the list
-            if (socket.connect(addressInfo->ai_addr, static_cast<socklen_t>(addressInfo->ai_addrlen)) < 0)
-                throw std::system_error(getLastError(), std::system_category(), "Failed to connect to " + domain + ":" + port);
-
             std::string headerData = method + " " + path + " HTTP/1.1\r\n";
 
             for (const std::string& header : headers)
@@ -456,6 +450,12 @@ namespace http
 
             std::vector<uint8_t> requestData(headerData.begin(), headerData.end());
             requestData.insert(requestData.end(), body.begin(), body.end());
+
+            Socket socket(internetProtocol);
+
+            // take the first address from the list
+            if (socket.connect(addressInfo->ai_addr, static_cast<socklen_t>(addressInfo->ai_addrlen)) < 0)
+                throw std::system_error(getLastError(), std::system_category(), "Failed to connect to " + domain + ":" + port);
 
 #if defined(__APPLE__) || defined(_WIN32)
             constexpr int flags = 0;
