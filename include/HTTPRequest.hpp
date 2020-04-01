@@ -465,7 +465,7 @@ namespace http
             Socket socket(internetProtocol);
 
             // take the first address from the list
-            if (socket.connect(addressInfo->ai_addr, static_cast<socklen_t>(addressInfo->ai_addrlen)) < 0)
+            if (socket.connect(addressInfo->ai_addr, static_cast<socklen_t>(addressInfo->ai_addrlen)) == -1)
                 throw std::system_error(getLastError(), std::system_category(), "Failed to connect to " + domain + ":" + port);
 
             auto remaining = requestData.size();
@@ -476,7 +476,7 @@ namespace http
             {
                 const auto size = socket.send(sendData, remaining, noSignal);
 
-                if (size < 0)
+                if (size == -1)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to send data to " + domain + ":" + port);
 
                 remaining -= static_cast<size_t>(size);
@@ -499,7 +499,7 @@ namespace http
             {
                 const auto size = socket.recv(tempBuffer, sizeof(tempBuffer), noSignal);
 
-                if (size < 0)
+                if (size == -1)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to read data from " + domain + ":" + port);
                 else if (size == 0)
                     break; // disconnected
