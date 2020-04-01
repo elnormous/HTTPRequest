@@ -65,7 +65,7 @@ int main(int argc, const char* argv[])
             "User-Agent: runscope/0.1"
         });
 
-        if (response.status == http::Response::STATUS_OK &&
+        if (response.status == http::Response::Ok &&
             !output.empty())
         {
             std::ofstream outfile(output, std::ofstream::binary);
