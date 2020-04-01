@@ -193,6 +193,25 @@ namespace http
                 return *this;
             }
 
+            int connect(const struct sockaddr* address, socklen_t addressSize)
+            {
+                return ::connect(endpoint, address, addressSize);
+            }
+
+            int send(const void* buffer, size_t length, int flags)
+            {
+                return static_cast<int>(::send(endpoint,
+                                               reinterpret_cast<const char*>(buffer),
+                                               length, flags));
+            }
+
+            int recv(void* buffer, size_t length, int flags)
+            {
+                return static_cast<int>(::recv(endpoint,
+                                               reinterpret_cast<char*>(buffer),
+                                               length, flags));
+            }
+
             inline operator Type() const noexcept { return endpoint; }
 
         private:
@@ -422,7 +441,7 @@ namespace http
             Socket socket(internetProtocol);
 			
             // take the first address from the list
-            if (connect(socket, addressInfo->ai_addr, static_cast<socklen_t>(addressInfo->ai_addrlen)) < 0)
+            if (socket.connect(addressInfo->ai_addr, static_cast<socklen_t>(addressInfo->ai_addrlen)) < 0)
                 throw std::system_error(getLastError(), std::system_category(), "Failed to connect to " + domain + ":" + port);
 
             std::string headerData = method + " " + path + " HTTP/1.1\r\n";
@@ -444,19 +463,18 @@ namespace http
             constexpr int flags = MSG_NOSIGNAL;
 #endif
 
-            using SizeType = decltype(::send(int{}, nullptr, size_t{}, int{}));
-            auto remaining = static_cast<SizeType>(requestData.size());
-            auto sendData = reinterpret_cast<const char*>(requestData.data());
+            auto remaining = requestData.size();
+            auto sendData = requestData.data();
 
             // send the request
             while (remaining > 0)
             {
-                const auto size = ::send(socket, sendData, static_cast<size_t>(remaining), flags);
+                const auto size = socket.send(sendData, remaining, flags);
 
                 if (size < 0)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to send data to " + domain + ":" + port);
 
-                remaining -= size;
+                remaining -= static_cast<size_t>(size);
                 sendData += size;
             }
 
@@ -474,7 +492,7 @@ namespace http
             // read the response
             for (;;)
             {
-                const auto size = recv(socket, reinterpret_cast<char*>(tempBuffer), sizeof(tempBuffer), flags);
+                const auto size = socket.recv(tempBuffer, sizeof(tempBuffer), flags);
 
                 if (size < 0)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to read data from " + domain + ":" + port);
