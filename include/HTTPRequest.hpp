@@ -101,9 +101,6 @@ namespace http
                 if (started) WSACleanup();
             }
 
-            WinSock(const WinSock&) = delete;
-            WinSock& operator=(const WinSock&) = delete;
-
             WinSock(WinSock&& other) noexcept:
                 started(other.started)
             {
@@ -185,9 +182,6 @@ namespace http
             {
                 if (endpoint != invalid) closeSocket(endpoint);
             }
-
-            Socket(const Socket&) = delete;
-            Socket& operator=(const Socket&) = delete;
 
             Socket(Socket&& other) noexcept:
                 endpoint(other.endpoint)
