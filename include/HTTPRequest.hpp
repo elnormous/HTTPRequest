@@ -83,7 +83,7 @@ namespace http
             WinSock()
             {
                 WSADATA wsaData;
-                const int error = WSAStartup(MAKEWORD(2, 2), &wsaData);
+                const auto error = WSAStartup(MAKEWORD(2, 2), &wsaData);
                 if (error != 0)
                     throw std::system_error(error, std::system_category(), "WSAStartup failed");
 
@@ -171,11 +171,6 @@ namespace http
                 if (setsockopt(endpoint, SOL_SOCKET, SO_NOSIGPIPE, &value, sizeof(value)) == -1)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to set socket option");
 #endif
-            }
-
-            explicit Socket(Type s) noexcept:
-                endpoint(s)
-            {
             }
 
             ~Socket()
@@ -449,9 +444,8 @@ namespace http
                 headerData += header + "\r\n";
 
             headerData += "Host: " + domain + "\r\n";
-            headerData += "Content-Length: " + std::to_string(body.size()) + "\r\n";
-
-            headerData += "\r\n";
+                "Content-Length: " + std::to_string(body.size()) + "\r\n"
+                "\r\n";
 
             std::vector<uint8_t> requestData(headerData.begin(), headerData.end());
             requestData.insert(requestData.end(), body.begin(), body.end());
