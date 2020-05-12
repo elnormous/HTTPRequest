@@ -27,7 +27,7 @@
 #  ifndef NOMINMAX
 #    define NOMINMAX
 #  endif
-#  include <winsock2.h>
+#  include <winsock2.h> // _WIN64 #include <winsock.h>
 #  if _WIN32_WINNT < _WIN32_WINNT_WINXP
 char* strdup(const char* src)
 {
@@ -200,16 +200,26 @@ namespace http
 
             int send(const void* buffer, size_t length, int flags) noexcept
             {
+#ifdef _WIN32
+                return ::send(endpoint, reinterpret_cast<const char*>(buffer),
+                              static_cast<int>(length), flags);
+#else
                 return static_cast<int>(::send(endpoint,
                                                reinterpret_cast<const char*>(buffer),
                                                length, flags));
+#endif
             }
 
             int recv(void* buffer, size_t length, int flags) noexcept
             {
+#ifdef _WIN32
+                return ::recv(endpoint, reinterpret_cast<char*>(buffer),
+                              static_cast<int>(length), flags);
+#else
                 return static_cast<int>(::recv(endpoint,
                                                reinterpret_cast<char*>(buffer),
                                                length, flags));
+#endif
             }
 
             operator Type() const noexcept { return endpoint; }
