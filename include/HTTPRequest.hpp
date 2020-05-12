@@ -27,7 +27,7 @@
 #  ifndef NOMINMAX
 #    define NOMINMAX
 #  endif
-#  include <winsock2.h> // _WIN64 #include <winsock.h>
+#  include <winsock2.h>
 #  if _WIN32_WINNT < _WIN32_WINNT_WINXP
 char* strdup(const char* src)
 {
