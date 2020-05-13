@@ -54,14 +54,14 @@ char* strdup(const char* src)
 
 namespace http
 {
-    class RequestError: public std::logic_error
+    class RequestError final: public std::logic_error
     {
     public:
         explicit RequestError(const char* str): std::logic_error(str) {}
         explicit RequestError(const std::string& str): std::logic_error(str) {}
     };
 
-    class ResponseError: public std::runtime_error
+    class ResponseError final: public std::runtime_error
     {
     public:
         explicit ResponseError(const char* str): std::runtime_error(str) {}
@@ -193,33 +193,42 @@ namespace http
                 return *this;
             }
 
-            int connect(const struct sockaddr* address, socklen_t addressSize) noexcept
+            void connect(const struct sockaddr* address, socklen_t addressSize)
             {
-                return ::connect(endpoint, address, addressSize);
+                if (::connect(endpoint, address, addressSize) == -1)
+                    throw std::system_error(getLastError(), std::system_category(), "Failed to connect");
             }
 
-            int send(const void* buffer, size_t length, int flags) noexcept
+            size_t send(const void* buffer, size_t length, int flags)
             {
 #ifdef _WIN32
-                return ::send(endpoint, reinterpret_cast<const char*>(buffer),
-                              static_cast<int>(length), flags);
+                const auto result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
+                                           static_cast<int>(length), flags);
 #else
-                return static_cast<int>(::send(endpoint,
-                                               reinterpret_cast<const char*>(buffer),
-                                               length, flags));
+                const auto result = ::send(endpoint,
+                                           reinterpret_cast<const char*>(buffer),
+                                           length, flags);
 #endif
+                if (result == -1)
+                    throw std::system_error(getLastError(), std::system_category(), "Failed to send data");
+
+                return static_cast<size_t>(result);
             }
 
-            int recv(void* buffer, size_t length, int flags) noexcept
+            size_t recv(void* buffer, size_t length, int flags)
             {
 #ifdef _WIN32
-                return ::recv(endpoint, reinterpret_cast<char*>(buffer),
-                              static_cast<int>(length), flags);
+                const auto result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
+                                           static_cast<int>(length), flags);
 #else
-                return static_cast<int>(::recv(endpoint,
-                                               reinterpret_cast<char*>(buffer),
-                                               length, flags));
+                const auto result = ::recv(endpoint,
+                                           reinterpret_cast<char*>(buffer),
+                                           length, flags);
 #endif
+                if (result == -1)
+                    throw std::system_error(getLastError(), std::system_category(), "Failed to read data");
+
+                return static_cast<size_t>(result);
             }
 
             operator Type() const noexcept { return endpoint; }
@@ -463,8 +472,7 @@ namespace http
             Socket socket(internetProtocol);
 
             // take the first address from the list
-            if (socket.connect(addressInfo->ai_addr, static_cast<socklen_t>(addressInfo->ai_addrlen)) == -1)
-                throw std::system_error(getLastError(), std::system_category(), "Failed to connect to " + domain + ":" + port);
+            socket.connect(addressInfo->ai_addr, static_cast<socklen_t>(addressInfo->ai_addrlen));
 
             auto remaining = requestData.size();
             auto sendData = requestData.data();
@@ -473,11 +481,7 @@ namespace http
             while (remaining > 0)
             {
                 const auto size = socket.send(sendData, remaining, noSignal);
-
-                if (size == -1)
-                    throw std::system_error(getLastError(), std::system_category(), "Failed to send data to " + domain + ":" + port);
-
-                remaining -= static_cast<size_t>(size);
+                remaining -= size;
                 sendData += size;
             }
 
@@ -497,9 +501,7 @@ namespace http
             {
                 const auto size = socket.recv(tempBuffer, sizeof(tempBuffer), noSignal);
 
-                if (size == -1)
-                    throw std::system_error(getLastError(), std::system_category(), "Failed to read data from " + domain + ":" + port);
-                else if (size == 0)
+                if (size == 0)
                     break; // disconnected
 
                 responseData.insert(responseData.end(), tempBuffer, tempBuffer + size);
