@@ -453,7 +453,7 @@ namespace http
             for (const std::string& header : headers)
                 headerData += header + "\r\n";
 
-            headerData += "Host: " + domain + "\r\n";
+            headerData += "Host: " + domain + "\r\n"
                 "Content-Length: " + std::to_string(body.size()) + "\r\n"
                 "\r\n";
 
