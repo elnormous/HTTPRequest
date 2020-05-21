@@ -195,19 +195,35 @@ namespace http
 
             void connect(const struct sockaddr* address, socklen_t addressSize)
             {
-                if (::connect(endpoint, address, addressSize) == -1)
+                auto result = ::connect(endpoint, address, addressSize);
+
+#ifdef _WIN32
+                while (result == WSAEINTR) result = ::connect(endpoint, address, addressSize);
+#else
+                while (result == EINTR) result = ::connect(endpoint, address, addressSize);
+#endif
+
+                if (result == -1)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to connect");
             }
 
             size_t send(const void* buffer, size_t length, int flags)
             {
 #ifdef _WIN32
-                const auto result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
-                                           static_cast<int>(length), flags);
+                auto result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
+                                     static_cast<int>(length), flags);
+
+                while (result == WSAEINTR)
+                    result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
+                                    static_cast<int>(length), flags);
+
 #else
-                const auto result = ::send(endpoint,
-                                           reinterpret_cast<const char*>(buffer),
-                                           length, flags);
+                auto result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
+                                     length, flags);
+
+                while (result == EINTR)
+                    result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
+                                    length, flags);
 #endif
                 if (result == -1)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to send data");
@@ -218,12 +234,19 @@ namespace http
             size_t recv(void* buffer, size_t length, int flags)
             {
 #ifdef _WIN32
-                const auto result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
-                                           static_cast<int>(length), flags);
+                auto result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
+                                     static_cast<int>(length), flags);
+
+                while (result == WSAEINTR)
+                    result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
+                                    static_cast<int>(length), flags);
 #else
-                const auto result = ::recv(endpoint,
-                                           reinterpret_cast<char*>(buffer),
-                                           length, flags);
+                auto result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
+                                     length, flags);
+
+                while (result == EINTR)
+                    result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
+                                    length, flags);
 #endif
                 if (result == -1)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to read data");
