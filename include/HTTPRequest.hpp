@@ -198,9 +198,11 @@ namespace http
                 auto result = ::connect(endpoint, address, addressSize);
 
 #ifdef _WIN32
-                while (result == WSAEINTR) result = ::connect(endpoint, address, addressSize);
+                while (result == -1 && WSAGetLastError() == WSAEINTR)
+                    result = ::connect(endpoint, address, addressSize);
 #else
-                while (result == EINTR) result = ::connect(endpoint, address, addressSize);
+                while (result == -1 && errno == EINTR)
+                    result = ::connect(endpoint, address, addressSize);
 #endif
 
                 if (result == -1)
@@ -213,7 +215,7 @@ namespace http
                 auto result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
                                      static_cast<int>(length), flags);
 
-                while (result == WSAEINTR)
+                while (result == -1 && WSAGetLastError() == WSAEINTR)
                     result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
                                     static_cast<int>(length), flags);
 
@@ -221,7 +223,7 @@ namespace http
                 auto result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
                                      length, flags);
 
-                while (result == EINTR)
+                while (result == -1 && errno == EINTR)
                     result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
                                     length, flags);
 #endif
@@ -237,14 +239,14 @@ namespace http
                 auto result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
                                      static_cast<int>(length), flags);
 
-                while (result == WSAEINTR)
+                while (result == -1 && WSAGetLastError() == WSAEINTR)
                     result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
                                     static_cast<int>(length), flags);
 #else
                 auto result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
                                      length, flags);
 
-                while (result == EINTR)
+                while (result == -1 && errno == EINTR)
                     result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
                                     length, flags);
 #endif
