@@ -467,8 +467,6 @@ namespace http
                       const std::vector<uint8_t>& body,
                       const std::vector<std::string>& headers)
         {
-            Response response;
-
             if (scheme != "http")
                 throw RequestError("Only HTTP scheme is supported");
 
@@ -512,6 +510,7 @@ namespace http
 
             std::uint8_t tempBuffer[4096];
             constexpr std::uint8_t crlf[] = {'\r', '\n'};
+            Response response;
             std::vector<std::uint8_t> responseData;
             bool firstLine = true;
             bool parsedHeaders = false;
@@ -532,7 +531,6 @@ namespace http
                 responseData.insert(responseData.end(), tempBuffer, tempBuffer + size);
 
                 if (!parsedHeaders)
-                {
                     for (;;)
                     {
                         const auto i = std::search(responseData.begin(), responseData.end(), std::begin(crlf), std::end(crlf));
@@ -610,7 +608,6 @@ namespace http
                             }
                         }
                     }
-                }
 
                 if (parsedHeaders)
                 {
