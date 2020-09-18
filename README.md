@@ -63,4 +63,4 @@ catch (const std::exception& e)
 
 ## License
 
-HTTPRequest codebase is licensed under the BSD license. Please refer to the LICENSE file for detailed information.
+HTTPRequest is released to the Public Domain.
