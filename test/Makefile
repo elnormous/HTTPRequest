@@ -1,21 +1,20 @@
 debug=0
 ifeq ($(OS),Windows_NT)
 platform=windows
-else
-ifeq ($(shell uname -s),Linux)
+else ifeq ($(shell uname -s),Linux)
 platform=linux
 endif
 ifeq ($(shell uname -s),Darwin)
 platform=macos
-endif
-ifeq ($(shell uname -s),Haiku)
+else ifeq ($(shell uname -s),Haiku)
 platform=haiku
-endif
 endif
 
 CXXFLAGS=-c -std=c++11 -Wall -O2 -I../include
 LDFLAGS=-O2
-ifeq ($(platform),haiku)
+ifeq ($(platform),windows)
+LDFLAGS+=-lws2_32
+else ifeq ($(platform),haiku)
 LDFLAGS+=-lnetwork
 endif
 SOURCES=main.cpp
