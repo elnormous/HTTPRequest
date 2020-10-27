@@ -29,16 +29,8 @@
 #  endif
 #  include <winsock2.h>
 #  if _WIN32_WINNT < _WIN32_WINNT_WINXP
-char* strdup(const char* src)
-{
-    std::size_t length = 0;
-    while (src[length]) ++length;
-    char* result = static_cast<char*>(malloc(length + 1));
-    char* p = result;
-    while (*src) *p++ = *src++;
-    *p = '\0';
-    return result;
-}
+extern "C" char *_strdup(const char *strSource);
+#    define strdup _strdup
 #    include <wspiapi.h>
 #  endif
 #  include <ws2tcpip.h>
