@@ -13,7 +13,7 @@ platform=haiku
 endif
 endif
 
-CXXFLAGS=-c -std=c++11 -Wall -O2 -I../include
+CXXFLAGS=-std=c++11 -Wall -O2 -I../include
 LDFLAGS=-O2
 ifeq ($(platform),haiku)
 LDFLAGS+=-lnetwork
@@ -21,6 +21,7 @@ endif
 SOURCES=main.cpp
 BASE_NAMES=$(basename $(SOURCES))
 OBJECTS=$(BASE_NAMES:=.o)
+DEPENDENCIES=$(OBJECTS:.o=.d)
 EXECUTABLE=test
 
 all: $(EXECUTABLE)
@@ -31,8 +32,10 @@ endif
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(OBJECTS) $(LDFLAGS) -o $@
 
+-include $(DEPENDENCIES)
+
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) $< -o $@
+	$(CXX) -c $(CXXFLAGS) -MMD -MP $< -o $@
 
 .PHONY: clean
 clean:
