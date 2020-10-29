@@ -1,4 +1,4 @@
-debug=0
+DEBUG=0
 ifeq ($(OS),Windows_NT)
 platform=windows
 else ifeq ($(shell uname -s),Linux)
@@ -24,7 +24,7 @@ DEPENDENCIES=$(OBJECTS:.o=.d)
 EXECUTABLE=test
 
 all: $(EXECUTABLE)
-ifeq ($(debug),1)
+ifeq ($(DEBUG),1)
 all: CXXFLAGS+=-DDEBUG -g
 endif
 
