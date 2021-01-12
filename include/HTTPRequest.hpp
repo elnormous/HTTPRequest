@@ -611,7 +611,7 @@ namespace http
                         {
                             if (expectedChunkSize > 0)
                             {
-                                const auto toWrite = std::min(expectedChunkSize, responseData.size());
+                                const auto toWrite = (std::min)(expectedChunkSize, responseData.size());
                                 response.body.insert(response.body.end(), responseData.begin(), responseData.begin() + static_cast<ptrdiff_t>(toWrite));
                                 responseData.erase(responseData.begin(), responseData.begin() + static_cast<ptrdiff_t>(toWrite));
                                 expectedChunkSize -= toWrite;
