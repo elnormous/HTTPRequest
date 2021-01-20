@@ -9,6 +9,7 @@ test/test.opensdf
 test/test.sdf
 test/test.VC.db
 *.o
+*.d
 test/test
 test/test.VC.VC.opendb
 test/test.xcodeproj/xcshareddata

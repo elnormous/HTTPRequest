@@ -41,5 +41,5 @@ clean:
 ifeq ($(platform),windows)
 	-del /f /q "$(EXECUTABLE).exe" "*.o"
 else
-	$(RM) $(EXECUTABLE) *.o $(EXECUTABLE).exe
+	$(RM) $(EXECUTABLE) $(OBJECTS) $(DEPENDENCIES) $(EXECUTABLE).exe
 endif
