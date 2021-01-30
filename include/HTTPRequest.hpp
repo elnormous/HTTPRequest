@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <algorithm>
+#include <array>
 #include <functional>
 #include <map>
 #include <memory>
@@ -257,7 +258,7 @@ namespace http
 
     inline std::string urlEncode(const std::string& str)
     {
-        constexpr char hexChars[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+        constexpr std::array<char, 16> hexChars = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
         std::string result;
 
@@ -500,8 +501,8 @@ namespace http
                 sendData += size;
             }
 
-            std::uint8_t tempBuffer[4096];
-            constexpr std::uint8_t crlf[] = {'\r', '\n'};
+            std::array<std::uint8_t, 4096> tempBuffer;
+            constexpr std::array<std::uint8_t, 2> crlf = {'\r', '\n'};
             Response response;
             std::vector<std::uint8_t> responseData;
             bool firstLine = true;
@@ -515,12 +516,12 @@ namespace http
             // read the response
             for (;;)
             {
-                const auto size = socket.recv(tempBuffer, sizeof(tempBuffer), noSignal);
+                const auto size = socket.recv(tempBuffer.data(), tempBuffer.size(), noSignal);
 
                 if (size == 0)
                     break; // disconnected
 
-                responseData.insert(responseData.end(), tempBuffer, tempBuffer + size);
+                responseData.insert(responseData.end(), tempBuffer.begin(), tempBuffer.begin() + size);
 
                 if (!parsedHeaders)
                     for (;;)
