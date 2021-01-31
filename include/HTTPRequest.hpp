@@ -473,11 +473,13 @@ namespace http
 
             std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> addressInfo(info, freeaddrinfo);
 
+            // RFC 7230, 3.1.1. Request Line
             std::string headerData = method + " " + path + " HTTP/1.1\r\n";
 
             for (const std::string& header : headers)
                 headerData += header + "\r\n";
 
+            // RFC 7230, 3.2.  Header Fields
             headerData += "Host: " + domain + "\r\n"
                 "Content-Length: " + std::to_string(body.size()) + "\r\n"
                 "\r\n";
@@ -505,7 +507,7 @@ namespace http
             constexpr std::array<std::uint8_t, 2> crlf = {'\r', '\n'};
             Response response;
             std::vector<std::uint8_t> responseData;
-            bool firstLine = true;
+            bool statusLine = true;
             bool parsedHeaders = false;
             bool contentLengthReceived = false;
             unsigned long contentLength = 0;
@@ -526,6 +528,7 @@ namespace http
                 if (!parsedHeaders)
                     for (;;)
                     {
+                        // RFC 7230, 3. Message Format
                         const auto i = std::search(responseData.begin(), responseData.end(), std::begin(crlf), std::end(crlf));
 
                         // didn't find a newline
@@ -540,31 +543,31 @@ namespace http
                             parsedHeaders = true;
                             break;
                         }
-                        else if (firstLine) // first line
+                        else if (statusLine) // RFC 7230, 3.1.2. Status Line
                         {
-                            firstLine = false;
-
-                            std::string::size_type lastPos = 0;
+                            statusLine = false;
                             const auto length = line.length();
-                            std::vector<std::string> parts;
+                            std::size_t partNum = 0;
 
                             // tokenize first line
-                            while (lastPos < length + 1)
+                            for (std::string::size_type lastPos = 0; lastPos < length + 1;)
                             {
                                 const auto pos = line.find(' ', lastPos);
-                                const auto endPos = (pos == std::string::npos) ? length : pos;
+                                const std::string part{
+                                    line.begin() + static_cast<std::string::difference_type>(lastPos),
+                                    (pos == std::string::npos) ?
+                                        line.end() :
+                                        line.begin() + static_cast<std::string::difference_type>(pos)
+                                };
 
-                                if (endPos != lastPos)
-                                    parts.emplace_back(line.data() + lastPos,
-                                                       static_cast<std::vector<std::string>::size_type>(endPos) - lastPos);
+                                if (++partNum == 2)
+                                    response.status = std::stoi(part);
 
-                                lastPos = endPos + 1;
+                                if (pos == std::string::npos) break;
+                                lastPos = pos + 1;
                             }
-
-                            if (parts.size() >= 2)
-                                response.status = std::stoi(parts[1]);
                         }
-                        else // headers
+                        else // RFC 7230, 3.2.  Header Fields
                         {
                             response.headers.push_back(line);
 
