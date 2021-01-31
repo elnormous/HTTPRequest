@@ -551,14 +551,14 @@ namespace http
                             // tokenize first line
                             while (lastPos < length + 1)
                             {
-                                auto pos = line.find(' ', lastPos);
-                                if (pos == std::string::npos) pos = length;
+                                const auto pos = line.find(' ', lastPos);
+                                const auto endPos = (pos == std::string::npos) ? length : pos;
 
-                                if (pos != lastPos)
+                                if (endPos != lastPos)
                                     parts.emplace_back(line.data() + lastPos,
-                                                       static_cast<std::vector<std::string>::size_type>(pos) - lastPos);
+                                                       static_cast<std::vector<std::string>::size_type>(endPos) - lastPos);
 
-                                lastPos = pos + 1;
+                                lastPos = endPos + 1;
                             }
 
                             if (parts.size() >= 2)
