@@ -544,25 +544,18 @@ namespace http
                         else if (statusLine) // RFC 7230, 3.1.2. Status Line
                         {
                             statusLine = false;
-                            const auto length = line.length();
                             std::size_t partNum = 0;
 
                             // tokenize the status line
-                            for (std::string::size_type lastPos = 0; lastPos < length + 1;)
+                            for (auto beginIterator = line.begin(); beginIterator != line.end();)
                             {
-                                const auto pos = line.find(' ', lastPos);
-                                const std::string part{
-                                    line.begin() + static_cast<std::string::difference_type>(lastPos),
-                                    (pos == std::string::npos) ?
-                                        line.end() :
-                                        line.begin() + static_cast<std::string::difference_type>(pos)
-                                };
+                                const auto endIterator = std::find(beginIterator, line.end(), ' ');
+                                const std::string part{beginIterator, endIterator};
 
-                                if (++partNum == 2)
-                                    response.status = std::stoi(part);
+                                if (++partNum == 2) response.status = std::stoi(part);
 
-                                if (pos == std::string::npos) break;
-                                lastPos = pos + 1;
+                                if (endIterator == line.end()) break;
+                                beginIterator = endIterator + 1;
                             }
                         }
                         else // RFC 7230, 3.2.  Header Fields
