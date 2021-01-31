@@ -519,9 +519,7 @@ namespace http
             for (;;)
             {
                 const auto size = socket.recv(tempBuffer.data(), tempBuffer.size(), noSignal);
-
-                if (size == 0)
-                    break; // disconnected
+                if (size == 0) break; // disconnected
 
                 responseData.insert(responseData.end(), tempBuffer.begin(), tempBuffer.begin() + size);
 
@@ -549,7 +547,7 @@ namespace http
                             const auto length = line.length();
                             std::size_t partNum = 0;
 
-                            // tokenize first line
+                            // tokenize the status line
                             for (std::string::size_type lastPos = 0; lastPos < length + 1;)
                             {
                                 const auto pos = line.find(' ', lastPos);
@@ -575,18 +573,19 @@ namespace http
 
                             if (pos != std::string::npos)
                             {
-                                std::string headerName = line.substr(0, pos);
-                                std::string headerValue = line.substr(pos + 1);
+                                const auto headerName = line.substr(0, pos);
+                                auto headerValue = line.substr(pos + 1);
+
+                                // RFC 7230, Appendix B. Collected ABNF
+                                auto isNotWhiteSpace = [](char c){
+                                    return c != ' ' && c != '\t';
+                                };
 
                                 // ltrim
-                                headerValue.erase(headerValue.begin(),
-                                                  std::find_if(headerValue.begin(), headerValue.end(),
-                                                               [](int c) {return !std::isspace(c);}));
+                                headerValue.erase(headerValue.begin(), std::find_if(headerValue.begin(), headerValue.end(), isNotWhiteSpace));
 
                                 // rtrim
-                                headerValue.erase(std::find_if(headerValue.rbegin(), headerValue.rend(),
-                                                               [](int c) {return !std::isspace(c);}).base(),
-                                                  headerValue.end());
+                                headerValue.erase(std::find_if(headerValue.rbegin(), headerValue.rend(), isNotWhiteSpace).base(), headerValue.end());
 
                                 if (headerName == "Content-Length")
                                 {
