@@ -476,7 +476,7 @@ namespace http
             // RFC 7230, 3.1.1. Request Line
             std::string headerData = method + " " + path + " HTTP/1.1\r\n";
 
-            for (const std::string& header : headers)
+            for (const auto& header : headers)
                 headerData += header + "\r\n";
 
             // RFC 7230, 3.2.  Header Fields
