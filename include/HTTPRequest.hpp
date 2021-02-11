@@ -202,7 +202,7 @@ namespace http
                     throw std::system_error(getLastError(), std::system_category(), "Failed to connect");
             }
 
-            size_t send(const void* buffer, size_t length, int flags)
+            std::size_t send(const void* buffer, std::size_t length, int flags)
             {
 #ifdef _WIN32
                 auto result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
@@ -223,10 +223,10 @@ namespace http
                 if (result == -1)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to send data");
 
-                return static_cast<size_t>(result);
+                return static_cast<std::size_t>(result);
             }
 
-            size_t recv(void* buffer, size_t length, int flags)
+            std::size_t recv(void* buffer, std::size_t length, int flags)
             {
 #ifdef _WIN32
                 auto result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
@@ -246,7 +246,7 @@ namespace http
                 if (result == -1)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to read data");
 
-                return static_cast<size_t>(result);
+                return static_cast<std::size_t>(result);
             }
 
             operator Type() const noexcept { return endpoint; }
