@@ -507,7 +507,7 @@ namespace http
             constexpr std::array<std::uint8_t, 2> crlf = {'\r', '\n'};
             Response response;
             std::vector<std::uint8_t> responseData;
-            bool statusLine = true;
+            bool parsedStatusLine = false;
             bool parsedHeaders = false;
             bool contentLengthReceived = false;
             unsigned long contentLength = 0;
@@ -541,9 +541,9 @@ namespace http
                             parsedHeaders = true;
                             break;
                         }
-                        else if (statusLine) // RFC 7230, 3.1.2. Status Line
+                        else if (!parsedStatusLine) // RFC 7230, 3.1.2. Status Line
                         {
-                            statusLine = false;
+                            parsedStatusLine = true;
                             std::size_t partNum = 0;
 
                             // tokenize the status line
