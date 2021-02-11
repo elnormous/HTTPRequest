@@ -510,7 +510,7 @@ namespace http
             bool parsedStatusLine = false;
             bool parsedHeaders = false;
             bool contentLengthReceived = false;
-            unsigned long contentLength = 0;
+            std::size_t contentLength = 0;
             bool chunkedResponse = false;
             std::size_t expectedChunkSize = 0;
             bool removeCrlfAfterChunk = false;
