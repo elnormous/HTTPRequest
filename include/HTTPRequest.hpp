@@ -349,7 +349,6 @@ namespace http
             UnsupportedMediaType = 415,
             RangeNotSatisfiable = 416,
             ExpectationFailed = 417,
-            ImaTeapot = 418,
             MisdirectedRequest = 421,
             UnprocessableEntity = 422,
             Locked = 423,
