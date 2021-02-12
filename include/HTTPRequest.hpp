@@ -562,37 +562,37 @@ namespace http
                         {
                             response.headers.push_back(line);
 
-                            const auto pos = line.find(':');
+                            const auto loumnPosition = line.find(':');
 
-                            if (pos != std::string::npos)
+                            if (loumnPosition == std::string::npos)
+                                throw ResponseError("Invalid header: " + line);
+
+                            const auto headerName = line.substr(0, loumnPosition);
+                            auto headerValue = line.substr(loumnPosition + 1);
+
+                            // RFC 7230, Appendix B. Collected ABNF
+                            auto isNotWhiteSpace = [](char c){
+                                return c != ' ' && c != '\t';
+                            };
+
+                            // ltrim
+                            headerValue.erase(headerValue.begin(), std::find_if(headerValue.begin(), headerValue.end(), isNotWhiteSpace));
+
+                            // rtrim
+                            headerValue.erase(std::find_if(headerValue.rbegin(), headerValue.rend(), isNotWhiteSpace).base(), headerValue.end());
+
+                            if (headerName == "Content-Length")
                             {
-                                const auto headerName = line.substr(0, pos);
-                                auto headerValue = line.substr(pos + 1);
-
-                                // RFC 7230, Appendix B. Collected ABNF
-                                auto isNotWhiteSpace = [](char c){
-                                    return c != ' ' && c != '\t';
-                                };
-
-                                // ltrim
-                                headerValue.erase(headerValue.begin(), std::find_if(headerValue.begin(), headerValue.end(), isNotWhiteSpace));
-
-                                // rtrim
-                                headerValue.erase(std::find_if(headerValue.rbegin(), headerValue.rend(), isNotWhiteSpace).base(), headerValue.end());
-
-                                if (headerName == "Content-Length")
-                                {
-                                    contentLength = std::stoul(headerValue);
-                                    contentLengthReceived = true;
-                                    response.body.reserve(contentLength);
-                                }
-                                else if (headerName == "Transfer-Encoding")
-                                {
-                                    if (headerValue == "chunked")
-                                        chunkedResponse = true;
-                                    else
-                                        throw ResponseError("Unsupported transfer encoding: " + headerValue);
-                                }
+                                contentLength = std::stoul(headerValue);
+                                contentLengthReceived = true;
+                                response.body.reserve(contentLength);
+                            }
+                            else if (headerName == "Transfer-Encoding")
+                            {
+                                if (headerValue == "chunked")
+                                    chunkedResponse = true;
+                                else
+                                    throw ResponseError("Unsupported transfer encoding: " + headerValue);
                             }
                         }
                     }
