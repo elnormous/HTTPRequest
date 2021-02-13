@@ -63,7 +63,7 @@ int main(int argc, const char* argv[])
         const http::Response response = request.send(method, arguments, {
             "Content-Type: application/x-www-form-urlencoded",
             "User-Agent: runscope/0.1"
-        });
+        }, std::chrono::seconds(2));
 
         if (response.status == http::Response::Ok &&
             !output.empty())

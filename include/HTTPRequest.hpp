@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <functional>
 #include <map>
 #include <memory>
@@ -38,6 +39,8 @@ extern "C" char *_strdup(const char *strSource);
 #  pragma pop_macro("WIN32_LEAN_AND_MEAN")
 #  pragma pop_macro("NOMINMAX")
 #else
+#  include <fcntl.h>
+#  include <sys/select.h>
 #  include <sys/socket.h>
 #  include <netinet/in.h>
 #  include <netdb.h>
@@ -159,12 +162,34 @@ namespace http
                 if (endpoint == invalid)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to create socket");
 
+#ifdef _WIN32
+                /*unsigned long mode = 1;
+                if (ioctlsocket(endpoint, FIONBIO, &mode) != 0)
+                {
+                    closeSocket(endpoint);
+                    throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to get socket flags");
+                }*/
+#else
+                const auto flags = fcntl(endpoint, F_GETFL, 0);
+                if (flags == -1)
+                {
+                    closeSocket(endpoint);
+                    throw std::system_error(errno, std::system_category(), "Failed to get socket flags");
+                }
+
+                if (fcntl(endpoint, F_SETFL, flags | O_NONBLOCK) == -1)
+                {
+                    closeSocket(endpoint);
+                    throw std::system_error(errno, std::system_category(), "Failed to set socket flags");
+                }
+#endif
+
 #if defined(__APPLE__)
                 const int value = 1;
                 if (setsockopt(endpoint, SOL_SOCKET, SO_NOSIGPIPE, &value, sizeof(value)) == -1)
                 {
                     closeSocket(endpoint);
-                    throw std::system_error(getLastError(), std::system_category(), "Failed to set socket option");
+                    throw std::system_error(errno, std::system_category(), "Failed to set socket option");
                 }
 #endif
             }
@@ -196,16 +221,19 @@ namespace http
 #ifdef _WIN32
                 while (result == -1 && WSAGetLastError() == WSAEINTR)
                     result = ::connect(endpoint, address, addressSize);
+
+                if (result == -1)
+                    throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to connect");
 #else
                 while (result == -1 && errno == EINTR)
                     result = ::connect(endpoint, address, addressSize);
-#endif
 
-                if (result == -1)
-                    throw std::system_error(getLastError(), std::system_category(), "Failed to connect");
+                if (result == -1 && errno != EINPROGRESS)
+                    throw std::system_error(errno, std::system_category(), "Failed to connect");
+#endif
             }
 
-            std::size_t send(const void* buffer, std::size_t length, int flags)
+            std::size_t send(const void* buffer, std::size_t length, int flags, const std::int64_t timeout)
             {
 #ifdef _WIN32
                 auto result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
@@ -216,6 +244,27 @@ namespace http
                                     static_cast<int>(length), flags);
 
 #else
+                fd_set readSet;
+                FD_ZERO(&readSet);
+                FD_SET(endpoint, &readSet);
+
+                timeval selectTimeout{
+                    static_cast<time_t>(timeout / 1000),
+                    static_cast<suseconds_t>((timeout % 1000) * 1000)
+                };
+
+                auto count = select(endpoint + 1, nullptr, &readSet, nullptr,
+                                    (timeout >= 0) ? &selectTimeout : nullptr);
+
+                while (count == -1 && errno == EINTR)
+                    count = select(endpoint + 1, nullptr, &readSet, nullptr,
+                                   (timeout >= 0) ? &selectTimeout : nullptr);
+
+                if (count == -1)
+                    throw std::system_error(errno, std::system_category(), "Failed to select socket");
+                else if (count == 0)
+                    throw ResponseError("Request timed out");
+
                 auto result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
                                      length, flags);
 
@@ -229,7 +278,7 @@ namespace http
                 return static_cast<std::size_t>(result);
             }
 
-            std::size_t recv(void* buffer, std::size_t length, int flags)
+            std::size_t recv(void* buffer, std::size_t length, int flags, const std::int64_t timeout)
             {
 #ifdef _WIN32
                 auto result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
@@ -239,6 +288,27 @@ namespace http
                     result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
                                     static_cast<int>(length), flags);
 #else
+                fd_set writeSet;
+                FD_ZERO(&writeSet);
+                FD_SET(endpoint, &writeSet);
+
+                timeval selectTimeout{
+                    static_cast<time_t>(timeout / 1000),
+                    static_cast<suseconds_t>((timeout % 1000) * 1000)
+                };
+
+                auto count = select(endpoint + 1, &writeSet, nullptr, nullptr,
+                                    (timeout >= 0) ? &selectTimeout : nullptr);
+
+                while (count == -1 && errno == EINTR)
+                    count = select(endpoint + 1, &writeSet, nullptr, nullptr,
+                                   (timeout >= 0) ? &selectTimeout : nullptr);
+
+                if (count == -1)
+                    throw std::system_error(errno, std::system_category(), "Failed to select socket");
+                else if (count == 0)
+                    throw ResponseError("Request timed out");
+
                 auto result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
                                      length, flags);
 
@@ -433,7 +503,8 @@ namespace http
 
         Response send(const std::string& method,
                       const std::map<std::string, std::string>& parameters,
-                      const std::vector<std::string>& headers = {})
+                      const std::vector<std::string>& headers = {},
+                      std::chrono::milliseconds timeout = std::chrono::milliseconds{-1})
         {
             std::string body;
             bool first = true;
@@ -446,22 +517,27 @@ namespace http
                 body += urlEncode(parameter.first) + "=" + urlEncode(parameter.second);
             }
 
-            return send(method, body, headers);
+            return send(method, body, headers, timeout);
         }
 
         Response send(const std::string& method = "GET",
                       const std::string& body = "",
-                      const std::vector<std::string>& headers = {})
+                      const std::vector<std::string>& headers = {},
+                      std::chrono::milliseconds timeout = std::chrono::milliseconds{-1})
         {
             return send(method,
                         std::vector<uint8_t>(body.begin(), body.end()),
-                        headers);
+                        headers,
+                        timeout);
         }
 
         Response send(const std::string& method,
                       const std::vector<uint8_t>& body,
-                      const std::vector<std::string>& headers)
+                      const std::vector<std::string>& headers,
+                      std::chrono::milliseconds timeout = std::chrono::milliseconds{-1})
         {
+            const auto stopTime = std::chrono::steady_clock::now() + timeout;
+
             if (scheme != "http")
                 throw RequestError("Only HTTP scheme is supported");
 
@@ -500,7 +576,10 @@ namespace http
             // send the request
             while (remaining > 0)
             {
-                const auto size = socket.send(sendData, remaining, noSignal);
+                const auto remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(stopTime - std::chrono::steady_clock::now());
+                const auto remainingMilliseconds = remainingTime.count() ? remainingTime.count() : 0;
+                const auto size = socket.send(sendData, remaining, noSignal,
+                                              (timeout.count() >= 0) ? remainingMilliseconds : -1);
                 remaining -= size;
                 sendData += size;
             }
@@ -520,7 +599,10 @@ namespace http
             // read the response
             for (;;)
             {
-                const auto size = socket.recv(tempBuffer.data(), tempBuffer.size(), noSignal);
+                const auto remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(stopTime - std::chrono::steady_clock::now());
+                const auto remainingMilliseconds = remainingTime.count() ? remainingTime.count() : 0;
+                const auto size = socket.recv(tempBuffer.data(), tempBuffer.size(), noSignal,
+                                              (timeout.count() >= 0) ? remainingMilliseconds : -1);
                 if (size == 0) break; // disconnected
 
                 responseData.insert(responseData.end(), tempBuffer.begin(), tempBuffer.begin() + size);
