@@ -139,10 +139,10 @@ namespace http
         constexpr auto closeSocket = close;
 #endif
 
-#if defined(__APPLE__) || defined(_WIN32)
-        constexpr int noSignal = 0;
-#else
+#if defined(__unix__) && !defined(__APPLE__)
         constexpr int noSignal = MSG_NOSIGNAL;
+#else
+        constexpr int noSignal = 0;
 #endif
 
         class Socket final
@@ -233,16 +233,15 @@ namespace http
 #endif
             }
 
-            std::size_t send(const void* buffer, std::size_t length, int flags, const std::int64_t timeout)
+            std::size_t send(const void* buffer, std::size_t length, const std::int64_t timeout)
             {
 #ifdef _WIN32
                 auto result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
-                                     static_cast<int>(length), flags);
+                                     static_cast<int>(length), 0);
 
                 while (result == -1 && WSAGetLastError() == WSAEINTR)
                     result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
-                                    static_cast<int>(length), flags);
-
+                                    static_cast<int>(length), 0);
 #else
                 fd_set readSet;
                 FD_ZERO(&readSet);
@@ -266,11 +265,11 @@ namespace http
                     throw ResponseError("Request timed out");
 
                 auto result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
-                                     length, flags);
+                                     length, noSignal);
 
                 while (result == -1 && errno == EINTR)
                     result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
-                                    length, flags);
+                                    length, noSignal);
 #endif
                 if (result == -1)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to send data");
@@ -278,15 +277,15 @@ namespace http
                 return static_cast<std::size_t>(result);
             }
 
-            std::size_t recv(void* buffer, std::size_t length, int flags, const std::int64_t timeout)
+            std::size_t recv(void* buffer, std::size_t length, const std::int64_t timeout)
             {
 #ifdef _WIN32
                 auto result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
-                                     static_cast<int>(length), flags);
+                                     static_cast<int>(length), 0);
 
                 while (result == -1 && WSAGetLastError() == WSAEINTR)
                     result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
-                                    static_cast<int>(length), flags);
+                                    static_cast<int>(length), 0);
 #else
                 fd_set writeSet;
                 FD_ZERO(&writeSet);
@@ -310,11 +309,11 @@ namespace http
                     throw ResponseError("Request timed out");
 
                 auto result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
-                                     length, flags);
+                                     length, noSignal);
 
                 while (result == -1 && errno == EINTR)
                     result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
-                                    length, flags);
+                                    length, noSignal);
 #endif
                 if (result == -1)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to read data");
@@ -578,7 +577,7 @@ namespace http
             {
                 const auto remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(stopTime - std::chrono::steady_clock::now());
                 const auto remainingMilliseconds = remainingTime.count() ? remainingTime.count() : 0;
-                const auto size = socket.send(sendData, remaining, noSignal,
+                const auto size = socket.send(sendData, remaining,
                                               (timeout.count() >= 0) ? remainingMilliseconds : -1);
                 remaining -= size;
                 sendData += size;
@@ -601,7 +600,7 @@ namespace http
             {
                 const auto remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(stopTime - std::chrono::steady_clock::now());
                 const auto remainingMilliseconds = remainingTime.count() ? remainingTime.count() : 0;
-                const auto size = socket.recv(tempBuffer.data(), tempBuffer.size(), noSignal,
+                const auto size = socket.recv(tempBuffer.data(), tempBuffer.size(),
                                               (timeout.count() >= 0) ? remainingMilliseconds : -1);
                 if (size == 0) break; // disconnected
 
