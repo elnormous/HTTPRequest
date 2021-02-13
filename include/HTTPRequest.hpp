@@ -151,13 +151,9 @@ namespace http
 #ifdef _WIN32
             using Type = SOCKET;
             static constexpr Type invalid = INVALID_SOCKET;
-            using Seconds = long;
-            using Microseconds = long;
 #else
             using Type = int;
             static constexpr Type invalid = -1;
-            using Seconds = time_t;
-            using Microseconds = suseconds_t;
 #endif
 
             explicit Socket(InternetProtocol internetProtocol):
@@ -244,8 +240,8 @@ namespace http
                 FD_SET(endpoint, &readSet);
 
                 timeval selectTimeout{
-                    static_cast<Seconds>(timeout / 1000),
-                    static_cast<Microseconds>((timeout % 1000) * 1000)
+                    static_cast<decltype(timeval::tv_sec)>(timeout / 1000),
+                    static_cast<decltype(timeval::tv_usec)>((timeout % 1000) * 1000)
                 };
 
 #ifdef _WIN32
@@ -300,8 +296,8 @@ namespace http
                 FD_SET(endpoint, &writeSet);
 
                 timeval selectTimeout{
-                    static_cast<Seconds>(timeout / 1000),
-                    static_cast<Microseconds>((timeout % 1000) * 1000)
+                    static_cast<decltype(timeval::tv_sec)>(timeout / 1000),
+                    static_cast<decltype(timeval::tv_usec)>((timeout % 1000) * 1000)
                 };
 #ifdef _WIN32
                 auto count = select(0, &writeSet, nullptr, nullptr,
