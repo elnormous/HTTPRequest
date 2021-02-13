@@ -39,13 +39,13 @@ extern "C" char *_strdup(const char *strSource);
 #  pragma pop_macro("WIN32_LEAN_AND_MEAN")
 #  pragma pop_macro("NOMINMAX")
 #else
+#  include <errno.h>
 #  include <fcntl.h>
-#  include <sys/select.h>
-#  include <sys/socket.h>
 #  include <netinet/in.h>
 #  include <netdb.h>
+#  include <sys/select.h>
+#  include <sys/socket.h>
 #  include <unistd.h>
-#  include <errno.h>
 #endif
 
 namespace http
