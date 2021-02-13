@@ -163,12 +163,12 @@ namespace http
                     throw std::system_error(getLastError(), std::system_category(), "Failed to create socket");
 
 #ifdef _WIN32
-                /*unsigned long mode = 1;
+                unsigned long mode = 1;
                 if (ioctlsocket(endpoint, FIONBIO, &mode) != 0)
                 {
                     closeSocket(endpoint);
                     throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to get socket flags");
-                }*/
+                }
 #else
                 const auto flags = fcntl(endpoint, F_GETFL, 0);
                 if (flags == -1)
@@ -222,7 +222,7 @@ namespace http
                 while (result == -1 && WSAGetLastError() == WSAEINTR)
                     result = ::connect(endpoint, address, addressSize);
 
-                if (result == -1)
+                if (result == -1 && WSAGetLastError() != WSAEWOULDBLOCK)
                     throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to connect");
 #else
                 while (result == -1 && errno == EINTR)
@@ -235,7 +235,28 @@ namespace http
 
             std::size_t send(const void* buffer, std::size_t length, const std::int64_t timeout)
             {
+                fd_set readSet;
+                FD_ZERO(&readSet);
+                FD_SET(endpoint, &readSet);
+
+                timeval selectTimeout{
+                    static_cast<long>(timeout / 1000),
+                    static_cast<long>((timeout % 1000) * 1000)
+                };
+
 #ifdef _WIN32
+                auto count = select(0, nullptr, &readSet, nullptr,
+                                    (timeout >= 0) ? &selectTimeout : nullptr);
+
+                while (count == -1 && WSAGetLastError() == WSAEINTR)
+                    count = select(0, nullptr, &readSet, nullptr,
+                                   (timeout >= 0) ? &selectTimeout : nullptr);
+
+                if (count == -1)
+                    throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to select socket");
+                else if (count == 0)
+                    throw ResponseError("Request timed out");
+
                 auto result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
                                      static_cast<int>(length), 0);
 
@@ -243,15 +264,6 @@ namespace http
                     result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
                                     static_cast<int>(length), 0);
 #else
-                fd_set readSet;
-                FD_ZERO(&readSet);
-                FD_SET(endpoint, &readSet);
-
-                timeval selectTimeout{
-                    static_cast<time_t>(timeout / 1000),
-                    static_cast<suseconds_t>((timeout % 1000) * 1000)
-                };
-
                 auto count = select(endpoint + 1, nullptr, &readSet, nullptr,
                                     (timeout >= 0) ? &selectTimeout : nullptr);
 
@@ -279,7 +291,27 @@ namespace http
 
             std::size_t recv(void* buffer, std::size_t length, const std::int64_t timeout)
             {
+                fd_set writeSet;
+                FD_ZERO(&writeSet);
+                FD_SET(endpoint, &writeSet);
+
+                timeval selectTimeout{
+                    static_cast<long>(timeout / 1000),
+                    static_cast<long>((timeout % 1000) * 1000)
+                };
 #ifdef _WIN32
+                auto count = select(0, &writeSet, nullptr, nullptr,
+                                    (timeout >= 0) ? &selectTimeout : nullptr);
+
+                while (count == -1 && WSAGetLastError() == WSAEINTR)
+                    count = select(0, &writeSet, nullptr, nullptr,
+                                   (timeout >= 0) ? &selectTimeout : nullptr);
+
+                if (count == -1)
+                    throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to select socket");
+                else if (count == 0)
+                    throw ResponseError("Request timed out");
+
                 auto result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
                                      static_cast<int>(length), 0);
 
@@ -287,15 +319,6 @@ namespace http
                     result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
                                     static_cast<int>(length), 0);
 #else
-                fd_set writeSet;
-                FD_ZERO(&writeSet);
-                FD_SET(endpoint, &writeSet);
-
-                timeval selectTimeout{
-                    static_cast<time_t>(timeout / 1000),
-                    static_cast<suseconds_t>((timeout % 1000) * 1000)
-                };
-
                 auto count = select(endpoint + 1, &writeSet, nullptr, nullptr,
                                     (timeout >= 0) ? &selectTimeout : nullptr);
 
