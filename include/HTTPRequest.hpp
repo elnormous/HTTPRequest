@@ -225,9 +225,8 @@ namespace http
                     static_cast<decltype(timeval::tv_usec)>((timeout % 1000) * 1000)
                 };
 
-                auto result = ::connect(endpoint, address, addressSize);
-
 #ifdef _WIN32
+                auto result = ::connect(endpoint, address, addressSize);
                 while (result == -1 && WSAGetLastError() == WSAEINTR)
                     result = ::connect(endpoint, address, addressSize);
 
@@ -259,6 +258,7 @@ namespace http
                         throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to connect");
                 }
 #else
+                auto result = ::connect(endpoint, address, addressSize);
                 while (result == -1 && errno == EINTR)
                     result = ::connect(endpoint, address, addressSize);
 
@@ -322,6 +322,9 @@ namespace http
                 while (result == -1 && WSAGetLastError() == WSAEINTR)
                     result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
                                     static_cast<int>(length), 0);
+
+                if (result == -1)
+                    throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to send data");
 #else
                 auto count = select(endpoint + 1, nullptr, &writeSet, nullptr,
                                     (timeout >= 0) ? &selectTimeout : nullptr);
@@ -341,10 +344,10 @@ namespace http
                 while (result == -1 && errno == EINTR)
                     result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
                                     length, noSignal);
-#endif
-                if (result == -1)
-                    throw std::system_error(getLastError(), std::system_category(), "Failed to send data");
 
+                if (result == -1)
+                    throw std::system_error(errno, std::system_category(), "Failed to send data");
+#endif
                 return static_cast<std::size_t>(result);
             }
 
@@ -377,6 +380,9 @@ namespace http
                 while (result == -1 && WSAGetLastError() == WSAEINTR)
                     result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
                                     static_cast<int>(length), 0);
+
+                if (result == -1)
+                    throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to read data");
 #else
                 auto count = select(endpoint + 1, &readSet, nullptr, nullptr,
                                     (timeout >= 0) ? &selectTimeout : nullptr);
@@ -396,10 +402,10 @@ namespace http
                 while (result == -1 && errno == EINTR)
                     result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
                                     length, noSignal);
-#endif
-                if (result == -1)
-                    throw std::system_error(getLastError(), std::system_category(), "Failed to read data");
 
+                if (result == -1)
+                    throw std::system_error(errno, std::system_category(), "Failed to read data");
+#endif
                 return static_cast<std::size_t>(result);
             }
 
