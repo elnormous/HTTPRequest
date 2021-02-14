@@ -665,7 +665,7 @@ namespace http
                     for (;;)
                     {
                         // RFC 7230, 3. Message Format
-                        const auto i = std::search(responseData.begin(), responseData.end(), std::begin(crlf), std::end(crlf));
+                        const auto i = std::search(responseData.begin(), responseData.end(), crlf.begin(), crlf.end());
 
                         // didn't find a newline
                         if (i == responseData.end()) break;
@@ -759,13 +759,16 @@ namespace http
                                 {
                                     if (responseData.size() >= 2)
                                     {
+                                        if (!std::equal(crlf.begin(), crlf.end(), responseData.begin()))
+                                            throw ResponseError("Invalid chunk");
+
                                         removeCrlfAfterChunk = false;
                                         responseData.erase(responseData.begin(), responseData.begin() + 2);
                                     }
                                     else break;
                                 }
 
-                                const auto i = std::search(responseData.begin(), responseData.end(), std::begin(crlf), std::end(crlf));
+                                const auto i = std::search(responseData.begin(), responseData.end(), crlf.begin(), crlf.end());
 
                                 if (i == responseData.end()) break;
 
