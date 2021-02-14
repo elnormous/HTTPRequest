@@ -835,8 +835,7 @@ namespace http
         {
             const auto now = std::chrono::steady_clock::now();
             const auto remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(time - now);
-            const auto remainingMilliseconds = remainingTime.count() ? remainingTime.count() : 0;
-            return remainingMilliseconds;
+            return (remainingTime.count() > 0) ? remainingTime.count() : 0;
         }
 
 #ifdef _WIN32
