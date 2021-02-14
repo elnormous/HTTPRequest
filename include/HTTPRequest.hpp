@@ -598,10 +598,8 @@ namespace http
             // send the request
             while (remaining > 0)
             {
-                const auto remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(stopTime - std::chrono::steady_clock::now());
-                const auto remainingMilliseconds = remainingTime.count() ? remainingTime.count() : 0;
                 const auto size = socket.send(sendData, remaining,
-                                              (timeout.count() >= 0) ? remainingMilliseconds : -1);
+                                              (timeout.count() >= 0) ? getMillisecondsUntil(stopTime) : -1);
                 remaining -= size;
                 sendData += size;
             }
@@ -621,10 +619,8 @@ namespace http
             // read the response
             for (;;)
             {
-                const auto remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(stopTime - std::chrono::steady_clock::now());
-                const auto remainingMilliseconds = remainingTime.count() ? remainingTime.count() : 0;
                 const auto size = socket.recv(tempBuffer.data(), tempBuffer.size(),
-                                              (timeout.count() >= 0) ? remainingMilliseconds : -1);
+                                              (timeout.count() >= 0) ? getMillisecondsUntil(stopTime) : -1);
                 if (size == 0) break; // disconnected
 
                 responseData.insert(responseData.end(), tempBuffer.begin(), tempBuffer.begin() + size);
@@ -769,6 +765,14 @@ namespace http
         }
 
     private:
+        static std::int64_t getMillisecondsUntil(std::chrono::steady_clock::time_point time)
+        {
+            const auto now = std::chrono::steady_clock::now();
+            const auto remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(time - now);
+            const auto remainingMilliseconds = remainingTime.count() ? remainingTime.count() : 0;
+            return remainingMilliseconds;
+        }
+
 #ifdef _WIN32
         WinSock winSock;
 #endif
