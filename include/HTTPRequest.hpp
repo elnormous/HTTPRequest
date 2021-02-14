@@ -214,7 +214,7 @@ namespace http
                 return *this;
             }
 
-            void connect(const struct sockaddr* address, socklen_t addressSize)
+            void connect(const struct sockaddr* address, socklen_t addressSize, const std::int64_t timeout)
             {
                 auto result = ::connect(endpoint, address, addressSize);
 
@@ -228,7 +228,38 @@ namespace http
                 while (result == -1 && errno == EINTR)
                     result = ::connect(endpoint, address, addressSize);
 
-                if (result == -1 && errno != EINPROGRESS)
+                if (errno == EINPROGRESS)
+                {
+                    fd_set writeSet;
+                    FD_ZERO(&writeSet);
+                    FD_SET(endpoint, &writeSet);
+
+                    timeval selectTimeout{
+                        static_cast<decltype(timeval::tv_sec)>(timeout / 1000),
+                        static_cast<decltype(timeval::tv_usec)>((timeout % 1000) * 1000)
+                    };
+
+                    auto count = select(endpoint + 1, nullptr, &writeSet, nullptr,
+                                        (timeout >= 0) ? &selectTimeout : nullptr);
+
+                    while (count == -1 && errno == EINTR)
+                        count = select(endpoint + 1, nullptr, &writeSet, nullptr,
+                                       (timeout >= 0) ? &selectTimeout : nullptr);
+
+                    if (count == -1)
+                        throw std::system_error(errno, std::system_category(), "Failed to select socket");
+                    else if (count == 0)
+                        throw ResponseError("Request timed out");
+
+                    int socketError;
+                    socklen_t optionLength;
+                    if (getsockopt(endpoint, SOL_SOCKET, SO_ERROR, &socketError, &optionLength) == -1)
+                        throw std::system_error(errno, std::system_category(), "Failed to get socket option");
+
+                    if (socketError != 0)
+                        throw std::system_error(socketError, std::system_category(), "Failed to connect");
+                }
+                else if (result == -1)
                     throw std::system_error(errno, std::system_category(), "Failed to connect");
 #endif
             }
@@ -590,7 +621,8 @@ namespace http
             Socket socket(internetProtocol);
 
             // take the first address from the list
-            socket.connect(addressInfo->ai_addr, static_cast<socklen_t>(addressInfo->ai_addrlen));
+            socket.connect(addressInfo->ai_addr, static_cast<socklen_t>(addressInfo->ai_addrlen),
+                           (timeout.count() >= 0) ? getRemainingMilliseconds(stopTime) : -1);
 
             auto remaining = requestData.size();
             auto sendData = requestData.data();
