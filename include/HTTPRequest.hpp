@@ -235,9 +235,9 @@ namespace http
 
             std::size_t send(const void* buffer, std::size_t length, const std::int64_t timeout)
             {
-                fd_set readSet;
-                FD_ZERO(&readSet);
-                FD_SET(endpoint, &readSet);
+                fd_set writeSet;
+                FD_ZERO(&writeSet);
+                FD_SET(endpoint, &writeSet);
 
                 timeval selectTimeout{
                     static_cast<decltype(timeval::tv_sec)>(timeout / 1000),
@@ -245,11 +245,11 @@ namespace http
                 };
 
 #ifdef _WIN32
-                auto count = select(0, nullptr, &readSet, nullptr,
+                auto count = select(0, nullptr, &writeSet, nullptr,
                                     (timeout >= 0) ? &selectTimeout : nullptr);
 
                 while (count == -1 && WSAGetLastError() == WSAEINTR)
-                    count = select(0, nullptr, &readSet, nullptr,
+                    count = select(0, nullptr, &writeSet, nullptr,
                                    (timeout >= 0) ? &selectTimeout : nullptr);
 
                 if (count == -1)
@@ -264,11 +264,11 @@ namespace http
                     result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
                                     static_cast<int>(length), 0);
 #else
-                auto count = select(endpoint + 1, nullptr, &readSet, nullptr,
+                auto count = select(endpoint + 1, nullptr, &writeSet, nullptr,
                                     (timeout >= 0) ? &selectTimeout : nullptr);
 
                 while (count == -1 && errno == EINTR)
-                    count = select(endpoint + 1, nullptr, &readSet, nullptr,
+                    count = select(endpoint + 1, nullptr, &writeSet, nullptr,
                                    (timeout >= 0) ? &selectTimeout : nullptr);
 
                 if (count == -1)
@@ -291,20 +291,20 @@ namespace http
 
             std::size_t recv(void* buffer, std::size_t length, const std::int64_t timeout)
             {
-                fd_set writeSet;
-                FD_ZERO(&writeSet);
-                FD_SET(endpoint, &writeSet);
+                fd_set readSet;
+                FD_ZERO(&readSet);
+                FD_SET(endpoint, &readSet);
 
                 timeval selectTimeout{
                     static_cast<decltype(timeval::tv_sec)>(timeout / 1000),
                     static_cast<decltype(timeval::tv_usec)>((timeout % 1000) * 1000)
                 };
 #ifdef _WIN32
-                auto count = select(0, &writeSet, nullptr, nullptr,
+                auto count = select(0, &readSet, nullptr, nullptr,
                                     (timeout >= 0) ? &selectTimeout : nullptr);
 
                 while (count == -1 && WSAGetLastError() == WSAEINTR)
-                    count = select(0, &writeSet, nullptr, nullptr,
+                    count = select(0, &readSet, nullptr, nullptr,
                                    (timeout >= 0) ? &selectTimeout : nullptr);
 
                 if (count == -1)
@@ -319,11 +319,11 @@ namespace http
                     result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
                                     static_cast<int>(length), 0);
 #else
-                auto count = select(endpoint + 1, &writeSet, nullptr, nullptr,
+                auto count = select(endpoint + 1, &readSet, nullptr, nullptr,
                                     (timeout >= 0) ? &selectTimeout : nullptr);
 
                 while (count == -1 && errno == EINTR)
-                    count = select(endpoint + 1, &writeSet, nullptr, nullptr,
+                    count = select(endpoint + 1, &readSet, nullptr, nullptr,
                                    (timeout >= 0) ? &selectTimeout : nullptr);
 
                 if (count == -1)
@@ -599,7 +599,7 @@ namespace http
             while (remaining > 0)
             {
                 const auto size = socket.send(sendData, remaining,
-                                              (timeout.count() >= 0) ? getMillisecondsUntil(stopTime) : -1);
+                                              (timeout.count() >= 0) ? getRemainingMilliseconds(stopTime) : -1);
                 remaining -= size;
                 sendData += size;
             }
@@ -620,7 +620,7 @@ namespace http
             for (;;)
             {
                 const auto size = socket.recv(tempBuffer.data(), tempBuffer.size(),
-                                              (timeout.count() >= 0) ? getMillisecondsUntil(stopTime) : -1);
+                                              (timeout.count() >= 0) ? getRemainingMilliseconds(stopTime) : -1);
                 if (size == 0) break; // disconnected
 
                 responseData.insert(responseData.end(), tempBuffer.begin(), tempBuffer.begin() + size);
@@ -765,7 +765,7 @@ namespace http
         }
 
     private:
-        static std::int64_t getMillisecondsUntil(std::chrono::steady_clock::time_point time)
+        static std::int64_t getRemainingMilliseconds(std::chrono::steady_clock::time_point time)
         {
             const auto now = std::chrono::steady_clock::now();
             const auto remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(time - now);
