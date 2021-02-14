@@ -133,12 +133,6 @@ namespace http
                 throw RequestError("Unsupported protocol");
         }
 
-#if defined(__unix__) && !defined(__APPLE__)
-        constexpr int noSignal = MSG_NOSIGNAL;
-#else
-        constexpr int noSignal = 0;
-#endif
-
         class Socket final
         {
         public:
@@ -377,6 +371,12 @@ namespace http
                 ::close(endpoint);
 #endif
             }
+
+#if defined(__unix__) && !defined(__APPLE__)
+            static constexpr int noSignal = MSG_NOSIGNAL;
+#else
+            static constexpr int noSignal = 0;
+#endif
 
             Type endpoint = invalid;
         };
