@@ -640,8 +640,12 @@ namespace http
             constexpr std::array<std::uint8_t, 2> crlf = {'\r', '\n'};
             Response response;
             std::vector<std::uint8_t> responseData;
-            bool parsedStatusLine = false;
-            bool parsedHeaders = false;
+            enum class State
+            {
+                statusLine,
+                headers,
+                body
+            } state = State::statusLine;
             bool contentLengthReceived = false;
             std::size_t contentLength = 0;
             bool chunkedResponse = false;
@@ -657,7 +661,7 @@ namespace http
 
                 responseData.insert(responseData.end(), tempBuffer.begin(), tempBuffer.begin() + size);
 
-                if (!parsedHeaders)
+                if (state != State::body)
                     for (;;)
                     {
                         // RFC 7230, 3. Message Format
@@ -672,12 +676,12 @@ namespace http
                         // empty line indicates the end of the header section
                         if (line.empty())
                         {
-                            parsedHeaders = true;
+                            state = State::body;
                             break;
                         }
-                        else if (!parsedStatusLine) // RFC 7230, 3.1.2. Status Line
+                        else if (state == State::statusLine) // RFC 7230, 3.1.2. Status Line
                         {
-                            parsedStatusLine = true;
+                            state = State::headers;
                             std::size_t partNum = 0;
 
                             // tokenize the status line
@@ -692,7 +696,7 @@ namespace http
                                 beginIterator = endIterator + 1;
                             }
                         }
-                        else // RFC 7230, 3.2.  Header Fields
+                        else if (state == State::headers) // RFC 7230, 3.2.  Header Fields
                         {
                             response.headers.push_back(line);
 
@@ -731,7 +735,7 @@ namespace http
                         }
                     }
 
-                if (parsedHeaders)
+                if (state == State::body)
                 {
                     // Content-Length must be ignored if Transfer-Encoding is received
                     if (chunkedResponse)
