@@ -216,15 +216,6 @@ namespace http
 
             void connect(const struct sockaddr* address, socklen_t addressSize, const std::int64_t timeout)
             {
-                fd_set writeSet;
-                FD_ZERO(&writeSet);
-                FD_SET(endpoint, &writeSet);
-
-                timeval selectTimeout{
-                    static_cast<decltype(timeval::tv_sec)>(timeout / 1000),
-                    static_cast<decltype(timeval::tv_usec)>((timeout % 1000) * 1000)
-                };
-
 #ifdef _WIN32
                 auto result = ::connect(endpoint, address, addressSize);
                 while (result == -1 && WSAGetLastError() == WSAEINTR)
@@ -234,17 +225,7 @@ namespace http
                 {
                     if (WSAGetLastError() != WSAEWOULDBLOCK)
                     {
-                        auto count = select(0, nullptr, &writeSet, nullptr,
-                                            (timeout >= 0) ? &selectTimeout : nullptr);
-
-                        while (count == -1 && WSAGetLastError() == WSAEINTR)
-                            count = select(0, nullptr, &writeSet, nullptr,
-                                           (timeout >= 0) ? &selectTimeout : nullptr);
-
-                        if (count == -1)
-                            throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to select socket");
-                        else if (count == 0)
-                            throw ResponseError("Request timed out");
+                        select(SelectType::write, timeout);
 
                         int socketError;
                         socklen_t optionLength = sizeof(socketError);
@@ -266,17 +247,7 @@ namespace http
                 {
                     if (errno == EINPROGRESS)
                     {
-                        auto count = select(endpoint + 1, nullptr, &writeSet, nullptr,
-                                            (timeout >= 0) ? &selectTimeout : nullptr);
-
-                        while (count == -1 && errno == EINTR)
-                            count = select(endpoint + 1, nullptr, &writeSet, nullptr,
-                                           (timeout >= 0) ? &selectTimeout : nullptr);
-
-                        if (count == -1)
-                            throw std::system_error(errno, std::system_category(), "Failed to select socket");
-                        else if (count == 0)
-                            throw ResponseError("Request timed out");
+                        select(SelectType::write, timeout);
 
                         int socketError;
                         socklen_t optionLength = sizeof(socketError);
@@ -294,28 +265,8 @@ namespace http
 
             std::size_t send(const void* buffer, std::size_t length, const std::int64_t timeout)
             {
-                fd_set writeSet;
-                FD_ZERO(&writeSet);
-                FD_SET(endpoint, &writeSet);
-
-                timeval selectTimeout{
-                    static_cast<decltype(timeval::tv_sec)>(timeout / 1000),
-                    static_cast<decltype(timeval::tv_usec)>((timeout % 1000) * 1000)
-                };
-
+                select(SelectType::write, timeout);
 #ifdef _WIN32
-                auto count = select(0, nullptr, &writeSet, nullptr,
-                                    (timeout >= 0) ? &selectTimeout : nullptr);
-
-                while (count == -1 && WSAGetLastError() == WSAEINTR)
-                    count = select(0, nullptr, &writeSet, nullptr,
-                                   (timeout >= 0) ? &selectTimeout : nullptr);
-
-                if (count == -1)
-                    throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to select socket");
-                else if (count == 0)
-                    throw ResponseError("Request timed out");
-
                 auto result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
                                      static_cast<int>(length), 0);
 
@@ -326,18 +277,6 @@ namespace http
                 if (result == -1)
                     throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to send data");
 #else
-                auto count = select(endpoint + 1, nullptr, &writeSet, nullptr,
-                                    (timeout >= 0) ? &selectTimeout : nullptr);
-
-                while (count == -1 && errno == EINTR)
-                    count = select(endpoint + 1, nullptr, &writeSet, nullptr,
-                                   (timeout >= 0) ? &selectTimeout : nullptr);
-
-                if (count == -1)
-                    throw std::system_error(errno, std::system_category(), "Failed to select socket");
-                else if (count == 0)
-                    throw ResponseError("Request timed out");
-
                 auto result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
                                      length, noSignal);
 
@@ -353,27 +292,8 @@ namespace http
 
             std::size_t recv(void* buffer, std::size_t length, const std::int64_t timeout)
             {
-                fd_set readSet;
-                FD_ZERO(&readSet);
-                FD_SET(endpoint, &readSet);
-
-                timeval selectTimeout{
-                    static_cast<decltype(timeval::tv_sec)>(timeout / 1000),
-                    static_cast<decltype(timeval::tv_usec)>((timeout % 1000) * 1000)
-                };
+                select(SelectType::read, timeout);
 #ifdef _WIN32
-                auto count = select(0, &readSet, nullptr, nullptr,
-                                    (timeout >= 0) ? &selectTimeout : nullptr);
-
-                while (count == -1 && WSAGetLastError() == WSAEINTR)
-                    count = select(0, &readSet, nullptr, nullptr,
-                                   (timeout >= 0) ? &selectTimeout : nullptr);
-
-                if (count == -1)
-                    throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to select socket");
-                else if (count == 0)
-                    throw ResponseError("Request timed out");
-
                 auto result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
                                      static_cast<int>(length), 0);
 
@@ -384,18 +304,6 @@ namespace http
                 if (result == -1)
                     throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to read data");
 #else
-                auto count = select(endpoint + 1, &readSet, nullptr, nullptr,
-                                    (timeout >= 0) ? &selectTimeout : nullptr);
-
-                while (count == -1 && errno == EINTR)
-                    count = select(endpoint + 1, &readSet, nullptr, nullptr,
-                                   (timeout >= 0) ? &selectTimeout : nullptr);
-
-                if (count == -1)
-                    throw std::system_error(errno, std::system_category(), "Failed to select socket");
-                else if (count == 0)
-                    throw ResponseError("Request timed out");
-
                 auto result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
                                      length, noSignal);
 
@@ -412,6 +320,61 @@ namespace http
             operator Type() const noexcept { return endpoint; }
 
         private:
+            enum class SelectType
+            {
+                read,
+                write
+            };
+
+            void select(const SelectType type, const std::int64_t timeout)
+            {
+                fd_set descriptorSet;
+                FD_ZERO(&descriptorSet);
+                FD_SET(endpoint, &descriptorSet);
+
+                timeval selectTimeout{
+                    static_cast<decltype(timeval::tv_sec)>(timeout / 1000),
+                    static_cast<decltype(timeval::tv_usec)>((timeout % 1000) * 1000)
+                };
+#ifdef _WIN32
+                auto count = ::select(0,
+                                      (type == SelectType::read) ? &descriptorSet : nullptr,
+                                      (type == SelectType::write) ? &descriptorSet : nullptr,
+                                      nullptr,
+                                      (timeout >= 0) ? &selectTimeout : nullptr);
+
+                while (count == -1 && WSAGetLastError() == WSAEINTR)
+                    count = ::select(0,
+                                     (type == SelectType::read) ? &descriptorSet : nullptr,
+                                     (type == SelectType::write) ? &descriptorSet : nullptr,
+                                     nullptr,
+                                     (timeout >= 0) ? &selectTimeout : nullptr);
+
+                if (count == -1)
+                    throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to select socket");
+                else if (count == 0)
+                    throw ResponseError("Request timed out");
+#else
+                auto count = ::select(endpoint + 1,
+                                      (type == SelectType::read) ? &descriptorSet : nullptr,
+                                      (type == SelectType::write) ? &descriptorSet : nullptr,
+                                      nullptr,
+                                      (timeout >= 0) ? &selectTimeout : nullptr);
+
+                while (count == -1 && errno == EINTR)
+                    count = ::select(endpoint + 1,
+                                     (type == SelectType::read) ? &descriptorSet : nullptr,
+                                     (type == SelectType::write) ? &descriptorSet : nullptr,
+                                     nullptr,
+                                     (timeout >= 0) ? &selectTimeout : nullptr);
+
+                if (count == -1)
+                    throw std::system_error(errno, std::system_category(), "Failed to select socket");
+                else if (count == 0)
+                    throw ResponseError("Request timed out");
+#endif
+            }
+
             Type endpoint = invalid;
         };
     }
