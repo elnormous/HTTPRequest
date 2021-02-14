@@ -228,39 +228,42 @@ namespace http
                 while (result == -1 && errno == EINTR)
                     result = ::connect(endpoint, address, addressSize);
 
-                if (errno == EINPROGRESS)
+                if (result == -1)
                 {
-                    fd_set writeSet;
-                    FD_ZERO(&writeSet);
-                    FD_SET(endpoint, &writeSet);
+                    if (errno == EINPROGRESS)
+                    {
+                        fd_set writeSet;
+                        FD_ZERO(&writeSet);
+                        FD_SET(endpoint, &writeSet);
 
-                    timeval selectTimeout{
-                        static_cast<decltype(timeval::tv_sec)>(timeout / 1000),
-                        static_cast<decltype(timeval::tv_usec)>((timeout % 1000) * 1000)
-                    };
+                        timeval selectTimeout{
+                            static_cast<decltype(timeval::tv_sec)>(timeout / 1000),
+                            static_cast<decltype(timeval::tv_usec)>((timeout % 1000) * 1000)
+                        };
 
-                    auto count = select(endpoint + 1, nullptr, &writeSet, nullptr,
-                                        (timeout >= 0) ? &selectTimeout : nullptr);
+                        auto count = select(endpoint + 1, nullptr, &writeSet, nullptr,
+                                            (timeout >= 0) ? &selectTimeout : nullptr);
 
-                    while (count == -1 && errno == EINTR)
-                        count = select(endpoint + 1, nullptr, &writeSet, nullptr,
-                                       (timeout >= 0) ? &selectTimeout : nullptr);
+                        while (count == -1 && errno == EINTR)
+                            count = select(endpoint + 1, nullptr, &writeSet, nullptr,
+                                           (timeout >= 0) ? &selectTimeout : nullptr);
 
-                    if (count == -1)
-                        throw std::system_error(errno, std::system_category(), "Failed to select socket");
-                    else if (count == 0)
-                        throw ResponseError("Request timed out");
+                        if (count == -1)
+                            throw std::system_error(errno, std::system_category(), "Failed to select socket");
+                        else if (count == 0)
+                            throw ResponseError("Request timed out");
 
-                    int socketError;
-                    socklen_t optionLength;
-                    if (getsockopt(endpoint, SOL_SOCKET, SO_ERROR, &socketError, &optionLength) == -1)
-                        throw std::system_error(errno, std::system_category(), "Failed to get socket option");
+                        int socketError;
+                        socklen_t optionLength;
+                        if (getsockopt(endpoint, SOL_SOCKET, SO_ERROR, &socketError, &optionLength) == -1)
+                            throw std::system_error(errno, std::system_category(), "Failed to get socket option");
 
-                    if (socketError != 0)
-                        throw std::system_error(socketError, std::system_category(), "Failed to connect");
+                        if (socketError != 0)
+                            throw std::system_error(socketError, std::system_category(), "Failed to connect");
+                    }
+                    else
+                        throw std::system_error(errno, std::system_category(), "Failed to connect");
                 }
-                else if (result == -1)
-                    throw std::system_error(errno, std::system_category(), "Failed to connect");
 #endif
             }
 
