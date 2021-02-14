@@ -61,6 +61,8 @@ catch (const std::exception& e)
 }
 ```
 
+The default timeout for a request with HTTPRequest is 2 seconds. To change the timeout, pass `std::chrono::duration` as a last parameter to `send()`. To disable the timeout, pass a negative duration to `send()`.
+
 ## License
 
 HTTPRequest is released to the Public Domain.
