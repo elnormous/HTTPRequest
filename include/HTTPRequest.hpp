@@ -133,12 +133,6 @@ namespace http
                 throw RequestError("Unsupported protocol");
         }
 
-#ifdef _WIN32
-        constexpr auto closeSocket = closesocket;
-#else
-        constexpr auto closeSocket = close;
-#endif
-
 #if defined(__unix__) && !defined(__APPLE__)
         constexpr int noSignal = MSG_NOSIGNAL;
 #else
@@ -166,20 +160,20 @@ namespace http
                 unsigned long mode = 1;
                 if (ioctlsocket(endpoint, FIONBIO, &mode) != 0)
                 {
-                    closeSocket(endpoint);
+                    close();
                     throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to get socket flags");
                 }
 #else
                 const auto flags = fcntl(endpoint, F_GETFL, 0);
                 if (flags == -1)
                 {
-                    closeSocket(endpoint);
+                    close();
                     throw std::system_error(errno, std::system_category(), "Failed to get socket flags");
                 }
 
                 if (fcntl(endpoint, F_SETFL, flags | O_NONBLOCK) == -1)
                 {
-                    closeSocket(endpoint);
+                    close();
                     throw std::system_error(errno, std::system_category(), "Failed to set socket flags");
                 }
 #endif
@@ -188,7 +182,7 @@ namespace http
                 const int value = 1;
                 if (setsockopt(endpoint, SOL_SOCKET, SO_NOSIGPIPE, &value, sizeof(value)) == -1)
                 {
-                    closeSocket(endpoint);
+                    close();
                     throw std::system_error(errno, std::system_category(), "Failed to set socket option");
                 }
 #endif
@@ -196,7 +190,7 @@ namespace http
 
             ~Socket()
             {
-                if (endpoint != invalid) closeSocket(endpoint);
+                if (endpoint != invalid) close();
             }
 
             Socket(Socket&& other) noexcept:
@@ -208,7 +202,7 @@ namespace http
             Socket& operator=(Socket&& other) noexcept
             {
                 if (&other == this) return *this;
-                if (endpoint != invalid) closeSocket(endpoint);
+                if (endpoint != invalid) close();
                 endpoint = other.endpoint;
                 other.endpoint = invalid;
                 return *this;
@@ -372,6 +366,15 @@ namespace http
                     throw std::system_error(errno, std::system_category(), "Failed to select socket");
                 else if (count == 0)
                     throw ResponseError("Request timed out");
+#endif
+            }
+
+            void close() noexcept
+            {
+#ifdef _WIN32
+                closesocket(endpoint);
+#else
+                ::close(endpoint);
 #endif
             }
 
