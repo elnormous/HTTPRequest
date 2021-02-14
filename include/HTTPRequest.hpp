@@ -657,7 +657,8 @@ namespace http
             {
                 const auto size = socket.recv(tempBuffer.data(), tempBuffer.size(),
                                               (timeout.count() >= 0) ? getRemainingMilliseconds(stopTime) : -1);
-                if (size == 0) break; // disconnected
+                if (size == 0) // disconnected
+                    return response;
 
                 responseData.insert(responseData.end(), tempBuffer.begin(), tempBuffer.begin() + size);
 
@@ -740,7 +741,6 @@ namespace http
                     // Content-Length must be ignored if Transfer-Encoding is received
                     if (chunkedResponse)
                     {
-                        bool dataReceived = false;
                         for (;;)
                         {
                             if (expectedChunkSize > 0)
@@ -776,17 +776,10 @@ namespace http
                                 responseData.erase(responseData.begin(), i + 2);
 
                                 expectedChunkSize = std::stoul(line, nullptr, 16);
-
                                 if (expectedChunkSize == 0)
-                                {
-                                    dataReceived = true;
-                                    break;
-                                }
+                                    return response;
                             }
                         }
-
-                        if (dataReceived)
-                            break;
                     }
                     else
                     {
@@ -795,7 +788,7 @@ namespace http
 
                         // got the whole content
                         if (contentLengthReceived && response.body.size() >= contentLength)
-                            break;
+                            return response;
                     }
                 }
             }
