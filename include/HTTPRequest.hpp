@@ -216,14 +216,48 @@ namespace http
 
             void connect(const struct sockaddr* address, socklen_t addressSize, const std::int64_t timeout)
             {
+                fd_set writeSet;
+                FD_ZERO(&writeSet);
+                FD_SET(endpoint, &writeSet);
+
+                timeval selectTimeout{
+                    static_cast<decltype(timeval::tv_sec)>(timeout / 1000),
+                    static_cast<decltype(timeval::tv_usec)>((timeout % 1000) * 1000)
+                };
+
                 auto result = ::connect(endpoint, address, addressSize);
 
 #ifdef _WIN32
                 while (result == -1 && WSAGetLastError() == WSAEINTR)
                     result = ::connect(endpoint, address, addressSize);
 
-                if (result == -1 && WSAGetLastError() != WSAEWOULDBLOCK)
-                    throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to connect");
+                if (result == -1)
+                {
+                    if (WSAGetLastError() != WSAEWOULDBLOCK)
+                    {
+                        auto count = select(0, nullptr, &writeSet, nullptr,
+                                            (timeout >= 0) ? &selectTimeout : nullptr);
+
+                        while (count == -1 && WSAGetLastError() == WSAEINTR)
+                            count = select(0, nullptr, &writeSet, nullptr,
+                                           (timeout >= 0) ? &selectTimeout : nullptr);
+
+                        if (count == -1)
+                            throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to select socket");
+                        else if (count == 0)
+                            throw ResponseError("Request timed out");
+
+                        int socketError;
+                        socklen_t optionLength = sizeof(socketError);
+                        if (getsockopt(endpoint, SOL_SOCKET, SO_ERROR, &socketError, &optionLength) == -1)
+                            throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to get socket option");
+
+                        if (socketError != 0)
+                            throw std::system_error(socketError, std::system_category(), "Failed to connect");
+                    }
+                    else
+                        throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to connect");
+                }
 #else
                 while (result == -1 && errno == EINTR)
                     result = ::connect(endpoint, address, addressSize);
@@ -232,15 +266,6 @@ namespace http
                 {
                     if (errno == EINPROGRESS)
                     {
-                        fd_set writeSet;
-                        FD_ZERO(&writeSet);
-                        FD_SET(endpoint, &writeSet);
-
-                        timeval selectTimeout{
-                            static_cast<decltype(timeval::tv_sec)>(timeout / 1000),
-                            static_cast<decltype(timeval::tv_usec)>((timeout % 1000) * 1000)
-                        };
-
                         auto count = select(endpoint + 1, nullptr, &writeSet, nullptr,
                                             (timeout >= 0) ? &selectTimeout : nullptr);
 
@@ -254,7 +279,7 @@ namespace http
                             throw ResponseError("Request timed out");
 
                         int socketError;
-                        socklen_t optionLength;
+                        socklen_t optionLength = sizeof(socketError);
                         if (getsockopt(endpoint, SOL_SOCKET, SO_ERROR, &socketError, &optionLength) == -1)
                             throw std::system_error(errno, std::system_category(), "Failed to get socket option");
 
