@@ -217,7 +217,7 @@ namespace http
 
                         int socketError;
                         socklen_t optionLength = sizeof(socketError);
-                        if (getsockopt(endpoint, SOL_SOCKET, SO_ERROR, &socketError, &optionLength) == -1)
+                        if (getsockopt(endpoint, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&socketError), &optionLength) == -1)
                             throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to get socket option");
 
                         if (socketError != 0)
