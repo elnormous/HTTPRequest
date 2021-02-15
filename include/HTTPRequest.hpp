@@ -215,10 +215,13 @@ namespace http
                     {
                         select(SelectType::write, timeout);
 
-                        int socketError;
-                        socklen_t optionLength = sizeof(socketError);
-                        if (getsockopt(endpoint, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&socketError), &optionLength) == -1)
+                        char socketErrorPointer[sizeof(int)];
+                        socklen_t optionLength = sizeof(socketErrorPointer);
+                        if (getsockopt(endpoint, SOL_SOCKET, SO_ERROR, socketErrorPointer, &optionLength) == -1)
                             throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to get socket option");
+
+                        int socketError;
+                        std::memcpy(&socketError, socketErrorPointer, sizeof(socketErrorPointer));
 
                         if (socketError != 0)
                             throw std::system_error(socketError, std::system_category(), "Failed to connect");
