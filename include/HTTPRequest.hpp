@@ -158,7 +158,7 @@ namespace http
                     throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to get socket flags");
                 }
 #else
-                const auto flags = fcntl(endpoint, F_GETFL, 0);
+                const auto flags = fcntl(endpoint, F_GETFL);
                 if (flags == -1)
                 {
                     close();
