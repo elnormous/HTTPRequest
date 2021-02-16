@@ -202,7 +202,7 @@ namespace http
                 return *this;
             }
 
-            void connect(const struct sockaddr* address, socklen_t addressSize, const std::int64_t timeout)
+            void connect(const struct sockaddr* address, const socklen_t addressSize, const std::int64_t timeout)
             {
 #ifdef _WIN32
                 auto result = ::connect(endpoint, address, addressSize);
@@ -256,7 +256,7 @@ namespace http
 #endif
             }
 
-            std::size_t send(const void* buffer, std::size_t length, const std::int64_t timeout)
+            std::size_t send(const void* buffer, const std::size_t length, const std::int64_t timeout)
             {
                 select(SelectType::write, timeout);
 #ifdef _WIN32
@@ -283,7 +283,7 @@ namespace http
                 return static_cast<std::size_t>(result);
             }
 
-            std::size_t recv(void* buffer, std::size_t length, const std::int64_t timeout)
+            std::size_t recv(void* buffer, const std::size_t length, const std::int64_t timeout)
             {
                 select(SelectType::read, timeout);
 #ifdef _WIN32
@@ -513,7 +513,7 @@ namespace http
     {
     public:
         explicit Request(const std::string& url,
-                         InternetProtocol protocol = InternetProtocol::V4):
+                         const InternetProtocol protocol = InternetProtocol::V4):
             internetProtocol(protocol)
         {
             const auto schemeEndPosition = url.find("://");
@@ -562,7 +562,7 @@ namespace http
         Response send(const std::string& method,
                       const std::map<std::string, std::string>& parameters,
                       const std::vector<std::string>& headers = {},
-                      std::chrono::milliseconds timeout = std::chrono::milliseconds{-1})
+                      const std::chrono::milliseconds timeout = std::chrono::milliseconds{-1})
         {
             std::string body;
             bool first = true;
@@ -581,7 +581,7 @@ namespace http
         Response send(const std::string& method = "GET",
                       const std::string& body = "",
                       const std::vector<std::string>& headers = {},
-                      std::chrono::milliseconds timeout = std::chrono::milliseconds{-1})
+                      const std::chrono::milliseconds timeout = std::chrono::milliseconds{-1})
         {
             return send(method,
                         std::vector<uint8_t>(body.begin(), body.end()),
@@ -592,7 +592,7 @@ namespace http
         Response send(const std::string& method,
                       const std::vector<uint8_t>& body,
                       const std::vector<std::string>& headers,
-                      std::chrono::milliseconds timeout = std::chrono::milliseconds{-1})
+                      const std::chrono::milliseconds timeout = std::chrono::milliseconds{-1})
         {
             const auto stopTime = std::chrono::steady_clock::now() + timeout;
 
@@ -802,7 +802,7 @@ namespace http
         }
 
     private:
-        static std::int64_t getRemainingMilliseconds(std::chrono::steady_clock::time_point time)
+        static std::int64_t getRemainingMilliseconds(const std::chrono::steady_clock::time_point time)
         {
             const auto now = std::chrono::steady_clock::now();
             const auto remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(time - now);
