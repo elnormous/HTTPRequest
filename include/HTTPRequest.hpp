@@ -54,15 +54,15 @@ namespace http
     class RequestError final: public std::logic_error
     {
     public:
-        explicit RequestError(const char* str): std::logic_error(str) {}
-        explicit RequestError(const std::string& str): std::logic_error(str) {}
+        explicit RequestError(const char* str): std::logic_error{str} {}
+        explicit RequestError(const std::string& str): std::logic_error{str} {}
     };
 
     class ResponseError final: public std::runtime_error
     {
     public:
-        explicit ResponseError(const char* str): std::runtime_error(str) {}
-        explicit ResponseError(const std::string& str): std::runtime_error(str) {}
+        explicit ResponseError(const char* str): std::runtime_error{str} {}
+        explicit ResponseError(const std::string& str): std::runtime_error{str} {}
     };
 
     enum class InternetProtocol: std::uint8_t
@@ -99,7 +99,7 @@ namespace http
             }
 
             WinSock(WinSock&& other) noexcept:
-                started(other.started)
+                started{other.started}
             {
                 other.started = false;
             }
@@ -146,7 +146,7 @@ namespace http
 #endif
 
             explicit Socket(InternetProtocol internetProtocol):
-                endpoint(socket(getAddressFamily(internetProtocol), SOCK_STREAM, IPPROTO_TCP))
+                endpoint{socket(getAddressFamily(internetProtocol), SOCK_STREAM, IPPROTO_TCP)}
             {
                 if (endpoint == invalid)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to create socket");
@@ -189,7 +189,7 @@ namespace http
             }
 
             Socket(Socket&& other) noexcept:
-                endpoint(other.endpoint)
+                endpoint{other.endpoint}
             {
                 other.endpoint = invalid;
             }
@@ -515,7 +515,7 @@ namespace http
     public:
         explicit Request(const std::string& url,
                          const InternetProtocol protocol = InternetProtocol::V4):
-            internetProtocol(protocol)
+            internetProtocol{protocol}
         {
             const auto schemeEndPosition = url.find("://");
 
