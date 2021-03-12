@@ -212,8 +212,6 @@ namespace http
 
                 if (result == -1)
                 {
-                    const auto e = WSAGetLastError();
-
                     if (WSAGetLastError() == WSAEWOULDBLOCK)
                     {
                         select(SelectType::write, timeout);
