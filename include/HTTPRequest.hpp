@@ -554,6 +554,8 @@ namespace http
                 port = domain.substr(portPosition + 1);
                 domain.resize(portPosition);
             }
+            else if (scheme == "https")
+                port = "443";
             else
                 port = "80";
         }
@@ -595,7 +597,7 @@ namespace http
         {
             const auto stopTime = std::chrono::steady_clock::now() + timeout;
 
-            if (scheme != "http")
+            if (scheme != "http" && scheme != "https")
                 throw RequestError("Only HTTP scheme is supported");
 
             addrinfo hints = {};
