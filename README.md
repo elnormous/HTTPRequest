@@ -10,11 +10,11 @@ Example of GET request
 try
 {
     // you can pass http::InternetProtocol::V6 to Request to make an IPv6 request
-    http::Request request("http://test.com/test");
+    http::Request request{"http://test.com/test"};
 
     // send a get request
-    const http::Response response = request.send("GET");
-    std::cout << std::string(response.body.begin(), response.body.end()) << '\n'; // print the result
+    const auto response = request.send("GET");
+    std::cout << std::string{response.body.begin(), response.body.end()} << '\n'; // print the result
 }
 catch (const std::exception& e)
 {
@@ -28,12 +28,12 @@ Example of POST request
 
 try
 {
-    http::Request request("http://test.com/test");
+    http::Request request{"http://test.com/test"};
     // send a post request
-    const http::Response response = request.send("POST", "foo=1&bar=baz", {
+    const auto response = request.send("POST", "foo=1&bar=baz", {
         "Content-Type: application/x-www-form-urlencoded"
     });
-    std::cout << std::string(response.body.begin(), response.body.end()) << '\n'; // print the result
+    std::cout << std::string{response.body.begin(), response.body.end()} << '\n'; // print the result
 }
 catch (const std::exception& e)
 {
@@ -50,10 +50,10 @@ try
     http::Request request("http://test.com/test");
     // pass parameters as a map
     std::map<std::string, std::string> parameters = {{"foo", "1"}, {"bar", "baz"}};
-    const http::Response response = request.send("POST", parameters, {
+    const auto response = request.send("POST", parameters, {
         "Content-Type: application/x-www-form-urlencoded"
     });
-    std::cout << std::string(response.body.begin(), response.body.end()) << '\n'; // print the result
+    std::cout << std::string{response.body.begin(), response.body.end()} << '\n'; // print the result
 }
 catch (const std::exception& e)
 {
