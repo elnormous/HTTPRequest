@@ -65,15 +65,17 @@ int main(int argc, const char* argv[])
             "User-Agent: runscope/0.1"
         }, std::chrono::seconds(2));
 
-        if (response.status == http::Response::Ok &&
-            !output.empty())
+        if (response.status == http::Response::Ok)
         {
-            std::ofstream outfile{output, std::ofstream::binary};
-            outfile.write(reinterpret_cast<const char*>(response.body.data()),
-                          static_cast<std::streamsize>(response.body.size()));
+            if (!output.empty())
+            {
+                std::ofstream outfile{output, std::ofstream::binary};
+                outfile.write(reinterpret_cast<const char*>(response.body.data()),
+                              static_cast<std::streamsize>(response.body.size()));
+            }
+            else
+                std::cout << std::string{response.body.begin(), response.body.end()} << '\n';
         }
-        else
-            std::cout << std::string{response.body.begin(), response.body.end()} << '\n';
     }
     catch (const std::exception& e)
     {
