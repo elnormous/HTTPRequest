@@ -1,65 +1,109 @@
 # HTTPRequest
 
-HTTPRequest is a single-header library for making HTTP requests. You can just include it in your project and use it. HTTPRequest was tested on macOS, Windows and Linux, but it should work on most of the Linux-based platforms. Supports IPv4 and IPv6.
+HTTPRequest is a single-header library for making HTTP requests. You can just include it in your project and use it.
+| :heavy_check_mark: Supports IPv4 and IPv6 |
+| --- |
+
+# HTTPRequest was tested on
+- MacOS
+- Windows
+- Linux
+  - It should work on most of the Linux-based platforms
 
 ## Usage
-Example of GET request
-```cpp
-#include "HTTPRequest.hpp"
+<details>
+  <summary>Example of GET request</summary>
 
-try
-{
-    // you can pass http::InternetProtocol::V6 to Request to make an IPv6 request
-    http::Request request{"http://test.com/test"};
+  ```cpp
+  #include <iostream>
 
-    // send a get request
-    const auto response = request.send("GET");
-    std::cout << std::string{response.body.begin(), response.body.end()} << '\n'; // print the result
-}
-catch (const std::exception& e)
-{
-    std::cerr << "Request failed, error: " << e.what() << '\n';
-}
-```
+  #include "HTTPRequest.hpp"
+  
+  int main(void)
+  {
+      try
+      {
+          // create a request
+          // you can pass http::InternetProtocol::V6 to Request to make an IPv6 request
+          http::Request request("http://test.com/test");
 
-Example of POST request
-```cpp
-#include "HTTPRequest.hpp"
+          // send a get request
+          const auto response = request.send("GET");
 
-try
-{
-    http::Request request{"http://test.com/test"};
-    // send a post request
-    const auto response = request.send("POST", "foo=1&bar=baz", {
-        "Content-Type: application/x-www-form-urlencoded"
-    });
-    std::cout << std::string{response.body.begin(), response.body.end()} << '\n'; // print the result
-}
-catch (const std::exception& e)
-{
-    std::cerr << "Request failed, error: " << e.what() << '\n';
-}
-```
+          // print the result
+          std::cout << std::string{response.body.begin(), response.body.end()} << std::endl;
+      }
+      catch (const std::exception& e)
+      {
+          std::cerr << "Request failed, error: " << e.what() << std::endl;
+      }
+  }
+  ```
+</details>
+<details>
+  <summary>Example of POST request</summary>
 
-Example of POST request by passing a map of parameters
-```cpp
-#include "HTTPRequest.hpp"
+  ```cpp
+  #include <iostream>
 
-try
-{
-    http::Request request("http://test.com/test");
-    // pass parameters as a map
-    std::map<std::string, std::string> parameters = {{"foo", "1"}, {"bar", "baz"}};
-    const auto response = request.send("POST", parameters, {
-        "Content-Type: application/x-www-form-urlencoded"
-    });
-    std::cout << std::string{response.body.begin(), response.body.end()} << '\n'; // print the result
-}
-catch (const std::exception& e)
-{
-    std::cerr << "Request failed, error: " << e.what() << '\n';
-}
-```
+  #include "HTTPRequest.hpp"
+  
+  int main(void)
+  {
+      try
+      {
+          // create a request
+          http::Request request("http://test.com/test");
+
+          // send a post request
+          const auto response = request.send("POST", "foo=1&bar=baz", {
+              "Content-Type: application/x-www-form-urlencoded"
+          });
+
+          // print the result
+          std::cout << std::string{response.body.begin(), response.body.end()} << std::endl;
+      }
+      catch (const std::exception& e)
+      {
+          std::cerr << "Request failed, error: " << e.what() << std::endl;
+      }
+  }
+  ```
+</details>
+<details>
+    <summary>Example of POST request by passing a map of parameters</summary>
+
+  ```cpp
+  #include <iostream>
+  #include <map>
+
+  #include "HTTPRequest.hpp"
+  
+  int main(void)
+  {
+      try
+      {
+          // pass parameters as a map
+          std::map<std::string, std::string> parameters = {{"foo", "1"}, {"bar", "baz"}};
+
+          // create a request
+          http::Request request("http://test.com/test");
+
+          // send a post request
+          const auto response = request.send("POST", parameters, {
+              "Content-Type: application/x-www-form-urlencoded"
+          });
+
+          // print the result
+          std::cout << std::string{response.body.begin(), response.body.end()} << std::endl;
+      }
+      catch (const std::exception& e)
+      {
+          std::cerr << "Request failed, error: " << e.what() << std::endl;
+      }
+  }  
+  ```
+</details>
 
 To set a timeout for HTTP requests, pass `std::chrono::duration` as a last parameter to `send()`. A negative duration (default) passed to `send()` disables timeout.
 
