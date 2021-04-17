@@ -26,16 +26,16 @@
 #  pragma push_macro("NOMINMAX")
 #  ifndef WIN32_LEAN_AND_MEAN
 #    define WIN32_LEAN_AND_MEAN
-#  endif
+#  endif // WIN32_LEAN_AND_MEAN
 #  ifndef NOMINMAX
 #    define NOMINMAX
-#  endif
+#  endif // NOMINMAX
 #  include <winsock2.h>
 #  if _WIN32_WINNT < _WIN32_WINNT_WINXP
 extern "C" char *_strdup(const char *strSource);
 #    define strdup _strdup
 #    include <wspiapi.h>
-#  endif
+#  endif // _WIN32_WINNT < _WIN32_WINNT_WINXP
 #  include <ws2tcpip.h>
 #  pragma pop_macro("WIN32_LEAN_AND_MEAN")
 #  pragma pop_macro("NOMINMAX")
@@ -47,7 +47,7 @@ extern "C" char *_strdup(const char *strSource);
 #  include <sys/select.h>
 #  include <sys/socket.h>
 #  include <unistd.h>
-#endif
+#endif // _WIN32
 
 namespace http
 {
@@ -116,7 +116,7 @@ namespace http
         private:
             bool started = false;
         };
-#endif
+#endif // _WIN32
 
         inline int getLastError() noexcept
         {
@@ -124,7 +124,7 @@ namespace http
             return WSAGetLastError();
 #else
             return errno;
-#endif
+#endif // _WIN32
         }
 
         constexpr int getAddressFamily(InternetProtocol internetProtocol)
@@ -143,7 +143,7 @@ namespace http
 #else
             using Type = int;
             static constexpr Type invalid = -1;
-#endif
+#endif // _WIN32
 
             explicit Socket(InternetProtocol internetProtocol):
                 endpoint{socket(getAddressFamily(internetProtocol), SOCK_STREAM, IPPROTO_TCP)}
@@ -171,7 +171,7 @@ namespace http
                     close();
                     throw std::system_error(errno, std::system_category(), "Failed to set socket flags");
                 }
-#endif
+#endif // _WIN32
 
 #ifdef __APPLE__
                 const int value = 1;
@@ -180,7 +180,7 @@ namespace http
                     close();
                     throw std::system_error(errno, std::system_category(), "Failed to set socket option");
                 }
-#endif
+#endif // __APPLE__
             }
 
             ~Socket()
@@ -252,7 +252,7 @@ namespace http
                     else
                         throw std::system_error(errno, std::system_category(), "Failed to connect");
                 }
-#endif
+#endif // _WIN32
             }
 
             std::size_t send(const void* buffer, const std::size_t length, const std::int64_t timeout)
@@ -278,7 +278,7 @@ namespace http
 
                 if (result == -1)
                     throw std::system_error(errno, std::system_category(), "Failed to send data");
-#endif
+#endif // _WIN32
                 return static_cast<std::size_t>(result);
             }
 
@@ -305,7 +305,7 @@ namespace http
 
                 if (result == -1)
                     throw std::system_error(errno, std::system_category(), "Failed to read data");
-#endif
+#endif // _WIN32
                 return static_cast<std::size_t>(result);
             }
 
@@ -364,7 +364,7 @@ namespace http
                     throw std::system_error(errno, std::system_category(), "Failed to select socket");
                 else if (count == 0)
                     throw ResponseError("Request timed out");
-#endif
+#endif // _WIN32
             }
 
             void close() noexcept
@@ -373,14 +373,14 @@ namespace http
                 closesocket(endpoint);
 #else
                 ::close(endpoint);
-#endif
+#endif // _WIN32
             }
 
 #if defined(__unix__) && !defined(__APPLE__)
             static constexpr int noSignal = MSG_NOSIGNAL;
 #else
             static constexpr int noSignal = 0;
-#endif
+#endif // defined(__unix__) && !defined(__APPLE__)
 
             Type endpoint = invalid;
         };
@@ -761,15 +761,13 @@ namespace http
                             {
                                 if (removeCrlfAfterChunk)
                                 {
-                                    if (responseData.size() >= 2)
-                                    {
-                                        if (!std::equal(crlf.begin(), crlf.end(), responseData.begin()))
-                                            throw ResponseError("Invalid chunk");
+                                    if (responseData.size() < 2) break;
+                                    
+                                    if (!std::equal(crlf.begin(), crlf.end(), responseData.begin()))
+                                        throw ResponseError("Invalid chunk");
 
-                                        removeCrlfAfterChunk = false;
-                                        responseData.erase(responseData.begin(), responseData.begin() + 2);
-                                    }
-                                    else break;
+                                    removeCrlfAfterChunk = false;
+                                    responseData.erase(responseData.begin(), responseData.begin() + 2);
                                 }
 
                                 const auto i = std::search(responseData.begin(), responseData.end(), crlf.begin(), crlf.end());
@@ -810,7 +808,7 @@ namespace http
 
 #ifdef _WIN32
         WinSock winSock;
-#endif
+#endif // _WIN32
         InternetProtocol internetProtocol;
         std::string scheme;
         std::string domain;
@@ -819,4 +817,4 @@ namespace http
     };
 }
 
-#endif
+#endif // HTTPREQUEST_HPP
