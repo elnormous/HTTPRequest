@@ -7,8 +7,10 @@ HTTPRequest is a single-header library for making HTTP requests. You can just in
 # HTTPRequest was tested on
 - MacOS
 - Windows
-- Linux
-  - It should work on most of the Linux-based platforms
+- GNU/Linux
+- Android
+- BSD
+- Haiku
 
 ## Usage
 <details>
@@ -25,17 +27,17 @@ HTTPRequest is a single-header library for making HTTP requests. You can just in
       {
           // create a request
           // you can pass http::InternetProtocol::V6 to Request to make an IPv6 request
-          http::Request request("http://test.com/test");
+          http::Request request{"http://test.com/test"};
 
           // send a get request
           const auto response = request.send("GET");
 
           // print the result
-          std::cout << std::string{response.body.begin(), response.body.end()} << std::endl;
+          std::cout << std::string{response.body.begin(), response.body.end()} << '\n';
       }
       catch (const std::exception& e)
       {
-          std::cerr << "Request failed, error: " << e.what() << std::endl;
+          std::cerr << "Request failed, error: " << e.what() << '\n';
       }
   }
   ```
@@ -53,7 +55,7 @@ HTTPRequest is a single-header library for making HTTP requests. You can just in
       try
       {
           // create a request
-          http::Request request("http://test.com/test");
+          http::Request request{"http://test.com/test"};
 
           // send a post request
           const auto response = request.send("POST", "foo=1&bar=baz", {
@@ -61,11 +63,11 @@ HTTPRequest is a single-header library for making HTTP requests. You can just in
           });
 
           // print the result
-          std::cout << std::string{response.body.begin(), response.body.end()} << std::endl;
+          std::cout << std::string{response.body.begin(), response.body.end()} << '\n';
       }
       catch (const std::exception& e)
       {
-          std::cerr << "Request failed, error: " << e.what() << std::endl;
+          std::cerr << "Request failed, error: " << e.what() << '\n';
       }
   }
   ```
@@ -95,11 +97,11 @@ HTTPRequest is a single-header library for making HTTP requests. You can just in
           });
 
           // print the result
-          std::cout << std::string{response.body.begin(), response.body.end()} << std::endl;
+          std::cout << std::string{response.body.begin(), response.body.end()} << '\n';
       }
       catch (const std::exception& e)
       {
-          std::cerr << "Request failed, error: " << e.what() << std::endl;
+          std::cerr << "Request failed, error: " << e.what() << '\n';
       }
   }  
   ```
