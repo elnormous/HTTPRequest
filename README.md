@@ -89,7 +89,7 @@ HTTPRequest is a single-header library for making HTTP requests. You can just in
           std::map<std::string, std::string> parameters = {{"foo", "1"}, {"bar", "baz"}};
 
           // create a request
-          http::Request request("http://test.com/test");
+          http::Request request{"http://test.com/test"};
 
           // send a post request
           const auto response = request.send("POST", parameters, {
