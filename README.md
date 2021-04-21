@@ -5,6 +5,7 @@ HTTPRequest is a single-header library for making HTTP requests. You can just in
 | --- |
 
 Modified by EntenKoeniq
+
 Original: https://github.com/elnormous/HTTPRequest
 
 # HTTPRequest was tested on
