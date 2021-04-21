@@ -506,6 +506,67 @@ namespace http
         int status = 0;
         std::vector<std::string> headers;
         std::vector<std::uint8_t> body;
+
+        std::vector<std::map<std::string, std::string>> getJson() const
+        {
+            std::string str = std::string{body.begin(), body.end()};
+            
+            std::vector<std::map<std::string, std::string>> result = {};
+            std::map<std::string, std::string> tmp = {};
+            
+            /*
+            * 0 = key
+            * 1 = value
+            */
+            int status = 0;
+            
+            // Temporarily store the key and value in strings
+            std::string key = "";
+            std::string value = "";
+            
+            for (int i = 0; i < str.length(); i++)
+            {
+                if (status == 0)
+                {
+                    if (str[i] == '\"')
+                    {
+                        for (; str[++i] != '\"'; key += str[i]);
+                        
+                        status = 1; 
+                    }
+                }
+                else
+                {
+                    if (str[i++] == ':')
+                    {
+                        if (str[i] == '\"')
+                        {
+                            i++;
+                        }
+                        
+                        for (; str[i] != ',' && str[i] != '\"' && str[i] != '}'; value += str[i++]);
+                        
+                        status = 0;
+                        tmp.insert(std::pair<std::string, std::string>(key, value));
+                        key.clear();
+                        value.clear();
+                        
+                        if (str[i] == '}' || str[++i] == '}')
+                        {
+                            result.push_back(tmp);
+                            tmp.clear();
+                            
+                            if (str[++i] != ',')
+                            {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return result;
+        }
     };
 
     class Request final
