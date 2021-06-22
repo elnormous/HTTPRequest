@@ -1,6 +1,6 @@
 # HTTPRequest
 
-HTTPRequest is a single-header library for making HTTP requests. You can just include it in your project and use it. HTTPRequest was tested on macOS, Windows and Linux, but it should work on most of the Linux-based platforms. Supports IPv4 and IPv6.
+HTTPRequest is a single-header library for making HTTP requests. You can just include it in your project and use it. HTTPRequest was tested on macOS, Windows and GNU/Linux, but it should work on most of the Linux-based platforms. Supports IPv4 and IPv6.
 
 ## Usage
 Example of GET request
