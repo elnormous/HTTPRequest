@@ -10,7 +10,7 @@ else ifeq ($(shell uname -s),Haiku)
 platform=haiku
 endif
 
-CXXFLAGS=-std=c++11 -Wall -O2 -I../include
+CXXFLAGS=-std=c++11 -Wall -Wshadow -O2 -I../include
 LDFLAGS=-O2
 ifeq ($(platform),windows)
 LDFLAGS+=-lws2_32
@@ -38,8 +38,4 @@ $(EXECUTABLE): $(OBJECTS)
 
 .PHONY: clean
 clean:
-ifeq ($(platform),windows)
-	-del /f /q "$(EXECUTABLE).exe" "*.o"
-else
 	$(RM) $(EXECUTABLE) $(OBJECTS) $(DEPENDENCIES) $(EXECUTABLE).exe
-endif
