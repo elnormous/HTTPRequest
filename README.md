@@ -49,9 +49,29 @@ try
 {
     http::Request request("http://test.com/test");
     // pass parameters as a map
-    std::map<std::string, std::string> parameters = {{"foo", "1"}, {"bar", "baz"}};
+    const std::map<std::string, std::string> parameters = {{"foo", "1"}, {"bar", "baz"}};
     const auto response = request.send("POST", parameters, {
         "Content-Type: application/x-www-form-urlencoded"
+    });
+    std::cout << std::string{response.body.begin(), response.body.end()} << '\n'; // print the result
+}
+catch (const std::exception& e)
+{
+    std::cerr << "Request failed, error: " << e.what() << '\n';
+}
+```
+
+Example of POST request with a JSON body
+```cpp
+#include "HTTPRequest.hpp"
+
+try
+{
+    http::Request request("http://test.com/test");
+    // pass parameters as a string
+    const std::string body = "{\"foo\": 1, \"bar\": \"baz\"}";
+    const auto response = request.send("POST", parameters, {
+        "Content-Type: application/json"
     });
     std::cout << std::string{response.body.begin(), response.body.end()} << '\n'; // print the result
 }
