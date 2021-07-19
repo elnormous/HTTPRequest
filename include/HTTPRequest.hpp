@@ -386,52 +386,6 @@ namespace http
         };
     }
 
-    inline std::string urlEncode(const std::string& str)
-    {
-        constexpr std::array<char, 16> hexChars = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
-
-        std::string result;
-
-        for (auto i = str.begin(); i != str.end(); ++i)
-        {
-            const std::uint8_t cp = *i & 0xFF;
-
-            if ((cp >= 0x30 && cp <= 0x39) || // 0-9
-                (cp >= 0x41 && cp <= 0x5A) || // A-Z
-                (cp >= 0x61 && cp <= 0x7A) || // a-z
-                cp == 0x2D || cp == 0x2E || cp == 0x5F) // - . _
-                result += static_cast<char>(cp);
-            else if (cp <= 0x7F) // length = 1
-                result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
-            else if ((cp >> 5) == 0x06) // length = 2
-            {
-                result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
-                if (++i == str.end()) break;
-                result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
-            }
-            else if ((cp >> 4) == 0x0E) // length = 3
-            {
-                result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
-                if (++i == str.end()) break;
-                result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
-                if (++i == str.end()) break;
-                result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
-            }
-            else if ((cp >> 3) == 0x1E) // length = 4
-            {
-                result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
-                if (++i == str.end()) break;
-                result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
-                if (++i == str.end()) break;
-                result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
-                if (++i == str.end()) break;
-                result += std::string("%") + hexChars[(*i & 0xF0) >> 4] + hexChars[*i & 0x0F];
-            }
-        }
-
-        return result;
-    }
-
     struct Response final
     {
         enum Status
@@ -556,25 +510,6 @@ namespace http
             }
             else
                 port = "80";
-        }
-
-        Response send(const std::string& method,
-                      const std::map<std::string, std::string>& parameters,
-                      const std::vector<std::string>& headers = {},
-                      const std::chrono::milliseconds timeout = std::chrono::milliseconds{-1})
-        {
-            std::string body;
-            bool first = true;
-
-            for (const auto& parameter : parameters)
-            {
-                if (!first) body += "&";
-                first = false;
-
-                body += urlEncode(parameter.first) + "=" + urlEncode(parameter.second);
-            }
-
-            return send(method, body, headers, timeout);
         }
 
         Response send(const std::string& method = "GET",

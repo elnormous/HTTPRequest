@@ -48,9 +48,8 @@ Example of POST request by passing a map of parameters
 try
 {
     http::Request request("http://test.com/test");
-    // pass parameters as a map
-    const std::map<std::string, std::string> parameters = {{"foo", "1"}, {"bar", "baz"}};
-    const auto response = request.send("POST", parameters, {
+    const string body = "foo=1&bar=baz";
+    const auto response = request.send("POST", body, {
         "Content-Type: application/x-www-form-urlencoded"
     });
     std::cout << std::string{response.body.begin(), response.body.end()} << '\n'; // print the result
@@ -68,7 +67,6 @@ Example of POST request with a JSON body
 try
 {
     http::Request request("http://test.com/test");
-    // pass parameters as a string
     const std::string body = "{\"foo\": 1, \"bar\": \"baz\"}";
     const auto response = request.send("POST", parameters, {
         "Content-Type: application/json"
