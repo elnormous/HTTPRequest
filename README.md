@@ -3,7 +3,8 @@
 HTTPRequest is a single-header library for making HTTP requests. You can just include it in your project and use it. HTTPRequest was tested on macOS, Windows and GNU/Linux, but it should work on most of the Linux-based platforms. Supports IPv4 and IPv6.
 
 ## Usage
-Example of GET request
+
+### Example of GET request
 ```cpp
 #include "HTTPRequest.hpp"
 
@@ -22,7 +23,7 @@ catch (const std::exception& e)
 }
 ```
 
-Example of POST request
+### Example of POST request
 ```cpp
 #include "HTTPRequest.hpp"
 
@@ -41,7 +42,7 @@ catch (const std::exception& e)
 }
 ```
 
-Example of POST request by passing a map of parameters
+### Example of POST request with form data
 ```cpp
 #include "HTTPRequest.hpp"
 
@@ -60,7 +61,7 @@ catch (const std::exception& e)
 }
 ```
 
-Example of POST request with a JSON body
+### Example of POST request with a JSON body
 ```cpp
 #include "HTTPRequest.hpp"
 
