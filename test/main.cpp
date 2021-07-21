@@ -65,6 +65,8 @@ int main(int argc, const char* argv[])
             "User-Agent: runscope/0.1"
         }, std::chrono::seconds(2));
 
+        std::cout << response.description << '\n';
+
         if (response.status == http::Response::Ok)
         {
             if (!output.empty())
