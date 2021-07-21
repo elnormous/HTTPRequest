@@ -458,6 +458,7 @@ namespace http
         };
 
         int status = 0;
+        std::string description;
         std::vector<std::string> headers;
         std::vector<std::uint8_t> body;
     };
@@ -630,7 +631,11 @@ namespace http
                                 const auto endIterator = std::find(beginIterator, line.end(), ' ');
                                 const std::string part{beginIterator, endIterator};
 
-                                if (++partNum == 2) response.status = std::stoi(part);
+                                switch (++partNum)
+                                {
+                                    case 2: response.status = std::stoi(part); break;
+                                    case 3: response.description = part; break;
+                                }
 
                                 if (endIterator == line.end()) break;
                                 beginIterator = endIterator + 1;
