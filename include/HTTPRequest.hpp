@@ -49,6 +49,10 @@ extern "C" char *_strdup(const char *strSource);
 #  include <unistd.h>
 #endif // _WIN32
 
+#ifdef _MSC_VER
+#pragma comment(lib, "ws2_32.lib")
+#endif
+
 namespace http
 {
     class RequestError final: public std::logic_error
