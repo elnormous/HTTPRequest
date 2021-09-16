@@ -623,22 +623,17 @@ namespace http
                         else if (state == State::statusLine) // RFC 7230, 3.1.2. Status Line
                         {
                             state = State::headers;
-                            std::size_t partNum = 0;
 
-                            // tokenize the status line
-                            for (auto beginIterator = line.begin(); beginIterator != line.end();)
+                            const auto httpEndIterator = std::find(line.begin(), line.end(), ' ');
+
+                            if (httpEndIterator != line.end())
                             {
-                                const auto endIterator = std::find(beginIterator, line.end(), ' ');
-                                const std::string part{beginIterator, endIterator};
+                                const auto statusEndIterator = std::find(httpEndIterator + 1, line.end(), ' ');
+                                const std::string status{httpEndIterator + 1, statusEndIterator};
+                                response.status = std::stoi(status);
 
-                                switch (++partNum)
-                                {
-                                    case 2: response.status = std::stoi(part); break;
-                                    case 3: response.description = part; break;
-                                }
-
-                                if (endIterator == line.end()) break;
-                                beginIterator = endIterator + 1;
+                                if (statusEndIterator != line.end())
+                                    response.description = std::string{statusEndIterator + 1, line.end()};
                             }
                         }
                         else if (state == State::headers) // RFC 7230, 3.2.  Header Fields
