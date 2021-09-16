@@ -493,24 +493,27 @@ namespace http
 
             if (pathPosition == std::string::npos)
             {
-                domain = path;
+                host = path;
                 path = "/";
             }
             else
             {
-                domain = path.substr(0, pathPosition);
+                host = path.substr(0, pathPosition);
                 path = path.substr(pathPosition);
             }
 
-            const auto portPosition = domain.find(':');
+            const auto portPosition = host.find(':');
 
             if (portPosition != std::string::npos)
             {
-                port = domain.substr(portPosition + 1);
-                domain.resize(portPosition);
+                domain = host.substr(0, portPosition);
+                port = host.substr(portPosition + 1);
             }
             else
+            {
+                domain = host;
                 port = "80";
+            }
         }
 
         Response send(const std::string& method = "GET",
@@ -550,8 +553,8 @@ namespace http
             for (const auto& header : headers)
                 headerData += header + "\r\n";
 
-            // RFC 7230, 3.2.  Header Fields
-            headerData += "Host: " + domain + "\r\n"
+            // RFC 7230, 3.2. Header Fields
+            headerData += "Host: " + host + "\r\n"
                 "Content-Length: " + std::to_string(body.size()) + "\r\n"
                 "\r\n";
 
@@ -750,6 +753,7 @@ namespace http
 #endif // _WIN32
         InternetProtocol internetProtocol;
         std::string scheme;
+        std::string host;
         std::string domain;
         std::string port;
         std::string path;
