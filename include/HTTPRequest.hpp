@@ -628,12 +628,16 @@ namespace http
 
                             if (httpEndIterator != line.end())
                             {
-                                const auto statusEndIterator = std::find(httpEndIterator + 1, line.end(), ' ');
-                                const std::string status{httpEndIterator + 1, statusEndIterator};
+                                const auto statusStartIterator = httpEndIterator + 1;
+                                const auto statusEndIterator = std::find(statusStartIterator, line.end(), ' ');
+                                const std::string status{statusStartIterator, statusEndIterator};
                                 response.status = std::stoi(status);
 
                                 if (statusEndIterator != line.end())
-                                    response.description = std::string{statusEndIterator + 1, line.end()};
+                                {
+                                    const auto descriptionStartIterator = statusEndIterator + 1;
+                                    response.description = std::string{descriptionStartIterator, line.end()};
+                                }
                             }
                         }
                         else if (state == State::headers) // RFC 7230, 3.2.  Header Fields
