@@ -62,7 +62,8 @@ int main(int argc, const char* argv[])
 
         const auto response = request.send(method, arguments, {
             "Content-Type: application/x-www-form-urlencoded",
-            "User-Agent: runscope/0.1"
+            "User-Agent: runscope/0.1",
+            "Accept: */*"
         }, std::chrono::seconds(2));
 
         std::cout << response.description << '\n';
