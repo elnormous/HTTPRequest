@@ -309,8 +309,6 @@ namespace http
                 return static_cast<std::size_t>(result);
             }
 
-            operator Type() const noexcept { return endpoint; }
-
         private:
             enum class SelectType
             {
