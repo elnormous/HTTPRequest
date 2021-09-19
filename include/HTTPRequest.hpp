@@ -682,7 +682,7 @@ namespace http
 
                 if (state == State::body)
                 {
-                    // Content-Length must be ignored if Transfer-Encoding is received
+                    // Content-Length must be ignored if Transfer-Encoding is received (RFC 7230, 3.2. Content-Length)
                     if (chunkedResponse)
                     {
                         for (;;)
