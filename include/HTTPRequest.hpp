@@ -615,7 +615,7 @@ namespace http
                         const std::string line(responseData.begin(), i);
                         responseData.erase(responseData.begin(), i + 2);
 
-                        // empty line indicates the end of the header section
+                        // empty line indicates the end of the header section (RFC 7230, 2.1. Client/Server Messaging)
                         if (line.empty())
                         {
                             state = State::body;
@@ -641,7 +641,7 @@ namespace http
                                 }
                             }
                         }
-                        else if (state == State::headers) // RFC 7230, 3.2.  Header Fields
+                        else if (state == State::headers) // RFC 7230, 3.2. Header Fields
                         {
                             response.headers.push_back(line);
 
