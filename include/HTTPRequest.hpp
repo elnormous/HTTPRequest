@@ -386,6 +386,7 @@ namespace http
 
     struct Response final
     {
+        // RFC 7231, 6. Response Status Codes
         enum Status
         {
             Continue = 100,
@@ -739,7 +740,7 @@ namespace http
         }
 
     private:
-        static std::int64_t getRemainingMilliseconds(const std::chrono::steady_clock::time_point time)
+        static std::int64_t getRemainingMilliseconds(const std::chrono::steady_clock::time_point time) noexcept
         {
             const auto now = std::chrono::steady_clock::now();
             const auto remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(time - now);
