@@ -651,13 +651,13 @@ namespace http
                         {
                             response.headers.push_back(line);
 
-                            const auto loumnPosition = line.find(':');
+                            const auto colonPosition = line.find(':');
 
-                            if (loumnPosition == std::string::npos)
+                            if (colonPosition == std::string::npos)
                                 throw ResponseError("Invalid header: " + line);
 
-                            const auto headerName = line.substr(0, loumnPosition);
-                            auto headerValue = line.substr(loumnPosition + 1);
+                            const auto headerName = line.substr(0, colonPosition);
+                            auto headerValue = line.substr(colonPosition + 1);
 
                             // RFC 7230, Appendix B. Collected ABNF
                             auto isNotWhiteSpace = [](char c){
