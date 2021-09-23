@@ -14,3 +14,4 @@ test/test
 test/test.VC.VC.opendb
 test/test.xcodeproj/xcshareddata
 *.user
+test/test.exe
