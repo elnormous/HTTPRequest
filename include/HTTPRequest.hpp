@@ -21,7 +21,7 @@
 #include <type_traits>
 #include <vector>
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 #  pragma push_macro("WIN32_LEAN_AND_MEAN")
 #  pragma push_macro("NOMINMAX")
 #  ifndef WIN32_LEAN_AND_MEAN
@@ -46,8 +46,9 @@ extern "C" char *_strdup(const char *strSource);
 #  include <netdb.h>
 #  include <sys/select.h>
 #  include <sys/socket.h>
+#  include <sys/types.h>
 #  include <unistd.h>
-#endif // _WIN32
+#endif // defined(_WIN32) || defined(__CYGWIN__)
 
 namespace http
 {
@@ -73,7 +74,7 @@ namespace http
 
     inline namespace detail
     {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
         class WinSock final
         {
         public:
@@ -116,15 +117,15 @@ namespace http
         private:
             bool started = false;
         };
-#endif // _WIN32
+#endif // defined(_WIN32) || defined(__CYGWIN__)
 
         inline int getLastError() noexcept
         {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
             return WSAGetLastError();
 #else
             return errno;
-#endif // _WIN32
+#endif // defined(_WIN32) || defined(__CYGWIN__)
         }
 
         constexpr int getAddressFamily(InternetProtocol internetProtocol)
@@ -137,13 +138,13 @@ namespace http
         class Socket final
         {
         public:
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
             using Type = SOCKET;
             static constexpr Type invalid = INVALID_SOCKET;
 #else
             using Type = int;
             static constexpr Type invalid = -1;
-#endif // _WIN32
+#endif // defined(_WIN32) || defined(__CYGWIN__)
 
             explicit Socket(InternetProtocol internetProtocol):
                 endpoint{socket(getAddressFamily(internetProtocol), SOCK_STREAM, IPPROTO_TCP)}
@@ -151,8 +152,8 @@ namespace http
                 if (endpoint == invalid)
                     throw std::system_error(getLastError(), std::system_category(), "Failed to create socket");
 
-#ifdef _WIN32
-                unsigned long mode = 1;
+#if defined(_WIN32) || defined(__CYGWIN__)
+                ULONG mode = 1;
                 if (ioctlsocket(endpoint, FIONBIO, &mode) != 0)
                 {
                     close();
@@ -171,7 +172,7 @@ namespace http
                     close();
                     throw std::system_error(errno, std::system_category(), "Failed to set socket flags");
                 }
-#endif // _WIN32
+#endif // defined(_WIN32) || defined(__CYGWIN__)
 
 #ifdef __APPLE__
                 const int value = 1;
@@ -205,7 +206,7 @@ namespace http
 
             void connect(const struct sockaddr* address, const socklen_t addressSize, const std::int64_t timeout)
             {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
                 auto result = ::connect(endpoint, address, addressSize);
                 while (result == -1 && WSAGetLastError() == WSAEINTR)
                     result = ::connect(endpoint, address, addressSize);
@@ -252,13 +253,13 @@ namespace http
                     else
                         throw std::system_error(errno, std::system_category(), "Failed to connect");
                 }
-#endif // _WIN32
+#endif // defined(_WIN32) || defined(__CYGWIN__)
             }
 
             std::size_t send(const void* buffer, const std::size_t length, const std::int64_t timeout)
             {
                 select(SelectType::write, timeout);
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
                 auto result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
                                      static_cast<int>(length), 0);
 
@@ -278,14 +279,14 @@ namespace http
 
                 if (result == -1)
                     throw std::system_error(errno, std::system_category(), "Failed to send data");
-#endif // _WIN32
+#endif // defined(_WIN32) || defined(__CYGWIN__)
                 return static_cast<std::size_t>(result);
             }
 
             std::size_t recv(void* buffer, const std::size_t length, const std::int64_t timeout)
             {
                 select(SelectType::read, timeout);
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
                 auto result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
                                      static_cast<int>(length), 0);
 
@@ -305,7 +306,7 @@ namespace http
 
                 if (result == -1)
                     throw std::system_error(errno, std::system_category(), "Failed to read data");
-#endif // _WIN32
+#endif // defined(_WIN32) || defined(__CYGWIN__)
                 return static_cast<std::size_t>(result);
             }
 
@@ -322,11 +323,11 @@ namespace http
                 FD_ZERO(&descriptorSet);
                 FD_SET(endpoint, &descriptorSet);
 
-                timeval selectTimeout{
-                    static_cast<decltype(timeval::tv_sec)>(timeout / 1000),
-                    static_cast<decltype(timeval::tv_usec)>((timeout % 1000) * 1000)
+#if defined(_WIN32) || defined(__CYGWIN__)
+                TIMEVAL selectTimeout{
+                    static_cast<LONG>(timeout / 1000),
+                    static_cast<LONG>((timeout % 1000) * 1000)
                 };
-#ifdef _WIN32
                 auto count = ::select(0,
                                       (type == SelectType::read) ? &descriptorSet : nullptr,
                                       (type == SelectType::write) ? &descriptorSet : nullptr,
@@ -345,6 +346,10 @@ namespace http
                 else if (count == 0)
                     throw ResponseError("Request timed out");
 #else
+                timeval selectTimeout{
+                    static_cast<time_t>(timeout / 1000),
+                    static_cast<suseconds_t>((timeout % 1000) * 1000)
+                };
                 auto count = ::select(endpoint + 1,
                                       (type == SelectType::read) ? &descriptorSet : nullptr,
                                       (type == SelectType::write) ? &descriptorSet : nullptr,
@@ -362,19 +367,19 @@ namespace http
                     throw std::system_error(errno, std::system_category(), "Failed to select socket");
                 else if (count == 0)
                     throw ResponseError("Request timed out");
-#endif // _WIN32
+#endif // defined(_WIN32) || defined(__CYGWIN__)
             }
 
             void close() noexcept
             {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
                 closesocket(endpoint);
 #else
                 ::close(endpoint);
-#endif // _WIN32
+#endif // defined(_WIN32) || defined(__CYGWIN__)
             }
 
-#if defined(__unix__) && !defined(__APPLE__)
+#if defined(__unix__) && !defined(__APPLE__) && !defined(__CYGWIN__)
             static constexpr int noSignal = MSG_NOSIGNAL;
 #else
             static constexpr int noSignal = 0;
@@ -747,9 +752,9 @@ namespace http
             return (remainingTime.count() > 0) ? remainingTime.count() : 0;
         }
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
         WinSock winSock;
-#endif // _WIN32
+#endif // defined(_WIN32) || defined(__CYGWIN__)
         InternetProtocol internetProtocol;
         std::string scheme;
         std::string host;
