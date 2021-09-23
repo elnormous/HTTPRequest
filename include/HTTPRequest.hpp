@@ -660,15 +660,15 @@ namespace http
                             auto headerValue = line.substr(colonPosition + 1);
 
                             // RFC 7230, Appendix B. Collected ABNF
-                            auto isNotWhiteSpace = [](char c){
+                            auto isNotWhitespace = [](char c){
                                 return c != ' ' && c != '\t';
                             };
 
                             // ltrim
-                            headerValue.erase(headerValue.begin(), std::find_if(headerValue.begin(), headerValue.end(), isNotWhiteSpace));
+                            headerValue.erase(headerValue.begin(), std::find_if(headerValue.begin(), headerValue.end(), isNotWhitespace));
 
                             // rtrim
-                            headerValue.erase(std::find_if(headerValue.rbegin(), headerValue.rend(), isNotWhiteSpace).base(), headerValue.end());
+                            headerValue.erase(std::find_if(headerValue.rbegin(), headerValue.rend(), isNotWhitespace).base(), headerValue.end());
 
                             if (headerName == "Content-Length")
                             {
