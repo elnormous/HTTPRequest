@@ -658,8 +658,8 @@ namespace http
 
                             auto headerName = line.substr(0, colonPosition);
 
-                            auto toLower = [](const char c) {
-                                return (c >= 'A' && c <= 'Z') ? c - ('Z' - 'z') : c;
+                            const auto toLower = [](const char c) {
+                                return (c >= 'A' && c <= 'Z') ? c - ('A' - 'a') : c;
                             };
 
                             std::transform(headerName.begin(), headerName.end(), headerName.begin(), toLower);
@@ -667,7 +667,7 @@ namespace http
                             auto headerValue = line.substr(colonPosition + 1);
 
                             // RFC 7230, Appendix B. Collected ABNF
-                            auto isNotWhitespace = [](const char c){
+                            const auto isNotWhitespace = [](const char c){
                                 return c != ' ' && c != '\t';
                             };
 
