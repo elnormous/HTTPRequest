@@ -10,33 +10,11 @@
 		30DAD98B1ECA11AC00E9F3D7 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 30DAD98A1ECA11AC00E9F3D7 /* main.cpp */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXCopyFilesBuildPhase section */
-		30DAD97E1ECA117100E9F3D7 /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 1;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
 		30DAD9801ECA117100E9F3D7 /* test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = test; sourceTree = BUILT_PRODUCTS_DIR; };
 		30DAD98A1ECA11AC00E9F3D7 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		30DAD98E1ECA180B00E9F3D7 /* HTTPRequest.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = HTTPRequest.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
-
-/* Begin PBXFrameworksBuildPhase section */
-		30DAD97D1ECA117100E9F3D7 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		30DAD9771ECA117100E9F3D7 = {
@@ -81,8 +59,6 @@
 			buildConfigurationList = 30DAD9871ECA117100E9F3D7 /* Build configuration list for PBXNativeTarget "test" */;
 			buildPhases = (
 				30DAD97C1ECA117100E9F3D7 /* Sources */,
-				30DAD97D1ECA117100E9F3D7 /* Frameworks */,
-				30DAD97E1ECA117100E9F3D7 /* CopyFiles */,
 			);
 			buildRules = (
 			);
