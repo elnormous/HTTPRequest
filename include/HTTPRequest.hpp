@@ -128,7 +128,7 @@ namespace http
 #endif // defined(_WIN32) || defined(__CYGWIN__)
         }
 
-        constexpr int getAddressFamily(InternetProtocol internetProtocol)
+        constexpr int getAddressFamily(const InternetProtocol internetProtocol)
         {
             return (internetProtocol == InternetProtocol::V4) ? AF_INET :
                 (internetProtocol == InternetProtocol::V6) ? AF_INET6 :
@@ -146,7 +146,7 @@ namespace http
             static constexpr Type invalid = -1;
 #endif // defined(_WIN32) || defined(__CYGWIN__)
 
-            explicit Socket(InternetProtocol internetProtocol):
+            explicit Socket(const InternetProtocol internetProtocol):
                 endpoint{socket(getAddressFamily(internetProtocol), SOCK_STREAM, IPPROTO_TCP)}
             {
                 if (endpoint == invalid)
@@ -565,7 +565,7 @@ namespace http
             std::vector<uint8_t> requestData(headerData.begin(), headerData.end());
             requestData.insert(requestData.end(), body.begin(), body.end());
 
-            Socket socket(internetProtocol);
+            Socket socket{internetProtocol};
 
             // take the first address from the list
             socket.connect(addressInfo->ai_addr, static_cast<socklen_t>(addressInfo->ai_addrlen),
