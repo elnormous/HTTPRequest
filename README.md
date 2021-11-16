@@ -48,7 +48,7 @@ catch (const std::exception& e)
 
 try
 {
-    http::Request request("http://test.com/test");
+    http::Request request{"http://test.com/test"};
     const string body = "foo=1&bar=baz";
     const auto response = request.send("POST", body, {
         "Content-Type: application/x-www-form-urlencoded"
@@ -67,7 +67,7 @@ catch (const std::exception& e)
 
 try
 {
-    http::Request request("http://test.com/test");
+    http::Request request{"http://test.com/test"};
     const std::string body = "{\"foo\": 1, \"bar\": \"baz\"}";
     const auto response = request.send("POST", parameters, {
         "Content-Type: application/json"
