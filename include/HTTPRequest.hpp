@@ -387,6 +387,64 @@ namespace http
 
             Type endpoint = invalid;
         };
+
+        // RFC 7230, 3.2.3. Whitespace
+        inline bool isWhitespace(const char c) noexcept
+        {
+            return c == ' ' || c == '\t';
+        };
+
+        // RFC 7230, 3.2.6. Field Value Components
+        inline bool isTchar(const char c) noexcept
+        {
+            return c == '!' || c == '#' || c == '$' || c == '%' || c == '&' || c == '\'' || c == '*' ||
+                c == '+' || c == '-' || c == '.' || c == '^' || c == '_' || c == '`' || c == '|' || c == '~' ||
+                (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+        };
+
+        // RFC 5234, B.1. Core Rules
+        inline bool isVchar(const char c) noexcept
+        {
+            return c >= 0x21 && c <= 0x7E;
+        }
+
+        template <class Iterator>
+        Iterator skipWhitespaces(const Iterator begin, const Iterator end)
+        {
+            for (auto i = begin; i != end; ++i)
+                if (!isWhitespace(*i))
+                    return i;
+
+            return begin;
+        }
+
+        // RFC 7230, 3.2.6. Field Value Components
+        template <class Iterator>
+        std::pair<Iterator, std::string> parseToken(const Iterator begin, const Iterator end)
+        {
+            std::string result;
+
+            auto i = begin;
+            for (; i != end && isTchar(*i); ++i)
+                result.push_back(*i);
+
+            if (result.empty())
+                throw ResponseError{"Invalid token"};
+
+            return std::make_pair(i, std::move(result));
+        }
+
+        template <class Iterator>
+        std::pair<Iterator, std::string> parseFieldValue(const Iterator begin, const Iterator end)
+        {
+            std::string result;
+
+            auto i = begin;
+            for (; i != end && (isVchar(*i) || isWhitespace(*i)); ++i)
+                result.push_back(*i);
+
+            return std::make_pair(i, std::move(result));
+        }
     }
 
     struct Response final
@@ -567,6 +625,12 @@ namespace http
 
             Socket socket{internetProtocol};
 
+            const auto getRemainingMilliseconds = [](const std::chrono::steady_clock::time_point time) noexcept -> std::int64_t {
+                const auto now = std::chrono::steady_clock::now();
+                const auto remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(time - now);
+                return (remainingTime.count() > 0) ? remainingTime.count() : 0;
+            };
+
             // take the first address from the list
             socket.connect(addressInfo->ai_addr, static_cast<socklen_t>(addressInfo->ai_addrlen),
                            (timeout.count() >= 0) ? getRemainingMilliseconds(stopTime) : -1);
@@ -651,31 +715,34 @@ namespace http
                         {
                             response.headers.push_back(line);
 
-                            const auto colonPosition = line.find(':');
+                            auto headerIterator = line.cbegin();
+                            const auto tokenResult = parseToken(headerIterator, line.cend());
+                            headerIterator = tokenResult.first;
+                            auto headerName = std::move(tokenResult.second);
 
-                            if (colonPosition == std::string::npos)
-                                throw ResponseError("Invalid header: " + line);
-
-                            auto headerName = line.substr(0, colonPosition);
-
-                            const auto toLower = [](const char c) {
+                            const auto toLower = [](const char c) noexcept {
                                 return (c >= 'A' && c <= 'Z') ? c - ('A' - 'a') : c;
                             };
 
                             std::transform(headerName.begin(), headerName.end(), headerName.begin(), toLower);
 
-                            auto headerValue = line.substr(colonPosition + 1);
+                            if (headerIterator == line.cend())
+                                throw ResponseError("Invalid header");
 
-                            // RFC 7230, Appendix B. Collected ABNF
-                            const auto isNotWhitespace = [](const char c){
-                                return c != ' ' && c != '\t';
-                            };
+                            if (*headerIterator++ != ':')
+                                throw ResponseError("Invalid header");
 
-                            // ltrim
-                            headerValue.erase(headerValue.begin(), std::find_if(headerValue.begin(), headerValue.end(), isNotWhitespace));
+                            headerIterator = skipWhitespaces(headerIterator, line.cend());
 
-                            // rtrim
-                            headerValue.erase(std::find_if(headerValue.rbegin(), headerValue.rend(), isNotWhitespace).base(), headerValue.end());
+                            const auto valueResult = parseFieldValue(headerIterator, line.cend());
+
+                            headerIterator = valueResult.first;
+                            auto headerValue = std::move(valueResult.second);
+
+                            headerIterator = skipWhitespaces(headerIterator, line.cend());
+
+                            if (headerIterator != line.cend())
+                                throw ResponseError("Invalid header");
 
                             if (headerName == "content-length")
                             {
@@ -703,8 +770,10 @@ namespace http
                             if (expectedChunkSize > 0)
                             {
                                 const auto toWrite = (std::min)(expectedChunkSize, responseData.size());
-                                response.body.insert(response.body.end(), responseData.begin(), responseData.begin() + static_cast<std::ptrdiff_t>(toWrite));
-                                responseData.erase(responseData.begin(), responseData.begin() + static_cast<std::ptrdiff_t>(toWrite));
+                                response.body.insert(response.body.end(), responseData.begin(),
+                                                     responseData.begin() + static_cast<std::ptrdiff_t>(toWrite));
+                                responseData.erase(responseData.begin(),
+                                                   responseData.begin() + static_cast<std::ptrdiff_t>(toWrite));
                                 expectedChunkSize -= toWrite;
 
                                 if (expectedChunkSize == 0) removeCrlfAfterChunk = true;
@@ -723,7 +792,8 @@ namespace http
                                     responseData.erase(responseData.begin(), responseData.begin() + 2);
                                 }
 
-                                const auto i = std::search(responseData.begin(), responseData.end(), crlf.begin(), crlf.end());
+                                const auto i = std::search(responseData.begin(), responseData.end(),
+                                                           crlf.begin(), crlf.end());
 
                                 if (i == responseData.end()) break;
 
@@ -752,13 +822,6 @@ namespace http
         }
 
     private:
-        static std::int64_t getRemainingMilliseconds(const std::chrono::steady_clock::time_point time) noexcept
-        {
-            const auto now = std::chrono::steady_clock::now();
-            const auto remainingTime = std::chrono::duration_cast<std::chrono::milliseconds>(time - now);
-            return (remainingTime.count() > 0) ? remainingTime.count() : 0;
-        }
-
 #if defined(_WIN32) || defined(__CYGWIN__)
         WinSock winSock;
 #endif // defined(_WIN32) || defined(__CYGWIN__)
