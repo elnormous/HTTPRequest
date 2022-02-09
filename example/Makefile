@@ -21,7 +21,7 @@ SOURCES=main.cpp
 BASE_NAMES=$(basename $(SOURCES))
 OBJECTS=$(BASE_NAMES:=.o)
 DEPENDENCIES=$(OBJECTS:.o=.d)
-EXECUTABLE=test
+EXECUTABLE=example
 
 all: $(EXECUTABLE)
 ifeq ($(DEBUG),1)

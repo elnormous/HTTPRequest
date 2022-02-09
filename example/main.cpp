@@ -20,7 +20,7 @@ int main(int argc, const char* argv[])
         {
             if (std::string{argv[i]} == "--help")
             {
-                std::cout << "test --url <url> [--protocol <protocol>] [--method <method>] [--arguments <arguments>] [--output <output>]\n";
+                std::cout << "example --url <url> [--protocol <protocol>] [--method <method>] [--arguments <arguments>] [--output <output>]\n";
                 return EXIT_SUCCESS;
             }
             else if (std::string{argv[i]} == "--url")

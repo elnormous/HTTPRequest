@@ -7,7 +7,7 @@ jobs:
     vmImage: 'Ubuntu-latest'
   steps:
   - script: |
-      cd test
+      cd example
       make -j2
     displayName: 'make'
 
@@ -17,7 +17,7 @@ jobs:
   steps:
   - task: MSBuild@1
     inputs:
-      solution: test/test.vcxproj
+      solution: example/example.vcxproj
       configuration: Release
 
 - job: macOS
@@ -25,6 +25,6 @@ jobs:
     vmImage: 'macOS-10.14'
   steps:
   - script: |
-      cd test
+      cd example
       make -j2
     displayName: 'make'
