@@ -23,7 +23,7 @@
     <ClCompile Include="tests.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\ini.hpp" />
+    <ClInclude Include="..\include\HTTPRequest.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{614C7EC0-3262-40DF-B884-224B959A01F9}</ProjectGuid>
