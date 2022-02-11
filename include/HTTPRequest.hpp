@@ -411,11 +411,12 @@ namespace http
         template <class Iterator>
         Iterator skipWhitespaces(const Iterator begin, const Iterator end)
         {
-            for (auto i = begin; i != end; ++i)
+            auto i = begin;
+            for (i = begin; i != end; ++i)
                 if (!isWhitespace(*i))
-                    return i;
+                    break;
 
-            return begin;
+            return i;
         }
 
         // RFC 7230, 3.2.6. Field Value Components

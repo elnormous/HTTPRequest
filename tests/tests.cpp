@@ -24,3 +24,32 @@ TEST_CASE("Vchar", "[parsing]")
                  c != '?' && c != '@' && c != '[' && c != '\\' && c != ']' &&
                  c != '{' && c != '}'));
 }
+
+TEST_CASE("Skip empty whitespaces", "[parsing]")
+{
+    std::string str = "";
+    auto i = http::detail::skipWhitespaces(str.begin(), str.end());
+    REQUIRE(i == str.begin());
+    REQUIRE(i == str.end());
+}
+
+TEST_CASE("Skip one whitespace", "[parsing]")
+{
+    std::string str = " ";
+    auto i = http::detail::skipWhitespaces(str.begin(), str.end());
+    REQUIRE(i == str.end());
+}
+
+TEST_CASE("Skip one whitespace at the beggining", "[parsing]")
+{
+    std::string str = " a";
+    auto i = http::detail::skipWhitespaces(str.begin(), str.end());
+    REQUIRE(i == str.begin() + 1);
+}
+
+TEST_CASE("Don't skip whitespaces", "[parsing]")
+{
+    std::string str = "a ";
+    auto i = http::detail::skipWhitespaces(str.begin(), str.end());
+    REQUIRE(i == str.begin());
+}
