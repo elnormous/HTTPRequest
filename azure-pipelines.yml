@@ -32,7 +32,6 @@ jobs:
   - script: ./tests
     displayName: 'make'
 
-jobs:
 - job: Example on Linux
   pool:
     vmImage: 'Ubuntu-latest'
