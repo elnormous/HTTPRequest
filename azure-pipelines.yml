@@ -2,7 +2,38 @@ trigger:
 - master
 
 jobs:
-- job: Linux
+- job: Tests on Linux
+  pool:
+    vmImage: 'Ubuntu-latest'
+  steps:
+  - script: |
+      cd tests
+      make -j2
+  - script: ./tests
+    displayName: 'make'
+
+- job: Tests on Windows
+  pool:
+    vmImage: 'vs2017-win2016'
+  steps:
+  - task: MSBuild@1
+    inputs:
+      solution: tests/tests.vcxproj
+      configuration: Release
+  - script: example/x64/Release/tests.exe
+
+- job: Tests on macOS
+  pool:
+    vmImage: 'macOS-10.14'
+  steps:
+  - script: |
+      cd tests
+      make -j2
+  - script: ./tests
+    displayName: 'make'
+
+jobs:
+- job: Example on Linux
   pool:
     vmImage: 'Ubuntu-latest'
   steps:
@@ -11,7 +42,7 @@ jobs:
       make -j2
     displayName: 'make'
 
-- job: Windows
+- job: Example on Windows
   pool:
     vmImage: 'vs2017-win2016'
   steps:
@@ -20,7 +51,7 @@ jobs:
       solution: example/example.vcxproj
       configuration: Release
 
-- job: macOS
+- job: Example on macOS
   pool:
     vmImage: 'macOS-10.14'
   steps:
