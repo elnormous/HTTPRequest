@@ -29,7 +29,9 @@ jobs:
     inputs:
       solution: tests/tests.vcxproj
       configuration: Release
-  - script: "Win32/Release/tests.exe"
+  - script: |
+        cd tests/Win32/Release
+        tests.exe
     displayName: 'run'
 
 - job: Tests_macOS
