@@ -3,9 +3,12 @@ trigger:
 
 jobs:
 - job: Tests_Linux
+  displayName: Tests on Linux
   pool:
     vmImage: 'Ubuntu-latest'
   steps:
+  - checkout: self
+    submodules: true
   - script: |
       cd tests
       make -j2
@@ -14,9 +17,12 @@ jobs:
     displayName: 'run'
 
 - job: Tests_Windows
+  displayName: Tests on Windows
   pool:
     vmImage: 'vs2017-win2016'
   steps:
+  - checkout: self
+    submodules: true
   - task: MSBuild@1
     inputs:
       solution: tests/tests.vcxproj
@@ -24,9 +30,12 @@ jobs:
   - script: example/x64/Release/tests.exe
 
 - job: Tests_macOS
+  displayName: Tests on macOS
   pool:
     vmImage: 'macOS-10.14'
   steps:
+  - checkout: self
+    submodules: true
   - script: |
       cd tests
       make -j2
@@ -35,6 +44,7 @@ jobs:
     displayName: 'run'
 
 - job: Example_Linux
+  displayName: Example on Linux
   pool:
     vmImage: 'Ubuntu-latest'
   steps:
@@ -44,6 +54,7 @@ jobs:
     displayName: 'make'
 
 - job: Example_Windows
+  displayName: Example on Windows
   pool:
     vmImage: 'vs2017-win2016'
   steps:
@@ -53,6 +64,7 @@ jobs:
       configuration: Release
 
 - job: Example_macOS
+  displayName: Example on macOS
   pool:
     vmImage: 'macOS-10.14'
   steps:
