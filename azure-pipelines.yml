@@ -30,6 +30,7 @@ jobs:
       solution: tests/tests.vcxproj
       configuration: Release
   - script: example/x64/Release/tests.exe
+    displayName: 'run'
 
 - job: Tests_macOS
   displayName: Tests on macOS
