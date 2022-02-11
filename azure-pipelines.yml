@@ -13,7 +13,9 @@ jobs:
       cd tests
       make -j2
     displayName: 'make'
-  - script: ./tests
+  - script: |
+      cd tests
+      ./tests
     displayName: 'run'
 
 - job: Tests_Windows
@@ -32,7 +34,7 @@ jobs:
 - job: Tests_macOS
   displayName: Tests on macOS
   pool:
-    vmImage: 'macOS-10.14'
+    vmImage: 'macOS-10.15'
   steps:
   - checkout: self
     submodules: true
@@ -40,7 +42,9 @@ jobs:
       cd tests
       make -j2
     displayName: 'make'
-  - script: ./tests
+  - script: |
+      cd tests
+      ./tests
     displayName: 'run'
 
 - job: Example_Linux
@@ -66,7 +70,7 @@ jobs:
 - job: Example_macOS
   displayName: Example on macOS
   pool:
-    vmImage: 'macOS-10.14'
+    vmImage: 'macOS-10.15'
   steps:
   - script: |
       cd example
