@@ -2,17 +2,18 @@ trigger:
 - master
 
 jobs:
-- job: Tests on Linux
+- job: Tests_Linux
   pool:
     vmImage: 'Ubuntu-latest'
   steps:
   - script: |
       cd tests
       make -j2
-  - script: ./tests
     displayName: 'make'
+  - script: ./tests
+    displayName: 'run'
 
-- job: Tests on Windows
+- job: Tests_Windows
   pool:
     vmImage: 'vs2017-win2016'
   steps:
@@ -22,17 +23,18 @@ jobs:
       configuration: Release
   - script: example/x64/Release/tests.exe
 
-- job: Tests on macOS
+- job: Tests_macOS
   pool:
     vmImage: 'macOS-10.14'
   steps:
   - script: |
       cd tests
       make -j2
-  - script: ./tests
     displayName: 'make'
+  - script: ./tests
+    displayName: 'run'
 
-- job: Example on Linux
+- job: Example_Linux
   pool:
     vmImage: 'Ubuntu-latest'
   steps:
@@ -41,7 +43,7 @@ jobs:
       make -j2
     displayName: 'make'
 
-- job: Example on Windows
+- job: Example_Windows
   pool:
     vmImage: 'vs2017-win2016'
   steps:
@@ -50,7 +52,7 @@ jobs:
       solution: example/example.vcxproj
       configuration: Release
 
-- job: Example on macOS
+- job: Example_macOS
   pool:
     vmImage: 'macOS-10.14'
   steps:
