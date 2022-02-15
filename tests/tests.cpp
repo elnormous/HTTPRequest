@@ -4,20 +4,32 @@
 
 TEST_CASE("Whitespace", "[parsing]")
 {
-    REQUIRE(http::detail::isWhitespace(' '));
-    REQUIRE(http::detail::isWhitespace('\t'));
+    REQUIRE(http::detail::isWhitespaceChar(' '));
+    REQUIRE(http::detail::isWhitespaceChar('\t'));
+}
+
+TEST_CASE("Digit", "[parsing]")
+{
+    for (int c = 0; c < 256; ++c)
+        REQUIRE(http::detail::isDigitChar(static_cast<char>(c)) == (c >= '0' && c <= '9'));
+}
+
+TEST_CASE("Alpha", "[parsing]")
+{
+    for (int c = 0; c < 256; ++c)
+        REQUIRE(http::detail::isAlphaChar(static_cast<char>(c)) == ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')));
 }
 
 TEST_CASE("Tchar", "[parsing]")
 {
     for (int c = 0; c < 256; ++c)
-        REQUIRE(http::detail::isVchar(static_cast<char>(c)) == (c >= 0x21 && c <= 0x7E));
+        REQUIRE(http::detail::isVisibleChar(static_cast<char>(c)) == (c >= 0x21 && c <= 0x7E));
 }
 
 TEST_CASE("Vchar", "[parsing]")
 {
     for (int c = 0; c < 256; ++c)
-        REQUIRE(http::detail::isTchar(static_cast<char>(c)) ==
+        REQUIRE(http::detail::isTokenChar(static_cast<char>(c)) ==
                 (c >= 0x21 && c <= 0x7E &&
                  c != '"' && c != '(' && c != ')' && c != ',' && c != '/' &&
                  c != ':' && c != ';' && c != '<' && c != '=' && c != '>' &&

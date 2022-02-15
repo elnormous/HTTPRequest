@@ -388,22 +388,35 @@ namespace http
             Type endpoint = invalid;
         };
 
-        // RFC 7230, 3.2.3. Whitespace
-        inline bool isWhitespace(const char c) noexcept
+        inline bool isWhitespaceChar(const char c) noexcept
         {
+            // RFC 7230, 3.2.3. Whitespace
             return c == ' ' || c == '\t';
         };
 
-        // RFC 7230, 3.2.6. Field Value Components
-        inline bool isTchar(const char c) noexcept
+        inline bool isDigitChar(const char c) noexcept
         {
+            // RFC 5234, Appendix B.1. Core Rules
+            return c >= '0' && c <= '9';
+        }
+
+        inline bool isAlphaChar(const char c) noexcept
+        {
+            // RFC 5234, Appendix B.1. Core Rules
+            return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+        }
+
+        inline bool isTokenChar(const char c) noexcept
+        {
+            // RFC 7230, 3.2.6. Field Value Components
             return c == '!' || c == '#' || c == '$' || c == '%' || c == '&' || c == '\'' || c == '*' ||
                 c == '+' || c == '-' || c == '.' || c == '^' || c == '_' || c == '`' || c == '|' || c == '~' ||
-                (c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+                isDigitChar(c) ||
+                isAlphaChar(c);
         };
 
         // RFC 5234, B.1. Core Rules
-        inline bool isVchar(const char c) noexcept
+        inline bool isVisibleChar(const char c) noexcept
         {
             return c >= 0x21 && c <= 0x7E;
         }
@@ -413,7 +426,7 @@ namespace http
         {
             auto i = begin;
             for (i = begin; i != end; ++i)
-                if (!isWhitespace(*i))
+                if (!isWhitespaceChar(*i))
                     break;
 
             return i;
@@ -426,7 +439,7 @@ namespace http
             std::string result;
 
             auto i = begin;
-            for (; i != end && isTchar(*i); ++i)
+            for (; i != end && isTokenChar(*i); ++i)
                 result.push_back(*i);
 
             if (result.empty())
@@ -441,7 +454,7 @@ namespace http
             std::string result;
 
             auto i = begin;
-            for (; i != end && (isVchar(*i) || isWhitespace(*i)); ++i)
+            for (; i != end && (isVisibleChar(*i) || isWhitespaceChar(*i)); ++i)
                 result.push_back(*i);
 
             return std::make_pair(i, std::move(result));
