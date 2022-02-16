@@ -421,6 +421,13 @@ namespace http
             return c >= 0x21 && c <= 0x7E;
         }
 
+        // RFC 7230, Appendix B. Collected ABNF
+        inline bool isObsTextChar(const char c) noexcept
+        {
+            return static_cast<unsigned char>(c) >= 0x80 &&
+                static_cast<unsigned char>(c) <= 0xFF;
+        }
+
         template <class Iterator>
         Iterator skipWhitespaces(const Iterator begin, const Iterator end)
         {
@@ -454,7 +461,7 @@ namespace http
             std::string result;
 
             auto i = begin;
-            for (; i != end && (isVisibleChar(*i) || isWhitespaceChar(*i)); ++i)
+            for (; i != end && (isVisibleChar(*i) || isWhitespaceChar(*i) || isObsTextChar(*i)); ++i)
                 result.push_back(*i);
 
             return std::make_pair(i, std::move(result));

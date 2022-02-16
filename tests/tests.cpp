@@ -37,6 +37,12 @@ TEST_CASE("Visible char", "[parsing]")
         REQUIRE(http::detail::isVisibleChar(static_cast<char>(c)) == (c >= 0x21 && c <= 0x7E));
 }
 
+TEST_CASE("OBS text char", "[parsing]")
+{
+    for (int c = 0; c < 256; ++c)
+        REQUIRE(http::detail::isObsTextChar(static_cast<char>(c)) == (c >= 0x80 && c <= 0xFF));
+}
+
 TEST_CASE("Skip empty whitespaces", "[parsing]")
 {
     std::string str = "";
