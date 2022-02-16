@@ -65,3 +65,11 @@ TEST_CASE("Don't skip whitespaces", "[parsing]")
     auto i = http::detail::skipWhitespaces(str.begin(), str.end());
     REQUIRE(i == str.begin());
 }
+
+TEST_CASE("Parse token", "[parsing]")
+{
+    std::string str = "token";
+    auto result = http::detail::parseToken(str.begin(), str.end());
+    REQUIRE(result.first == str.end());
+    REQUIRE(result.second == "token");
+}
