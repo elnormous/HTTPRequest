@@ -83,12 +83,12 @@ namespace http
                 WSADATA wsaData;
                 const auto error = WSAStartup(MAKEWORD(2, 2), &wsaData);
                 if (error != 0)
-                    throw std::system_error(error, std::system_category(), "WSAStartup failed");
+                    throw std::system_error{error, std::system_category(), "WSAStartup failed"};
 
                 if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2)
                 {
                     WSACleanup();
-                    throw std::runtime_error("Invalid WinSock version");
+                    throw std::runtime_error{"Invalid WinSock version"};
                 }
 
                 started = true;
@@ -132,7 +132,7 @@ namespace http
         {
             return (internetProtocol == InternetProtocol::V4) ? AF_INET :
                 (internetProtocol == InternetProtocol::V6) ? AF_INET6 :
-                throw RequestError("Unsupported protocol");
+                throw RequestError{"Unsupported protocol"};
         }
 
         class Socket final
@@ -150,27 +150,27 @@ namespace http
                 endpoint{socket(getAddressFamily(internetProtocol), SOCK_STREAM, IPPROTO_TCP)}
             {
                 if (endpoint == invalid)
-                    throw std::system_error(getLastError(), std::system_category(), "Failed to create socket");
+                    throw std::system_error{getLastError(), std::system_category(), "Failed to create socket"};
 
 #if defined(_WIN32) || defined(__CYGWIN__)
                 ULONG mode = 1;
                 if (ioctlsocket(endpoint, FIONBIO, &mode) != 0)
                 {
                     close();
-                    throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to get socket flags");
+                    throw std::system_error{WSAGetLastError(), std::system_category(), "Failed to get socket flags"};
                 }
 #else
                 const auto flags = fcntl(endpoint, F_GETFL);
                 if (flags == -1)
                 {
                     close();
-                    throw std::system_error(errno, std::system_category(), "Failed to get socket flags");
+                    throw std::system_error{errno, std::system_category(), "Failed to get socket flags"};
                 }
 
                 if (fcntl(endpoint, F_SETFL, flags | O_NONBLOCK) == -1)
                 {
                     close();
-                    throw std::system_error(errno, std::system_category(), "Failed to set socket flags");
+                    throw std::system_error{errno, std::system_category(), "Failed to set socket flags"};
                 }
 #endif // defined(_WIN32) || defined(__CYGWIN__)
 
@@ -179,7 +179,7 @@ namespace http
                 if (setsockopt(endpoint, SOL_SOCKET, SO_NOSIGPIPE, &value, sizeof(value)) == -1)
                 {
                     close();
-                    throw std::system_error(errno, std::system_category(), "Failed to set socket option");
+                    throw std::system_error{errno, std::system_category(), "Failed to set socket option"};
                 }
 #endif // __APPLE__
             }
@@ -220,16 +220,16 @@ namespace http
                         char socketErrorPointer[sizeof(int)];
                         socklen_t optionLength = sizeof(socketErrorPointer);
                         if (getsockopt(endpoint, SOL_SOCKET, SO_ERROR, socketErrorPointer, &optionLength) == -1)
-                            throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to get socket option");
+                            throw std::system_error{WSAGetLastError(), std::system_category(), "Failed to get socket option"};
 
                         int socketError;
                         std::memcpy(&socketError, socketErrorPointer, sizeof(socketErrorPointer));
 
                         if (socketError != 0)
-                            throw std::system_error(socketError, std::system_category(), "Failed to connect");
+                            throw std::system_error{socketError, std::system_category(), "Failed to connect"};
                     }
                     else
-                        throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to connect");
+                        throw std::system_error{WSAGetLastError(), std::system_category(), "Failed to connect"};
                 }
 #else
                 auto result = ::connect(endpoint, address, addressSize);
@@ -245,13 +245,13 @@ namespace http
                         int socketError;
                         socklen_t optionLength = sizeof(socketError);
                         if (getsockopt(endpoint, SOL_SOCKET, SO_ERROR, &socketError, &optionLength) == -1)
-                            throw std::system_error(errno, std::system_category(), "Failed to get socket option");
+                            throw std::system_error{errno, std::system_category(), "Failed to get socket option"};
 
                         if (socketError != 0)
-                            throw std::system_error(socketError, std::system_category(), "Failed to connect");
+                            throw std::system_error{socketError, std::system_category(), "Failed to connect"};
                     }
                     else
-                        throw std::system_error(errno, std::system_category(), "Failed to connect");
+                        throw std::system_error{errno, std::system_category(), "Failed to connect"};
                 }
 #endif // defined(_WIN32) || defined(__CYGWIN__)
             }
@@ -268,7 +268,7 @@ namespace http
                                     static_cast<int>(length), 0);
 
                 if (result == -1)
-                    throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to send data");
+                    throw std::system_error{WSAGetLastError(), std::system_category(), "Failed to send data"};
 #else
                 auto result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
                                      length, noSignal);
@@ -278,7 +278,7 @@ namespace http
                                     length, noSignal);
 
                 if (result == -1)
-                    throw std::system_error(errno, std::system_category(), "Failed to send data");
+                    throw std::system_error{errno, std::system_category(), "Failed to send data"};
 #endif // defined(_WIN32) || defined(__CYGWIN__)
                 return static_cast<std::size_t>(result);
             }
@@ -295,7 +295,7 @@ namespace http
                                     static_cast<int>(length), 0);
 
                 if (result == -1)
-                    throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to read data");
+                    throw std::system_error{WSAGetLastError(), std::system_category(), "Failed to read data"};
 #else
                 auto result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
                                      length, noSignal);
@@ -305,7 +305,7 @@ namespace http
                                     length, noSignal);
 
                 if (result == -1)
-                    throw std::system_error(errno, std::system_category(), "Failed to read data");
+                    throw std::system_error{errno, std::system_category(), "Failed to read data"};
 #endif // defined(_WIN32) || defined(__CYGWIN__)
                 return static_cast<std::size_t>(result);
             }
@@ -342,9 +342,9 @@ namespace http
                                      (timeout >= 0) ? &selectTimeout : nullptr);
 
                 if (count == -1)
-                    throw std::system_error(WSAGetLastError(), std::system_category(), "Failed to select socket");
+                    throw std::system_error{WSAGetLastError(), std::system_category(), "Failed to select socket"};
                 else if (count == 0)
-                    throw ResponseError("Request timed out");
+                    throw ResponseError{"Request timed out"};
 #else
                 timeval selectTimeout{
                     static_cast<time_t>(timeout / 1000),
@@ -364,9 +364,9 @@ namespace http
                                      (timeout >= 0) ? &selectTimeout : nullptr);
 
                 if (count == -1)
-                    throw std::system_error(errno, std::system_category(), "Failed to select socket");
+                    throw std::system_error{errno, std::system_category(), "Failed to select socket"};
                 else if (count == 0)
-                    throw ResponseError("Request timed out");
+                    throw ResponseError{"Request timed out"};
 #endif // defined(_WIN32) || defined(__CYGWIN__)
             }
 
@@ -611,7 +611,7 @@ namespace http
             const auto stopTime = std::chrono::steady_clock::now() + timeout;
 
             if (scheme != "http")
-                throw RequestError("Only HTTP scheme is supported");
+                throw RequestError{"Only HTTP scheme is supported"};
 
             addrinfo hints = {};
             hints.ai_family = getAddressFamily(internetProtocol);
@@ -619,7 +619,7 @@ namespace http
 
             addrinfo* info;
             if (getaddrinfo(domain.c_str(), port.c_str(), &hints, &info) != 0)
-                throw std::system_error(getLastError(), std::system_category(), "Failed to get address info of " + domain);
+                throw std::system_error{getLastError(), std::system_category(), "Failed to get address info of " + domain};
 
             const std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> addressInfo{info, freeaddrinfo};
 
@@ -741,10 +741,10 @@ namespace http
                             std::transform(headerName.begin(), headerName.end(), headerName.begin(), toLower);
 
                             if (headerIterator == line.cend())
-                                throw ResponseError("Invalid header");
+                                throw ResponseError{"Invalid header"};
 
                             if (*headerIterator++ != ':')
-                                throw ResponseError("Invalid header");
+                                throw ResponseError{"Invalid header"};
 
                             headerIterator = skipWhitespaces(headerIterator, line.cend());
 
@@ -756,7 +756,7 @@ namespace http
                             headerIterator = skipWhitespaces(headerIterator, line.cend());
 
                             if (headerIterator != line.cend())
-                                throw ResponseError("Invalid header");
+                                throw ResponseError{"Invalid header"};
 
                             if (headerName == "content-length")
                             {
@@ -769,7 +769,7 @@ namespace http
                                 if (headerValue == "chunked")
                                     chunkedResponse = true;
                                 else
-                                    throw ResponseError("Unsupported transfer encoding: " + headerValue);
+                                    throw ResponseError{"Unsupported transfer encoding: " + headerValue};
                             }
                         }
                     }
@@ -800,7 +800,7 @@ namespace http
                                     if (responseData.size() < 2) break;
                                     
                                     if (!std::equal(crlf.begin(), crlf.end(), responseData.begin()))
-                                        throw ResponseError("Invalid chunk");
+                                        throw ResponseError{"Invalid chunk"};
 
                                     removeCrlfAfterChunk = false;
                                     responseData.erase(responseData.begin(), responseData.begin() + 2);
