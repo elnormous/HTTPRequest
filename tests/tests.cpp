@@ -79,3 +79,11 @@ TEST_CASE("Parse token", "[parsing]")
     REQUIRE(result.first == str.end());
     REQUIRE(result.second == "token");
 }
+
+TEST_CASE("Parse field value", "[parsing]")
+{
+    std::string str = "value";
+    auto result = http::detail::parseFieldValue(str.begin(), str.end());
+    REQUIRE(result.first == str.end());
+    REQUIRE(result.second == "value");
+}
