@@ -698,13 +698,14 @@ namespace http
                     for (;;)
                     {
                         // RFC 7230, 3. Message Format
-                        const auto i = std::search(responseData.begin(), responseData.end(), crlf.begin(), crlf.end());
+                        const auto lineBegin = responseData.cbegin();
+                        const auto lineEnd = std::search(responseData.cbegin(), responseData.cend(), crlf.cbegin(), crlf.cend());
 
                         // didn't find a newline
-                        if (i == responseData.end()) break;
+                        if (lineEnd == responseData.cend()) break;
 
-                        const std::string line(responseData.begin(), i);
-                        responseData.erase(responseData.begin(), i + 2);
+                        const std::string line(lineBegin, lineEnd);
+                        responseData.erase(lineBegin, lineEnd + 2);
 
                         // empty line indicates the end of the header section (RFC 7230, 2.1. Client/Server Messaging)
                         if (line.empty())
