@@ -94,6 +94,12 @@ TEST_CASE("Too short status code", "[parsing]")
     std::string str = "33";
     REQUIRE_THROWS_AS(http::detail::parseStatusCode(str.begin(), str.end()), http::ResponseError);
 }
+
+TEST_CASE("Invalid short status code", "[parsing]")
+{
+    std::string str = "33a";
+    REQUIRE_THROWS_AS(http::detail::parseStatusCode(str.begin(), str.end()), http::ResponseError);
+}
 {
     std::string str = "value";
     auto result = http::detail::parseFieldValue(str.begin(), str.end());
