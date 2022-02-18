@@ -461,7 +461,7 @@ namespace http
             std::string result;
 
             auto i = begin;
-            for (; i != end && (isVisibleChar(*i) || isWhitespaceChar(*i) || isObsTextChar(*i)); ++i)
+            for (; i != end && (isWhitespaceChar(*i) || isVisibleChar(*i) || isObsTextChar(*i)); ++i)
                 result.push_back(*i);
 
             return std::make_pair(i, std::move(result));
@@ -526,6 +526,19 @@ namespace http
                     result = static_cast<uint16_t>(result * 10U + static_cast<uint16_t>(*i - '0'));
 
             return std::make_pair(i, result);
+        }
+
+        // RFC 7230, 3.1.2. Status Line
+        template <class Iterator>
+        std::pair<Iterator, std::string> parseReasonPhrase(const Iterator begin, const Iterator end)
+        {
+            std::string result;
+
+            auto i = begin;
+            for (; i != end && (isWhitespaceChar(*i) || isVisibleChar(*i) || isObsTextChar(*i)); ++i)
+                result.push_back(*i);
+
+            return std::make_pair(i, std::move(result));
         }
     }
 

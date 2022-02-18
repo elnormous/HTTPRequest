@@ -126,6 +126,24 @@ TEST_CASE("Invalid short status code", "[parsing]")
     std::string str = "33a";
     REQUIRE_THROWS_AS(http::detail::parseStatusCode(str.begin(), str.end()), http::ResponseError);
 }
+
+TEST_CASE("Reason phrase", "[parsing]")
+{
+    std::string str = "reason";
+    auto result = http::detail::parseReasonPhrase(str.begin(), str.end());
+    REQUIRE(result.first == str.end());
+    REQUIRE(result.second == "reason");
+}
+
+TEST_CASE("Reason phrase with space", "[parsing]")
+{
+    std::string str = "reason s";
+    auto result = http::detail::parseReasonPhrase(str.begin(), str.end());
+    REQUIRE(result.first == str.end());
+    REQUIRE(result.second == "reason s");
+}
+
+TEST_CASE("Field value", "[parsing]")
 {
     std::string str = "value";
     auto result = http::detail::parseFieldValue(str.begin(), str.end());
