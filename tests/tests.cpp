@@ -87,3 +87,11 @@ TEST_CASE("Parse field value", "[parsing]")
     REQUIRE(result.first == str.end());
     REQUIRE(result.second == "value");
 }
+
+TEST_CASE("Parse field value with a space", "[parsing]")
+{
+    std::string str = "value s";
+    auto result = http::detail::parseFieldValue(str.begin(), str.end());
+    REQUIRE(result.first == str.end());
+    REQUIRE(result.second == "value s");
+}
