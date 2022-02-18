@@ -80,7 +80,33 @@ TEST_CASE("Token", "[parsing]")
     REQUIRE(result.second == "token");
 }
 
-TEST_CASE("Parse status code", "[parsing]")
+TEST_CASE("HTTP version", "[parsing]")
+{
+    std::string str = "HTTP/1.1";
+    auto result = http::detail::parseHttpVersion(str.begin(), str.end());
+    REQUIRE(result.first == str.end());
+    REQUIRE(result.second.major == 1U);
+    REQUIRE(result.second.minor == 1U);
+}
+
+TEST_CASE("Invalid HTTP in version", "[parsing]")
+{
+    std::string str = "TTP/1.1";
+    REQUIRE_THROWS_AS(http::detail::parseHttpVersion(str.begin(), str.end()), http::ResponseError);
+}
+
+TEST_CASE("No slash in HTTP version", "[parsing]")
+{
+    std::string str = "HTTP1.1";
+    REQUIRE_THROWS_AS(http::detail::parseHttpVersion(str.begin(), str.end()), http::ResponseError);
+}
+
+TEST_CASE("No minor version in HTTP version", "[parsing]")
+{
+    std::string str = "HTTP/1.";
+    REQUIRE_THROWS_AS(http::detail::parseHttpVersion(str.begin(), str.end()), http::ResponseError);
+}
+
 TEST_CASE("Status code", "[parsing]")
 {
     std::string str = "333";

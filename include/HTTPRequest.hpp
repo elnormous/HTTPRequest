@@ -467,6 +467,51 @@ namespace http
             return std::make_pair(i, std::move(result));
         }
 
+        struct HttpVersion final
+        {
+            uint16_t major;
+            uint16_t minor;
+        };
+
+        // RFC 7230, 2.6. Protocol Versioning
+        template <class Iterator>
+        std::pair<Iterator, HttpVersion> parseHttpVersion(const Iterator begin, const Iterator end)
+        {
+            auto i = begin;
+
+            constexpr std::array<char, 4> http{'H', 'T', 'T', 'P'};
+
+            for (std::size_t n = 0; n < http.size(); ++n, ++i)
+                if (i == end || *i != http[n])
+                    throw ResponseError{"Invalid HTTP version"};
+
+            if (i == end || *i != '/')
+                throw ResponseError{"Invalid HTTP version"};
+
+            ++i;
+
+            if (i == end || !isDigitChar(*i))
+                throw ResponseError{"Invalid HTTP version"};
+
+            const auto majorVersion = static_cast<uint16_t>(*i - '0');
+
+            ++i;
+
+            if (i == end || *i != '.')
+                throw ResponseError{"Invalid HTTP version"};
+
+            ++i;
+
+            if (i == end || !isDigitChar(*i))
+                throw ResponseError{"Invalid HTTP version"};
+
+            const auto minorVersion = static_cast<uint16_t>(*i - '0');
+
+            ++i;
+
+            return std::make_pair(i, HttpVersion{majorVersion, minorVersion});
+        }
+
         // RFC 7230, 3.1.2. Status Line
         template <class Iterator>
         std::pair<Iterator, std::uint16_t> parseStatusCode(const Iterator begin, const Iterator end)
