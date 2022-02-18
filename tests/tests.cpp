@@ -72,7 +72,7 @@ TEST_CASE("Don't skip whitespaces", "[parsing]")
     REQUIRE(i == str.begin());
 }
 
-TEST_CASE("Parse token", "[parsing]")
+TEST_CASE("Token", "[parsing]")
 {
     std::string str = "token";
     auto result = http::detail::parseToken(str.begin(), str.end());
@@ -81,6 +81,7 @@ TEST_CASE("Parse token", "[parsing]")
 }
 
 TEST_CASE("Parse status code", "[parsing]")
+TEST_CASE("Status code", "[parsing]")
 {
     std::string str = "333";
     auto result = http::detail::parseStatusCode(str.begin(), str.end());
@@ -88,7 +89,11 @@ TEST_CASE("Parse status code", "[parsing]")
     REQUIRE(result.second == 333);
 }
 
-TEST_CASE("Parse field value", "[parsing]")
+TEST_CASE("Too short status code", "[parsing]")
+{
+    std::string str = "33";
+    REQUIRE_THROWS_AS(http::detail::parseStatusCode(str.begin(), str.end()), http::ResponseError);
+}
 {
     std::string str = "value";
     auto result = http::detail::parseFieldValue(str.begin(), str.end());
@@ -96,7 +101,7 @@ TEST_CASE("Parse field value", "[parsing]")
     REQUIRE(result.second == "value");
 }
 
-TEST_CASE("Parse field value with a space", "[parsing]")
+TEST_CASE("Field value with a space", "[parsing]")
 {
     std::string str = "value s";
     auto result = http::detail::parseFieldValue(str.begin(), str.end());

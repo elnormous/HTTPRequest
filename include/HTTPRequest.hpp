@@ -472,14 +472,13 @@ namespace http
         std::pair<Iterator, std::uint16_t> parseStatusCode(const Iterator begin, const Iterator end)
         {
             std::uint16_t result = 0;
-            std::size_t size = 0;
 
             auto i = begin;
-            for (; i != end && isDigitChar(*i) && size < 3; ++i, ++size)
-                result = static_cast<uint16_t>(result * 10U + static_cast<uint16_t>(*i - '0'));
-
-            if (size != 3)
-                throw ResponseError{"Invalid status code"};
+            for (std::size_t n = 0; n < 3; ++n, ++i)
+                if (i == end || !isDigitChar(*i))
+                    throw ResponseError{"Invalid status code"};
+                else
+                    result = static_cast<uint16_t>(result * 10U + static_cast<uint16_t>(*i - '0'));
 
             return std::make_pair(i, result);
         }
