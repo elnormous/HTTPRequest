@@ -80,6 +80,14 @@ TEST_CASE("Parse token", "[parsing]")
     REQUIRE(result.second == "token");
 }
 
+TEST_CASE("Parse status code", "[parsing]")
+{
+    std::string str = "333";
+    auto result = http::detail::parseStatusCode(str.begin(), str.end());
+    REQUIRE(result.first == str.end());
+    REQUIRE(result.second == 333);
+}
+
 TEST_CASE("Parse field value", "[parsing]")
 {
     std::string str = "value";

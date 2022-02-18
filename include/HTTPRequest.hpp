@@ -466,6 +466,23 @@ namespace http
 
             return std::make_pair(i, std::move(result));
         }
+
+        // RFC 7230, 3.1.2. Status Line
+        template <class Iterator>
+        std::pair<Iterator, std::uint16_t> parseStatusCode(const Iterator begin, const Iterator end)
+        {
+            std::uint16_t result = 0;
+            std::size_t size = 0;
+
+            auto i = begin;
+            for (; i != end && isDigitChar(*i) && size < 3; ++i, ++size)
+                result = static_cast<uint16_t>(result * 10U + static_cast<uint16_t>(*i - '0'));
+
+            if (size != 3)
+                throw ResponseError{"Invalid status code"};
+
+            return std::make_pair(i, result);
+        }
     }
 
     struct Response final
