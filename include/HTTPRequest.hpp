@@ -796,19 +796,15 @@ namespace http
                             auto i = httpVersion.first;
                             response.httpVersion = httpVersion.second;
 
-                            if (i == line.end() || *i != ' ')
+                            if (i == line.end() || *i++ != ' ')
                                 throw ResponseError{"Invalid status line"};
-
-                            ++i;
 
                             const auto statusCode = parseStatusCode(i, line.cend());
                             i = statusCode.first;
                             response.status = statusCode.second;
 
-                            if (i == line.end() || *i != ' ')
+                            if (i == line.end() || *i++ != ' ')
                                 throw ResponseError{"Invalid status line"};
-
-                            ++i;
 
                             const auto reasonPhrase = parseReasonPhrase(i, line.cend());
                             i = reasonPhrase.first;
@@ -821,9 +817,8 @@ namespace http
                         {
                             response.headers.push_back(line);
 
-                            auto headerIterator = line.cbegin();
-                            const auto tokenResult = parseToken(headerIterator, line.cend());
-                            headerIterator = tokenResult.first;
+                            const auto tokenResult = parseToken(line.cbegin(), line.cend());
+                            auto i = tokenResult.first;
                             auto headerName = std::move(tokenResult.second);
 
                             const auto toLower = [](const char c) noexcept {
@@ -832,22 +827,18 @@ namespace http
 
                             std::transform(headerName.begin(), headerName.end(), headerName.begin(), toLower);
 
-                            if (headerIterator == line.cend())
+                            if (i == line.cend() || *i++ != ':')
                                 throw ResponseError{"Invalid header"};
 
-                            if (*headerIterator++ != ':')
-                                throw ResponseError{"Invalid header"};
+                            i = skipWhitespaces(i, line.cend());
 
-                            headerIterator = skipWhitespaces(headerIterator, line.cend());
-
-                            const auto valueResult = parseFieldValue(headerIterator, line.cend());
-
-                            headerIterator = valueResult.first;
+                            const auto valueResult = parseFieldValue(i, line.cend());
+                            i = valueResult.first;
                             auto headerValue = std::move(valueResult.second);
 
-                            headerIterator = skipWhitespaces(headerIterator, line.cend());
+                            i = skipWhitespaces(i, line.cend());
 
-                            if (headerIterator != line.cend())
+                            if (i != line.cend())
                                 throw ResponseError{"Invalid header"};
 
                             if (headerName == "content-length")
