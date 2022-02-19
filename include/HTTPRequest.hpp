@@ -841,18 +841,20 @@ namespace http
                             if (i != line.cend())
                                 throw ResponseError{"Invalid header"};
 
-                            if (headerName == "content-length")
+                            if (headerName == "transfer-encoding")
                             {
-                                contentLength = std::stoul(headerValue);
-                                contentLengthReceived = true;
-                                response.body.reserve(contentLength);
-                            }
-                            else if (headerName == "transfer-encoding")
-                            {
+                                // RFC 7230, 3.3.1. Transfer-Encoding
                                 if (headerValue == "chunked")
                                     chunkedResponse = true;
                                 else
                                     throw ResponseError{"Unsupported transfer encoding: " + headerValue};
+                            }
+                            else if (headerName == "content-length")
+                            {
+                                // RFC 7230, 3.3.2. Content-Length
+                                contentLength = std::stoul(headerValue);
+                                contentLengthReceived = true;
+                                response.body.reserve(contentLength);
                             }
                         }
                     }
@@ -862,6 +864,7 @@ namespace http
                     // Content-Length must be ignored if Transfer-Encoding is received (RFC 7230, 3.2. Content-Length)
                     if (chunkedResponse)
                     {
+                        // RFC 7230, 4.1. Chunked Transfer Coding
                         for (;;)
                         {
                             if (expectedChunkSize > 0)
