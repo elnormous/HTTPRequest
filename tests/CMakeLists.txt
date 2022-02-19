@@ -18,3 +18,4 @@ target_include_directories(HTTPRequest_tests
 add_test(test HTTPRequest_tests)
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
                   DEPENDS HTTPRequest_tests)
+
