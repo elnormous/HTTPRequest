@@ -72,6 +72,91 @@ namespace http
         V6
     };
 
+    struct HttpVersion final
+    {
+        uint16_t major;
+        uint16_t minor;
+    };
+
+    struct Response final
+    {
+        // RFC 7231, 6. Response Status Codes
+        enum Status: std::uint16_t
+        {
+            Continue = 100,
+            SwitchingProtocol = 101,
+            Processing = 102,
+            EarlyHints = 103,
+
+            Ok = 200,
+            Created = 201,
+            Accepted = 202,
+            NonAuthoritativeInformation = 203,
+            NoContent = 204,
+            ResetContent = 205,
+            PartialContent = 206,
+            MultiStatus = 207,
+            AlreadyReported = 208,
+            ImUsed = 226,
+
+            MultipleChoice = 300,
+            MovedPermanently = 301,
+            Found = 302,
+            SeeOther = 303,
+            NotModified = 304,
+            UseProxy = 305,
+            TemporaryRedirect = 307,
+            PermanentRedirect = 308,
+
+            BadRequest = 400,
+            Unauthorized = 401,
+            PaymentRequired = 402,
+            Forbidden = 403,
+            NotFound = 404,
+            MethodNotAllowed = 405,
+            NotAcceptable = 406,
+            ProxyAuthenticationRequired = 407,
+            RequestTimeout = 408,
+            Conflict = 409,
+            Gone = 410,
+            LengthRequired = 411,
+            PreconditionFailed = 412,
+            PayloadTooLarge = 413,
+            UriTooLong = 414,
+            UnsupportedMediaType = 415,
+            RangeNotSatisfiable = 416,
+            ExpectationFailed = 417,
+            MisdirectedRequest = 421,
+            UnprocessableEntity = 422,
+            Locked = 423,
+            FailedDependency = 424,
+            TooEarly = 425,
+            UpgradeRequired = 426,
+            PreconditionRequired = 428,
+            TooManyRequests = 429,
+            RequestHeaderFieldsTooLarge = 431,
+            UnavailableForLegalReasons = 451,
+
+            InternalServerError = 500,
+            NotImplemented = 501,
+            BadGateway = 502,
+            ServiceUnavailable = 503,
+            GatewayTimeout = 504,
+            HttpVersionNotSupported = 505,
+            VariantAlsoNegotiates = 506,
+            InsufficientStorage = 507,
+            LoopDetected = 508,
+            NotExtended = 510,
+            NetworkAuthenticationRequired = 511
+        };
+
+        HttpVersion httpVersion;
+        std::uint16_t status = 0;
+        std::string reason;
+        std::vector<std::string> headers;
+        std::vector<std::uint8_t> body;
+    };
+
     inline namespace detail
     {
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -467,12 +552,6 @@ namespace http
             return std::make_pair(i, std::move(result));
         }
 
-        struct HttpVersion final
-        {
-            uint16_t major;
-            uint16_t minor;
-        };
-
         // RFC 7230, 2.6. Protocol Versioning
         template <class Iterator>
         std::pair<Iterator, HttpVersion> parseHttpVersion(const Iterator begin, const Iterator end)
@@ -541,84 +620,6 @@ namespace http
             return std::make_pair(i, std::move(result));
         }
     }
-
-    struct Response final
-    {
-        // RFC 7231, 6. Response Status Codes
-        enum Status
-        {
-            Continue = 100,
-            SwitchingProtocol = 101,
-            Processing = 102,
-            EarlyHints = 103,
-
-            Ok = 200,
-            Created = 201,
-            Accepted = 202,
-            NonAuthoritativeInformation = 203,
-            NoContent = 204,
-            ResetContent = 205,
-            PartialContent = 206,
-            MultiStatus = 207,
-            AlreadyReported = 208,
-            ImUsed = 226,
-
-            MultipleChoice = 300,
-            MovedPermanently = 301,
-            Found = 302,
-            SeeOther = 303,
-            NotModified = 304,
-            UseProxy = 305,
-            TemporaryRedirect = 307,
-            PermanentRedirect = 308,
-
-            BadRequest = 400,
-            Unauthorized = 401,
-            PaymentRequired = 402,
-            Forbidden = 403,
-            NotFound = 404,
-            MethodNotAllowed = 405,
-            NotAcceptable = 406,
-            ProxyAuthenticationRequired = 407,
-            RequestTimeout = 408,
-            Conflict = 409,
-            Gone = 410,
-            LengthRequired = 411,
-            PreconditionFailed = 412,
-            PayloadTooLarge = 413,
-            UriTooLong = 414,
-            UnsupportedMediaType = 415,
-            RangeNotSatisfiable = 416,
-            ExpectationFailed = 417,
-            MisdirectedRequest = 421,
-            UnprocessableEntity = 422,
-            Locked = 423,
-            FailedDependency = 424,
-            TooEarly = 425,
-            UpgradeRequired = 426,
-            PreconditionRequired = 428,
-            TooManyRequests = 429,
-            RequestHeaderFieldsTooLarge = 431,
-            UnavailableForLegalReasons = 451,
-
-            InternalServerError = 500,
-            NotImplemented = 501,
-            BadGateway = 502,
-            ServiceUnavailable = 503,
-            GatewayTimeout = 504,
-            HttpVersionNotSupported = 505,
-            VariantAlsoNegotiates = 506,
-            InsufficientStorage = 507,
-            LoopDetected = 508,
-            NotExtended = 510,
-            NetworkAuthenticationRequired = 511
-        };
-
-        int status = 0;
-        std::string description;
-        std::vector<std::string> headers;
-        std::vector<std::uint8_t> body;
-    };
 
     class Request final
     {
@@ -791,21 +792,30 @@ namespace http
                         {
                             state = State::parsingHeaders;
 
-                            const auto httpEndIterator = std::find(line.begin(), line.end(), ' ');
+                            const auto httpVersion = parseHttpVersion(line.cbegin(), line.cend());
+                            auto i = httpVersion.first;
+                            response.httpVersion = httpVersion.second;
 
-                            if (httpEndIterator != line.end())
-                            {
-                                const auto statusStartIterator = httpEndIterator + 1;
-                                const auto statusEndIterator = std::find(statusStartIterator, line.end(), ' ');
-                                const std::string status{statusStartIterator, statusEndIterator};
-                                response.status = std::stoi(status);
+                            if (i == line.end() || *i != ' ')
+                                throw ResponseError{"Invalid status line"};
 
-                                if (statusEndIterator != line.end())
-                                {
-                                    const auto descriptionStartIterator = statusEndIterator + 1;
-                                    response.description = std::string{descriptionStartIterator, line.end()};
-                                }
-                            }
+                            ++i;
+
+                            const auto statusCode = parseStatusCode(i, line.cend());
+                            i = statusCode.first;
+                            response.status = statusCode.second;
+
+                            if (i == line.end() || *i != ' ')
+                                throw ResponseError{"Invalid status line"};
+
+                            ++i;
+
+                            const auto reasonPhrase = parseReasonPhrase(i, line.cend());
+                            i = reasonPhrase.first;
+                            response.reason = reasonPhrase.second;
+
+                            if (i != line.cend())
+                                throw ResponseError{"Invalid status line"};
                         }
                         else if (state == State::parsingHeaders) // RFC 7230, 3.2. Header Fields
                         {
