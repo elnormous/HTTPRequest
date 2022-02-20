@@ -158,3 +158,12 @@ TEST_CASE("Field value with a space", "[parsing]")
     REQUIRE(result.first == str.end());
     REQUIRE(result.second == "value s");
 }
+
+TEST_CASE("Header field", "[parsing]")
+{
+    std::string str = "field:value";
+    auto result = http::detail::parseHeaderField(str.begin(), str.end());
+    REQUIRE(result.first == str.end());
+    REQUIRE(result.second.first == "field");
+    REQUIRE(result.second.second == "value");
+}

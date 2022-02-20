@@ -620,6 +620,34 @@ namespace http
 
             return std::make_pair(i, std::move(result));
         }
+
+        // RFC 7230, 3.2. Header Fields
+        template <class Iterator>
+        std::pair<Iterator, std::pair<std::string, std::string>> parseHeaderField(const Iterator begin, const Iterator end)
+        {
+            const auto tokenResult = parseToken(begin, end);
+            auto i = tokenResult.first;
+            auto fieldName = std::move(tokenResult.second);
+
+            if (i == end || *i++ != ':')
+                throw ResponseError{"Invalid header"};
+
+            i = skipWhitespaces(i, end);
+
+            const auto valueResult = parseFieldValue(i, end);
+            i = valueResult.first;
+            auto fieldValue = std::move(valueResult.second);
+
+            return std::make_pair(i, std::make_pair(std::move(fieldName), std::move(fieldValue)));
+        }
+
+        // RFC 7230, 3.1.2. Status Line
+        template <class Iterator>
+        std::pair<Iterator, std::string> parseStatusLine(const Iterator begin, const Iterator end)
+        {
+            
+            // TODO: implement
+        }
     }
 
     class Request final
@@ -818,42 +846,35 @@ namespace http
                         {
                             response.headers.push_back(line);
 
-                            const auto tokenResult = parseToken(line.cbegin(), line.cend());
-                            auto i = tokenResult.first;
-                            auto headerName = std::move(tokenResult.second);
+                            auto headerFieldResult = parseHeaderField(line.cbegin(), line.cend());
+
+                            const auto i = headerFieldResult.first;
+                            if (i != line.cend())
+                                throw ResponseError{"Invalid header"};
+
+                            auto fieldName = std::move(headerFieldResult.second.first);
 
                             const auto toLower = [](const char c) noexcept {
                                 return (c >= 'A' && c <= 'Z') ? c - ('A' - 'a') : c;
                             };
 
-                            std::transform(headerName.begin(), headerName.end(), headerName.begin(), toLower);
+                            std::transform(fieldName.begin(), fieldName.end(), fieldName.begin(), toLower);
 
-                            if (i == line.cend() || *i++ != ':')
-                                throw ResponseError{"Invalid header"};
+                            const auto fieldValue = std::move(headerFieldResult.second.second);
 
-                            i = skipWhitespaces(i, line.cend());
 
-                            const auto valueResult = parseFieldValue(i, line.cend());
-                            i = valueResult.first;
-                            auto headerValue = std::move(valueResult.second);
-
-                            i = skipWhitespaces(i, line.cend());
-
-                            if (i != line.cend())
-                                throw ResponseError{"Invalid header"};
-
-                            if (headerName == "transfer-encoding")
+                            if (fieldName == "transfer-encoding")
                             {
                                 // RFC 7230, 3.3.1. Transfer-Encoding
-                                if (headerValue == "chunked")
+                                if (fieldValue == "chunked")
                                     chunkedResponse = true;
                                 else
-                                    throw ResponseError{"Unsupported transfer encoding: " + headerValue};
+                                    throw ResponseError{"Unsupported transfer encoding: " + fieldValue};
                             }
-                            else if (headerName == "content-length")
+                            else if (fieldName == "content-length")
                             {
                                 // RFC 7230, 3.3.2. Content-Length
-                                contentLength = std::stoul(headerValue);
+                                contentLength = std::stoul(fieldValue);
                                 contentLengthReceived = true;
                                 response.body.reserve(contentLength);
                             }
