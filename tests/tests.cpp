@@ -167,3 +167,36 @@ TEST_CASE("Header field", "[parsing]")
     REQUIRE(result.second.first == "field");
     REQUIRE(result.second.second == "value");
 }
+
+TEST_CASE("Header field upper case", "[parsing]")
+{
+    std::string str = "Field:Value";
+    auto result = http::detail::parseHeaderField(str.begin(), str.end());
+    REQUIRE(result.first == str.end());
+    REQUIRE(result.second.first == "Field");
+    REQUIRE(result.second.second == "Value");
+}
+
+TEST_CASE("Header field with spaces", "[parsing]")
+{
+    std::string str = "field:  \tvalue";
+    auto result = http::detail::parseHeaderField(str.begin(), str.end());
+    REQUIRE(result.first == str.end());
+    REQUIRE(result.second.first == "field");
+    REQUIRE(result.second.second == "value");
+}
+
+TEST_CASE("Header field with no value", "[parsing]")
+{
+    std::string str = "field:";
+    auto result = http::detail::parseHeaderField(str.begin(), str.end());
+    REQUIRE(result.first == str.end());
+    REQUIRE(result.second.first == "field");
+    REQUIRE(result.second.second == "");
+}
+
+TEST_CASE("Header field with no colon", "[parsing]")
+{
+    std::string str = "field";
+    REQUIRE_THROWS_AS(http::detail::parseHeaderField(str.begin(), str.end()), http::ResponseError);
+}
