@@ -524,34 +524,6 @@ namespace http
             return i;
         }
 
-        // RFC 7230, 3.2.6. Field Value Components
-        template <class Iterator>
-        std::pair<Iterator, std::string> parseToken(const Iterator begin, const Iterator end)
-        {
-            std::string result;
-
-            auto i = begin;
-            for (; i != end && isTokenChar(*i); ++i)
-                result.push_back(*i);
-
-            if (result.empty())
-                throw ResponseError{"Invalid token"};
-
-            return std::make_pair(i, std::move(result));
-        }
-
-        template <class Iterator>
-        std::pair<Iterator, std::string> parseFieldValue(const Iterator begin, const Iterator end)
-        {
-            std::string result;
-
-            auto i = begin;
-            for (; i != end && (isWhitespaceChar(*i) || isVisibleChar(*i) || isObsTextChar(*i)); ++i)
-                result.push_back(*i);
-
-            return std::make_pair(i, std::move(result));
-        }
-
         // RFC 7230, 2.6. Protocol Versioning
         template <class Iterator>
         std::pair<Iterator, HttpVersion> parseHttpVersion(const Iterator begin, const Iterator end)
@@ -610,6 +582,35 @@ namespace http
         // RFC 7230, 3.1.2. Status Line
         template <class Iterator>
         std::pair<Iterator, std::string> parseReasonPhrase(const Iterator begin, const Iterator end)
+        {
+            std::string result;
+
+            auto i = begin;
+            for (; i != end && (isWhitespaceChar(*i) || isVisibleChar(*i) || isObsTextChar(*i)); ++i)
+                result.push_back(*i);
+
+            return std::make_pair(i, std::move(result));
+        }
+
+        // RFC 7230, 3.2.6. Field Value Components
+        template <class Iterator>
+        std::pair<Iterator, std::string> parseToken(const Iterator begin, const Iterator end)
+        {
+            std::string result;
+
+            auto i = begin;
+            for (; i != end && isTokenChar(*i); ++i)
+                result.push_back(*i);
+
+            if (result.empty())
+                throw ResponseError{"Invalid token"};
+
+            return std::make_pair(i, std::move(result));
+        }
+
+        // RFC 7230, 3.2. Header Fields
+        template <class Iterator>
+        std::pair<Iterator, std::string> parseFieldValue(const Iterator begin, const Iterator end)
         {
             std::string result;
 
