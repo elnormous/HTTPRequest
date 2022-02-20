@@ -159,6 +159,14 @@ TEST_CASE("Field value with a space", "[parsing]")
     REQUIRE(result.second == "value s");
 }
 
+TEST_CASE("Field value with trailing whitespaces", "[parsing]")
+{
+    std::string str = "value \t";
+    auto result = http::detail::parseFieldValue(str.begin(), str.end());
+    REQUIRE(result.first == str.end());
+    REQUIRE(result.second == "value");
+}
+
 TEST_CASE("Header field", "[parsing]")
 {
     std::string str = "field:value";
@@ -179,6 +187,15 @@ TEST_CASE("Header field upper case", "[parsing]")
 
 TEST_CASE("Header field with spaces", "[parsing]")
 {
+    std::string str = "field:value s";
+    auto result = http::detail::parseHeaderField(str.begin(), str.end());
+    REQUIRE(result.first == str.end());
+    REQUIRE(result.second.first == "field");
+    REQUIRE(result.second.second == "value s");
+}
+
+TEST_CASE("Header field with spaces after colon", "[parsing]")
+{
     std::string str = "field:  \tvalue";
     auto result = http::detail::parseHeaderField(str.begin(), str.end());
     REQUIRE(result.first == str.end());
@@ -193,6 +210,15 @@ TEST_CASE("Header field with no value", "[parsing]")
     REQUIRE(result.first == str.end());
     REQUIRE(result.second.first == "field");
     REQUIRE(result.second.second == "");
+}
+
+TEST_CASE("Header field with trailing whitespace", "[parsing]")
+{
+    std::string str = "field:value ";
+    auto result = http::detail::parseHeaderField(str.begin(), str.end());
+    REQUIRE(result.first == str.end());
+    REQUIRE(result.second.first == "field");
+    REQUIRE(result.second.second == "value");
 }
 
 TEST_CASE("Header field with no colon", "[parsing]")
