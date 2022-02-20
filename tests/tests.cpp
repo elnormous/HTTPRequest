@@ -40,7 +40,7 @@ TEST_CASE("Visible char", "[parsing]")
 TEST_CASE("OBS text char", "[parsing]")
 {
     for (int c = 0; c < 256; ++c)
-        REQUIRE(http::detail::isObsTextChar(static_cast<char>(c)) == (c >= 0x80 && c <= 0xFF));
+        REQUIRE(http::detail::isObsoleteTextChar(static_cast<char>(c)) == (c >= 0x80 && c <= 0xFF));
 }
 
 TEST_CASE("Skip empty whitespaces", "[parsing]")

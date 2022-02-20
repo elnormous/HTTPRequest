@@ -507,7 +507,7 @@ namespace http
         }
 
         // RFC 7230, Appendix B. Collected ABNF
-        inline bool isObsTextChar(const char c) noexcept
+        inline bool isObsoleteTextChar(const char c) noexcept
         {
             return static_cast<unsigned char>(c) >= 0x80 &&
                 static_cast<unsigned char>(c) <= 0xFF;
@@ -586,7 +586,7 @@ namespace http
             std::string result;
 
             auto i = begin;
-            for (; i != end && (isWhitespaceChar(*i) || isVisibleChar(*i) || isObsTextChar(*i)); ++i)
+            for (; i != end && (isWhitespaceChar(*i) || isVisibleChar(*i) || isObsoleteTextChar(*i)); ++i)
                 result.push_back(*i);
 
             return std::make_pair(i, std::move(result));
@@ -615,7 +615,7 @@ namespace http
             std::string result;
 
             auto i = begin;
-            for (; i != end && (isWhitespaceChar(*i) || isVisibleChar(*i) || isObsTextChar(*i)); ++i)
+            for (; i != end && (isWhitespaceChar(*i) || isVisibleChar(*i) || isObsoleteTextChar(*i)); ++i)
                 result.push_back(*i);
 
             result.erase(std::find_if(result.rbegin(), result.rend(), [](char c) {
@@ -643,14 +643,6 @@ namespace http
             auto fieldValue = std::move(valueResult.second);
 
             return std::make_pair(i, std::make_pair(std::move(fieldName), std::move(fieldValue)));
-        }
-
-        // RFC 7230, 3.1.2. Status Line
-        template <class Iterator>
-        std::pair<Iterator, std::string> parseStatusLine(const Iterator begin, const Iterator end)
-        {
-            
-            // TODO: implement
         }
     }
 
