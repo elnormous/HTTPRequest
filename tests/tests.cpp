@@ -145,7 +145,7 @@ TEST_CASE("Reason phrase with space", "[parsing]")
 
 TEST_CASE("Status", "[parsing]")
 {
-    std::string str = "HTTP/1.1 123 test";
+    std::string str = "HTTP/1.1 123 test\r\n";
     auto result = http::detail::parseStatusLine(str.begin(), str.end());
     REQUIRE(result.first == str.end());
     REQUIRE(result.second.httpVersion.major == 1);

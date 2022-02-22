@@ -671,6 +671,12 @@ namespace http
             auto reasonPhraseResult = parseReasonPhrase(i, end);
             i = reasonPhraseResult.first;
 
+            if (i == end || *i++ != '\r')
+                throw ResponseError{"Invalid status line"};
+
+            if (i == end || *i++ != '\n')
+                throw ResponseError{"Invalid status line"};
+
             return std::make_pair(i, Status{
                 httpVersionResult.second,
                 statusCodeResult.second,
@@ -837,11 +843,11 @@ namespace http
                         // didn't find a newline
                         if (lineEnd == responseData.cend()) break;
 
-                        const std::string line(lineBegin, lineEnd);
+                        const std::string line(lineBegin, lineEnd + 2);
                         responseData.erase(lineBegin, lineEnd + 2);
 
                         // empty line indicates the end of the header section (RFC 7230, 2.1. Client/Server Messaging)
-                        if (line.empty())
+                        if (line.length() <= 2)
                         {
                             state = State::parsingBody;
                             break;
@@ -865,7 +871,14 @@ namespace http
 
                             auto headerFieldResult = parseHeaderField(line.cbegin(), line.cend());
 
-                            const auto i = headerFieldResult.first;
+                            auto i = headerFieldResult.first;
+
+                            if (i == line.cend() || *i++ != '\r')
+                                throw ResponseError{"Invalid header"};
+
+                            if (i == line.cend() || *i++ != '\n')
+                                throw ResponseError{"Invalid header"};
+
                             if (i != line.cend())
                                 throw ResponseError{"Invalid header"};
 
@@ -878,7 +891,6 @@ namespace http
                             std::transform(fieldName.begin(), fieldName.end(), fieldName.begin(), toLower);
 
                             const auto fieldValue = std::move(headerFieldResult.second.second);
-
 
                             if (fieldName == "transfer-encoding")
                             {
