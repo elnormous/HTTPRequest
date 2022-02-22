@@ -68,7 +68,7 @@ int main(int argc, const char* argv[])
 
         std::cout << response.reason << '\n';
 
-        if (response.status == http::Response::Ok)
+        if (response.status == http::Status::Ok)
         {
             if (!output.empty())
             {

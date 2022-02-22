@@ -78,10 +78,10 @@ namespace http
         uint16_t minor;
     };
 
-    struct Response final
+    struct Status final
     {
         // RFC 7231, 6. Response Status Codes
-        enum Status: std::uint16_t
+        enum Code: std::uint16_t
         {
             Continue = 100,
             SwitchingProtocol = 101,
@@ -150,6 +150,13 @@ namespace http
             NetworkAuthenticationRequired = 511
         };
 
+        HttpVersion httpVersion;
+        std::uint16_t status;
+        std::string reason;
+    };
+
+    struct Response final
+    {
         HttpVersion httpVersion;
         std::uint16_t status = 0;
         std::string reason;
@@ -644,6 +651,32 @@ namespace http
 
             return std::make_pair(i, std::make_pair(std::move(fieldName), std::move(fieldValue)));
         }
+
+        // RFC 7230, 3.1.2. Status Line
+        template <class Iterator>
+        std::pair<Iterator, Status> parseStatusLine(const Iterator begin, const Iterator end)
+        {
+            const auto httpVersionResult = parseHttpVersion(begin, end);
+            auto i = httpVersionResult.first;
+
+            if (i == end || *i++ != ' ')
+                throw ResponseError{"Invalid status line"};
+
+            const auto statusCodeResult = parseStatusCode(i, end);
+            i = statusCodeResult.first;
+
+            if (i == end || *i++ != ' ')
+                throw ResponseError{"Invalid status line"};
+
+            auto reasonPhraseResult = parseReasonPhrase(i, end);
+            i = reasonPhraseResult.first;
+
+            return std::make_pair(i, Status{
+                httpVersionResult.second,
+                statusCodeResult.second,
+                std::move(reasonPhraseResult.second)
+            });
+        }
     }
 
     class Request final
@@ -817,26 +850,14 @@ namespace http
                         {
                             state = State::parsingHeaders;
 
-                            const auto httpVersion = parseHttpVersion(line.cbegin(), line.cend());
-                            auto i = httpVersion.first;
-                            response.httpVersion = httpVersion.second;
-
-                            if (i == line.end() || *i++ != ' ')
-                                throw ResponseError{"Invalid status line"};
-
-                            const auto statusCode = parseStatusCode(i, line.cend());
-                            i = statusCode.first;
-                            response.status = statusCode.second;
-
-                            if (i == line.end() || *i++ != ' ')
-                                throw ResponseError{"Invalid status line"};
-
-                            const auto reasonPhrase = parseReasonPhrase(i, line.cend());
-                            i = reasonPhrase.first;
-                            response.reason = reasonPhrase.second;
-
+                            auto statusLineResult = parseStatusLine(line.cbegin(), line.cend());
+                            const auto i = statusLineResult.first;
                             if (i != line.cend())
                                 throw ResponseError{"Invalid status line"};
+
+                            response.httpVersion = statusLineResult.second.httpVersion;
+                            response.status = statusLineResult.second.status;
+                            response.reason = std::move(statusLineResult.second.reason);
                         }
                         else if (state == State::parsingHeaders) // RFC 7230, 3.2. Header Fields
                         {

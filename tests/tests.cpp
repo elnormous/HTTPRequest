@@ -143,6 +143,17 @@ TEST_CASE("Reason phrase with space", "[parsing]")
     REQUIRE(result.second == "reason s");
 }
 
+TEST_CASE("Status", "[parsing]")
+{
+    std::string str = "HTTP/1.1 123 test";
+    auto result = http::detail::parseStatusLine(str.begin(), str.end());
+    REQUIRE(result.first == str.end());
+    REQUIRE(result.second.httpVersion.major == 1);
+    REQUIRE(result.second.httpVersion.minor == 1);
+    REQUIRE(result.second.status == 123);
+    REQUIRE(result.second.reason == "test");
+}
+
 TEST_CASE("Field value", "[parsing]")
 {
     std::string str = "value";
