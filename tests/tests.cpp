@@ -194,6 +194,22 @@ TEST_CASE("Field content with obsolete folding", "[parsing]")
     REQUIRE(result.second == "content t");
 }
 
+TEST_CASE("Field content with obsolete folding and whitespace", "[parsing]")
+{
+    std::string str = "content\r\n  t";
+    auto result = http::detail::parseFieldContent(str.begin(), str.end());
+    REQUIRE(result.first == str.end());
+    REQUIRE(result.second == "content  t");
+}
+
+TEST_CASE("Field content with obsolete folding with empty first line", "[parsing]")
+{
+    std::string str = "\r\n t";
+    auto result = http::detail::parseFieldContent(str.begin(), str.end());
+    REQUIRE(result.first == str.end());
+    REQUIRE(result.second == " t");
+}
+
 TEST_CASE("Header field", "[parsing]")
 {
     std::string str = "field:value\r\n";
