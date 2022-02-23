@@ -674,7 +674,7 @@ namespace http
             if (i == end || *i++ != ' ')
                 throw ResponseError{"Invalid status line"};
 
-            auto reasonPhraseResult = parseReasonPhrase(i, end);
+            const auto reasonPhraseResult = parseReasonPhrase(i, end);
             i = reasonPhraseResult.first;
 
             if (i == end || *i++ != '\r')
@@ -862,7 +862,7 @@ namespace http
                         {
                             state = State::parsingHeaders;
 
-                            auto statusLineResult = parseStatusLine(line.cbegin(), line.cend());
+                            const auto statusLineResult = parseStatusLine(line.cbegin(), line.cend());
                             const auto i = statusLineResult.first;
                             if (i != line.cend())
                                 throw ResponseError{"Invalid status line"};
@@ -875,8 +875,7 @@ namespace http
                         {
                             response.headers.push_back(line);
 
-                            auto headerFieldResult = parseHeaderField(line.cbegin(), line.cend());
-
+                            const auto headerFieldResult = parseHeaderField(line.cbegin(), line.cend());
                             auto i = headerFieldResult.first;
 
                             if (i != line.cend())
