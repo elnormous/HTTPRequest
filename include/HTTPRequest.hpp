@@ -634,6 +634,38 @@ namespace http
 
         // RFC 7230, 3.2. Header Fields
         template <class Iterator>
+        std::pair<Iterator, std::string> parseFieldContent(const Iterator begin, const Iterator end)
+        {
+            std::string result;
+
+            auto i = begin;
+
+            for (;;)
+            {
+                const auto fieldValueResult = parseFieldValue(i, end);
+                i = fieldValueResult.first;
+                result += fieldValueResult.second;
+
+                // handle obsolete fold as per RFC 7230, 3.2.4. Field Parsing
+                auto obsoleteFoldIterator = i;
+                if (obsoleteFoldIterator == end || *obsoleteFoldIterator++ != '\r')
+                    break;
+
+                if (obsoleteFoldIterator == end || *obsoleteFoldIterator++ != '\n')
+                    break;
+
+                if (obsoleteFoldIterator == end || !isWhitespaceChar(*obsoleteFoldIterator++))
+                    break;
+
+                result.push_back(' ');
+                i = obsoleteFoldIterator;
+            }
+
+            return std::make_pair(i, std::move(result));;
+        }
+
+        // RFC 7230, 3.2. Header Fields
+        template <class Iterator>
         std::pair<Iterator, std::pair<std::string, std::string>> parseHeaderField(const Iterator begin, const Iterator end)
         {
             const auto tokenResult = parseToken(begin, end);
@@ -645,7 +677,7 @@ namespace http
 
             i = skipWhitespaces(i, end);
 
-            const auto valueResult = parseFieldValue(i, end);
+            const auto valueResult = parseFieldContent(i, end);
             i = valueResult.first;
             auto fieldValue = std::move(valueResult.second);
 

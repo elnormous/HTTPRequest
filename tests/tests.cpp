@@ -178,6 +178,22 @@ TEST_CASE("Field value with trailing whitespaces", "[parsing]")
     REQUIRE(result.second == "value");
 }
 
+TEST_CASE("Field content", "[parsing]")
+{
+    std::string str = "content";
+    auto result = http::detail::parseFieldContent(str.begin(), str.end());
+    REQUIRE(result.first == str.end());
+    REQUIRE(result.second == "content");
+}
+
+TEST_CASE("Field content with obsolete folding", "[parsing]")
+{
+    std::string str = "content\r\n t";
+    auto result = http::detail::parseFieldContent(str.begin(), str.end());
+    REQUIRE(result.first == str.end());
+    REQUIRE(result.second == "content t");
+}
+
 TEST_CASE("Header field", "[parsing]")
 {
     std::string str = "field:value\r\n";
@@ -242,4 +258,13 @@ TEST_CASE("Header field without CRLF", "[parsing]")
 {
     std::string str = "field:value";
     REQUIRE_THROWS_AS(http::detail::parseHeaderField(str.begin(), str.end()), http::ResponseError);
+}
+
+TEST_CASE("Header field with obsolete fold", "[parsing]")
+{
+    std::string str = "field:value1\r\n value2\r\n";
+    auto result = http::detail::parseHeaderField(str.begin(), str.end());
+    REQUIRE(result.first == str.end());
+    REQUIRE(result.second.first == "field");
+    REQUIRE(result.second.second == "value1 value2");
 }
