@@ -646,7 +646,8 @@ namespace http
                 i = fieldValueResult.first;
                 result += fieldValueResult.second;
 
-                // handle obsolete fold as per RFC 7230, 3.2.4. Field Parsing
+                // Handle obsolete fold as per RFC 7230, 3.2.4. Field Parsing
+                // Obsolete folding is known as linear white space (LWS) in RFC 2616, 2.2 Basic Rules
                 auto obsoleteFoldIterator = i;
                 if (obsoleteFoldIterator == end || *obsoleteFoldIterator++ != '\r')
                     break;
