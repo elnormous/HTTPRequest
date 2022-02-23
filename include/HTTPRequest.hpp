@@ -649,6 +649,12 @@ namespace http
             i = valueResult.first;
             auto fieldValue = std::move(valueResult.second);
 
+            if (i == end || *i++ != '\r')
+                throw ResponseError{"Invalid header"};
+
+            if (i == end || *i++ != '\n')
+                throw ResponseError{"Invalid header"};
+
             return std::make_pair(i, std::make_pair(std::move(fieldName), std::move(fieldValue)));
         }
 
@@ -872,12 +878,6 @@ namespace http
                             auto headerFieldResult = parseHeaderField(line.cbegin(), line.cend());
 
                             auto i = headerFieldResult.first;
-
-                            if (i == line.cend() || *i++ != '\r')
-                                throw ResponseError{"Invalid header"};
-
-                            if (i == line.cend() || *i++ != '\n')
-                                throw ResponseError{"Invalid header"};
 
                             if (i != line.cend())
                                 throw ResponseError{"Invalid header"};
