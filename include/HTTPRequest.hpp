@@ -151,15 +151,13 @@ namespace http
         };
 
         HttpVersion httpVersion;
-        std::uint16_t status;
+        std::uint16_t code;
         std::string reason;
     };
 
     struct Response final
     {
-        HttpVersion httpVersion;
-        std::uint16_t status = 0;
-        std::string reason;
+        Status status;
         std::vector<std::string> headers;
         std::vector<std::uint8_t> body;
     };
@@ -900,9 +898,7 @@ namespace http
                             if (i != line.cend())
                                 throw ResponseError{"Invalid status line"};
 
-                            response.httpVersion = statusLineResult.second.httpVersion;
-                            response.status = statusLineResult.second.status;
-                            response.reason = std::move(statusLineResult.second.reason);
+                            response.status = std::move(statusLineResult.second);
                         }
                         else if (state == State::parsingHeaders) // RFC 7230, 3.2. Header Fields
                         {

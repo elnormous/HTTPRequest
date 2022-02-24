@@ -66,9 +66,9 @@ int main(int argc, const char* argv[])
             "Accept: */*"
         }, std::chrono::seconds(2));
 
-        std::cout << response.reason << '\n';
+        std::cout << response.status.reason << '\n';
 
-        if (response.status == http::Status::Ok)
+        if (response.status.code == http::Status::Ok)
         {
             if (!output.empty())
             {

@@ -150,7 +150,7 @@ TEST_CASE("Status", "[parsing]")
     REQUIRE(result.first == str.end());
     REQUIRE(result.second.httpVersion.major == 1);
     REQUIRE(result.second.httpVersion.minor == 1);
-    REQUIRE(result.second.status == 123);
+    REQUIRE(result.second.code == 123);
     REQUIRE(result.second.reason == "test");
 }
 
