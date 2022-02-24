@@ -158,7 +158,7 @@ namespace http
     struct Response final
     {
         Status status;
-        std::vector<std::string> headers;
+        std::vector<std::pair<std::string, std::string>> headers;
         std::vector<std::uint8_t> body;
     };
 
@@ -902,8 +902,6 @@ namespace http
                         }
                         else if (state == State::parsingHeaders) // RFC 7230, 3.2. Header Fields
                         {
-                            response.headers.push_back(line);
-
                             const auto headerFieldResult = parseHeaderField(line.cbegin(), line.cend());
                             auto i = headerFieldResult.first;
 
@@ -918,7 +916,7 @@ namespace http
 
                             std::transform(fieldName.begin(), fieldName.end(), fieldName.begin(), toLower);
 
-                            const auto fieldValue = std::move(headerFieldResult.second.second);
+                            auto fieldValue = std::move(headerFieldResult.second.second);
 
                             if (fieldName == "transfer-encoding")
                             {
@@ -935,6 +933,8 @@ namespace http
                                 contentLengthReceived = true;
                                 response.body.reserve(contentLength);
                             }
+
+                            response.headers.push_back(std::make_pair(std::move(fieldName), std::move(fieldValue)));
                         }
                     }
 
