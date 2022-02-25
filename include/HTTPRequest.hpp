@@ -823,8 +823,8 @@ namespace http
 
             const std::string headerData = encodeStatusLine(method, path) +
                 encodeHeaders({
-                    {"Host", host},
-                    {"Content-Length", std::to_string(body.size())}
+                    {"Host", host}, // RFC 7230, 5.4. Host
+                    {"Content-Length", std::to_string(body.size())} // RFC 7230, 3.3.2. Content-Length
                 }) +
                 encodeHeaders(headers) +
                 "\r\n";
