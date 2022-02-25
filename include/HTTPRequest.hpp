@@ -846,14 +846,10 @@ namespace http
 
             std::array<std::uint8_t, 4096> tempBuffer;
             constexpr std::array<std::uint8_t, 2> crlf = {'\r', '\n'};
+            constexpr std::array<std::uint8_t, 4> headerEnd = {'\r', '\n', '\r', '\n'};
             Response response;
             std::vector<std::uint8_t> responseData;
-            enum class State
-            {
-                parsingStatusLine,
-                parsingHeaders,
-                parsingBody
-            } state = State::parsingStatusLine;
+            bool parsingBody = false;
             bool contentLengthReceived = false;
             std::size_t contentLength = 0;
             bool chunkedResponse = false;
@@ -870,75 +866,63 @@ namespace http
 
                 responseData.insert(responseData.end(), tempBuffer.begin(), tempBuffer.begin() + size);
 
-                if (state != State::parsingBody)
+                if (!parsingBody)
+                {
+                    // RFC 7230, 3. Message Format
+                    // Empty line indicates the end of the header section (RFC 7230, 2.1. Client/Server Messaging)
+                    const auto headerEndIterator = std::search(responseData.cbegin(), responseData.cend(), headerEnd.cbegin(), headerEnd.cend());
+                    if (headerEndIterator == responseData.cend()) break;
+
+                    // didn't find a newline
+                    const std::string headerResponseData(responseData.cbegin(), headerEndIterator + 2);
+                    responseData.erase(responseData.cbegin(), headerEndIterator + 4);
+
+                    const auto statusLineResult = parseStatusLine(headerResponseData.cbegin(), headerResponseData.cend());
+                    auto i = statusLineResult.first;
+
+                    response.status = std::move(statusLineResult.second);
+
                     for (;;)
                     {
-                        // RFC 7230, 3. Message Format
-                        const auto lineBegin = responseData.cbegin();
-                        const auto lineEnd = std::search(responseData.cbegin(), responseData.cend(), crlf.cbegin(), crlf.cend());
+                        const auto headerFieldResult = parseHeaderField(i, headerResponseData.cend());
+                        i = headerFieldResult.first;
 
-                        // didn't find a newline
-                        if (lineEnd == responseData.cend()) break;
+                        auto fieldName = std::move(headerFieldResult.second.first);
 
-                        const std::string line(lineBegin, lineEnd + 2);
-                        responseData.erase(lineBegin, lineEnd + 2);
+                        const auto toLower = [](const char c) noexcept {
+                            return (c >= 'A' && c <= 'Z') ? c - ('A' - 'a') : c;
+                        };
 
-                        // empty line indicates the end of the header section (RFC 7230, 2.1. Client/Server Messaging)
-                        if (line.length() <= 2)
+                        std::transform(fieldName.begin(), fieldName.end(), fieldName.begin(), toLower);
+
+                        auto fieldValue = std::move(headerFieldResult.second.second);
+
+                        if (fieldName == "transfer-encoding")
                         {
-                            state = State::parsingBody;
+                            // RFC 7230, 3.3.1. Transfer-Encoding
+                            if (fieldValue == "chunked")
+                                chunkedResponse = true;
+                            else
+                                throw ResponseError{"Unsupported transfer encoding: " + fieldValue};
+                        }
+                        else if (fieldName == "content-length")
+                        {
+                            // RFC 7230, 3.3.2. Content-Length
+                            contentLength = std::stoul(fieldValue);
+                            contentLengthReceived = true;
+                            response.body.reserve(contentLength);
+                        }
+
+                        response.headers.push_back(std::make_pair(std::move(fieldName), std::move(fieldValue)));
+
+                        if (i == headerResponseData.cend())
                             break;
-                        }
-                        else if (state == State::parsingStatusLine) // RFC 7230, 3.1.2. Status Line
-                        {
-                            state = State::parsingHeaders;
-
-                            const auto statusLineResult = parseStatusLine(line.cbegin(), line.cend());
-                            const auto i = statusLineResult.first;
-                            if (i != line.cend())
-                                throw ResponseError{"Invalid status line"};
-
-                            response.status = std::move(statusLineResult.second);
-                        }
-                        else if (state == State::parsingHeaders) // RFC 7230, 3.2. Header Fields
-                        {
-                            const auto headerFieldResult = parseHeaderField(line.cbegin(), line.cend());
-                            auto i = headerFieldResult.first;
-
-                            if (i != line.cend())
-                                throw ResponseError{"Invalid header"};
-
-                            auto fieldName = std::move(headerFieldResult.second.first);
-
-                            const auto toLower = [](const char c) noexcept {
-                                return (c >= 'A' && c <= 'Z') ? c - ('A' - 'a') : c;
-                            };
-
-                            std::transform(fieldName.begin(), fieldName.end(), fieldName.begin(), toLower);
-
-                            auto fieldValue = std::move(headerFieldResult.second.second);
-
-                            if (fieldName == "transfer-encoding")
-                            {
-                                // RFC 7230, 3.3.1. Transfer-Encoding
-                                if (fieldValue == "chunked")
-                                    chunkedResponse = true;
-                                else
-                                    throw ResponseError{"Unsupported transfer encoding: " + fieldValue};
-                            }
-                            else if (fieldName == "content-length")
-                            {
-                                // RFC 7230, 3.3.2. Content-Length
-                                contentLength = std::stoul(fieldValue);
-                                contentLengthReceived = true;
-                                response.body.reserve(contentLength);
-                            }
-
-                            response.headers.push_back(std::make_pair(std::move(fieldName), std::move(fieldValue)));
-                        }
                     }
 
-                if (state == State::parsingBody)
+                    parsingBody = true;
+                }
+
+                if (parsingBody)
                 {
                     // Content-Length must be ignored if Transfer-Encoding is received (RFC 7230, 3.2. Content-Length)
                     if (chunkedResponse)
