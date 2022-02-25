@@ -23,25 +23,6 @@ catch (const std::exception& e)
 }
 ```
 
-### Example of POST request
-```cpp
-#include "HTTPRequest.hpp"
-
-try
-{
-    http::Request request{"http://test.com/test"};
-    // send a post request
-    const auto response = request.send("POST", "foo=1&bar=baz", {
-        {"Content-Type", "application/x-www-form-urlencoded"}
-    });
-    std::cout << std::string{response.body.begin(), response.body.end()} << '\n'; // print the result
-}
-catch (const std::exception& e)
-{
-    std::cerr << "Request failed, error: " << e.what() << '\n';
-}
-```
-
 ### Example of POST request with form data
 ```cpp
 #include "HTTPRequest.hpp"
