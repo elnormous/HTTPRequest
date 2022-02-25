@@ -821,12 +821,12 @@ namespace http
 
             const std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> addressInfo{info, freeaddrinfo};
 
-            // RFC 7230, 3.1.1. Request Line
-            std::string headerData = encodeStatusLine(method, path) + encodeHeaders(headers);
-
-            // RFC 7230, 3.2. Header Fields
-            headerData += "Host: " + host + "\r\n"
-                "Content-Length: " + std::to_string(body.size()) + "\r\n"
+            const std::string headerData = encodeStatusLine(method, path) +
+                encodeHeaders({
+                    {"Host", host},
+                    {"Content-Length", std::to_string(body.size())}
+                }) +
+                encodeHeaders(headers) +
                 "\r\n";
 
             std::vector<uint8_t> requestData(headerData.begin(), headerData.end());
