@@ -285,8 +285,17 @@ TEST_CASE("Parse header field with obsolete fold", "[parsing]")
     REQUIRE(result.second.second == "value1 value2");
 }
 
-TEST_CASE("Create status line", "[serialization]")
+TEST_CASE("Encode status line", "[serialization]")
 {
-    std::string result = http::detail::encodeStatusLine("GET", "/");
+    const auto result = http::detail::encodeStatusLine("GET", "/");
     REQUIRE(result == "GET / HTTP/1.1\r\n");
+}
+
+TEST_CASE("Encode headers", "[serialization]")
+{
+    const auto result = http::detail::encodeHeaders({
+        {"a", "b"},
+        {"c", "d"}
+    });
+    REQUIRE(result == "a: b\r\nc: d\r\n");
 }

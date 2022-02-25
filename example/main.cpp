@@ -61,9 +61,9 @@ int main(int argc, const char* argv[])
         http::Request request{url, protocol};
 
         const auto response = request.send(method, arguments, {
-            "Content-Type: application/x-www-form-urlencoded",
-            "User-Agent: runscope/0.1",
-            "Accept: */*"
+            {"Content-Type", "application/x-www-form-urlencoded"},
+            {"User-Agent", "runscope/0.1"},
+            {"Accept", "*/*"}
         }, std::chrono::seconds(2));
 
         std::cout << response.status.reason << '\n';

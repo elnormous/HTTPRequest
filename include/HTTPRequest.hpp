@@ -721,10 +721,19 @@ namespace http
             });
         }
 
+        // RFC 7230, 3.1.1. Request Line
         inline std::string encodeStatusLine(const std::string& method, const std::string& path)
         {
-            // RFC 7230, 3.1.1. Request Line
             return method + " " + path + " HTTP/1.1\r\n";
+        }
+
+        // RFC 7230, 3.2. Header Fields
+        inline std::string encodeHeaders(const std::vector<std::pair<std::string, std::string>>& headers)
+        {
+            std::string result;
+            for (const auto& header : headers)
+                result += header.first + ": " + header.second + "\r\n";
+            return result;
         }
     }
 
@@ -783,7 +792,7 @@ namespace http
 
         Response send(const std::string& method = "GET",
                       const std::string& body = "",
-                      const std::vector<std::string>& headers = {},
+                      const std::vector<std::pair<std::string, std::string>>& headers = {},
                       const std::chrono::milliseconds timeout = std::chrono::milliseconds{-1})
         {
             return send(method,
@@ -794,7 +803,7 @@ namespace http
 
         Response send(const std::string& method,
                       const std::vector<uint8_t>& body,
-                      const std::vector<std::string>& headers,
+                      const std::vector<std::pair<std::string, std::string>>& headers,
                       const std::chrono::milliseconds timeout = std::chrono::milliseconds{-1})
         {
             const auto stopTime = std::chrono::steady_clock::now() + timeout;
@@ -813,10 +822,7 @@ namespace http
             const std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> addressInfo{info, freeaddrinfo};
 
             // RFC 7230, 3.1.1. Request Line
-            std::string headerData = encodeStatusLine(method, path);
-
-            for (const auto& header : headers)
-                headerData += header + "\r\n";
+            std::string headerData = encodeStatusLine(method, path) + encodeHeaders(headers);
 
             // RFC 7230, 3.2. Header Fields
             headerData += "Host: " + host + "\r\n"
