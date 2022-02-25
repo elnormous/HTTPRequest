@@ -720,6 +720,12 @@ namespace http
                 std::move(reasonPhraseResult.second)
             });
         }
+
+        inline std::string encodeStatusLine(const std::string& method, const std::string& path)
+        {
+            // RFC 7230, 3.1.1. Request Line
+            return method + " " + path + " HTTP/1.1\r\n";
+        }
     }
 
     class Request final
@@ -807,7 +813,7 @@ namespace http
             const std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> addressInfo{info, freeaddrinfo};
 
             // RFC 7230, 3.1.1. Request Line
-            std::string headerData = method + " " + path + " HTTP/1.1\r\n";
+            std::string headerData = encodeStatusLine(method, path);
 
             for (const auto& header : headers)
                 headerData += header + "\r\n";
