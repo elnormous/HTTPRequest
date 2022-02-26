@@ -920,7 +920,7 @@ namespace http
                         else if (fieldName == "content-length")
                         {
                             // RFC 7230, 3.3.2. Content-Length
-                            contentLength = std::stoul(fieldValue);
+                            contentLength = static_cast<std::size_t>(std::stoul(fieldValue));
                             contentLengthReceived = true;
                             response.body.reserve(contentLength);
                         }
@@ -975,7 +975,7 @@ namespace http
                                 const std::string line(responseData.begin(), i);
                                 responseData.erase(responseData.begin(), i + 2);
 
-                                expectedChunkSize = std::stoul(line, nullptr, 16);
+                                expectedChunkSize = static_cast<std::size_t>(std::stoul(line, nullptr, 16));
                                 if (expectedChunkSize == 0)
                                     return response;
                             }
