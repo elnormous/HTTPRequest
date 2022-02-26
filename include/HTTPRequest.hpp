@@ -863,9 +863,9 @@ namespace http
             std::vector<std::uint8_t> responseData;
             bool parsingBody = false;
             bool contentLengthReceived = false;
-            std::size_t contentLength = 0;
+            std::size_t contentLength = 0U;
             bool chunkedResponse = false;
-            std::size_t expectedChunkSize = 0;
+            std::size_t expectedChunkSize = 0U;
             bool removeCrlfAfterChunk = false;
 
             // read the response
