@@ -740,11 +740,8 @@ namespace http
         constexpr T hexToUint(char c)
         {
             // RFC 5234, Appendix B.1. Core Rules
-            if (c >= '0' && c <= '9')
-                return static_cast<T>(c - '0');
-            else if (c >= 'A' && c <= 'F')
-                return static_cast<T>(c - 'A') + T(10);
-            else
+            return (c >= '0' && c <= '9') ? static_cast<T>(c - '0') :
+                (c >= 'A' && c <= 'F') ? static_cast<T>(c - 'A') + T(10) :
                 throw ResponseError{"Invalid hex integer"};
         }
 
