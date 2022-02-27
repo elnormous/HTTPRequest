@@ -747,14 +747,11 @@ namespace http
         }
 
         template <typename T, class Iterator, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
-        constexpr T hexToUint(const Iterator begin, const Iterator end)
+        constexpr T hexToUint(const Iterator begin, const Iterator end, const T value = 0)
         {
             // RFC 7230, 4.1. Chunked Transfer Coding
-            T result = 0;
-            for (auto i = begin; i != end; ++i)
-                result = result * T(16) + hexToUint<T>(*i);
-
-            return result;
+            return begin == end ? value :
+                hexToUint<T>(begin + 1, end, value * 16 + hexToUint<T>(*begin));
         }
     }
 
