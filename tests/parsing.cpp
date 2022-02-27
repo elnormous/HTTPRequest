@@ -294,7 +294,7 @@ TEST_CASE("Hex digit to unsigned int", "[parsing]")
 TEST_CASE("Hex lowercase letter to unsigned int", "[parsing]")
 {
     const char c = 'a';
-    REQUIRE(http::detail::hexToUint<std::size_t>(c) == 10U);
+    REQUIRE_THROWS_AS(http::detail::hexToUint<std::size_t>(c) == 10U, http::ResponseError);
 }
 
 TEST_CASE("Hex uppercase letter to unsigned int", "[parsing]")
