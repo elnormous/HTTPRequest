@@ -505,7 +505,7 @@ namespace http
                 isAlphaChar(c);
         };
 
-        // RFC 5234, B.1. Core Rules
+        // RFC 5234, Appendix B.1. Core Rules
         inline bool isVisibleChar(const char c) noexcept
         {
             return c >= 0x21 && c <= 0x7E;
@@ -736,19 +736,27 @@ namespace http
             return result;
         }
 
+        template <typename T, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
+        constexpr T hexToUint(char c)
+        {
+            // RFC 5234, Appendix B.1. Core Rules
+            if (c >= '0' && c <= '9')
+                return static_cast<T>(c - '0');
+            else if (c >= 'a' && c <= 'f')
+                return static_cast<T>(c - 'a') + T(10);
+            else if (c >= 'A' && c <= 'F')
+                return static_cast<T>(c - 'A') + T(10);
+            else
+                throw ResponseError{"Invalid hex integer"};
+        }
+
         template <typename T, class Iterator, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
         constexpr T hexToUint(const Iterator begin, const Iterator end)
         {
+            // RFC 7230, 4.1. Chunked Transfer Coding
             T result = 0;
             for (auto i = begin; i != end; ++i)
-                if (*i >= '0' && *i <= '9')
-                    result = result * T(16) + static_cast<T>(*i - '0');
-                else if (*i >= 'a' && *i <= 'f')
-                    result = result * T(16) + static_cast<T>(*i - 'a') + T(10);
-                else if (*i >= 'A' && *i <= 'F')
-                    result = result * T(16) + static_cast<T>(*i - 'A') + T(10);
-                else
-                    throw ResponseError{"Invalid hex integer"};
+                result = result * T(16) + hexToUint<T>(*i);
 
             return result;
         }
