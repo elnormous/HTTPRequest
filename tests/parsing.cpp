@@ -284,3 +284,40 @@ TEST_CASE("Parse header field with obsolete fold", "[parsing]")
     REQUIRE(result.second.first == "field");
     REQUIRE(result.second.second == "value1 value2");
 }
+
+TEST_CASE("Hex digit to unsigned int", "[parsing]")
+{
+    std::string str = "1";
+    REQUIRE(http::detail::hexToUint<std::size_t>(str.begin(), str.end()) == 1U);
+}
+
+TEST_CASE("Hex lowercase letter to unsigned int", "[parsing]")
+{
+    std::string str = "a";
+    REQUIRE(http::detail::hexToUint<std::size_t>(str.begin(), str.end()) == 10U);
+}
+
+TEST_CASE("Hex uppercase letter to unsigned int", "[parsing]")
+{
+    std::string str = "A";
+    REQUIRE(http::detail::hexToUint<std::size_t>(str.begin(), str.end()) == 10U);
+}
+
+TEST_CASE("Hex digit and letter to unsigned int", "[parsing]")
+{
+    std::string str = "1A";
+    REQUIRE(http::detail::hexToUint<std::size_t>(str.begin(), str.end()) == 26U);
+}
+
+TEST_CASE("Hex letter and digit to unsigned int", "[parsing]")
+{
+    std::string str = "A1";
+    REQUIRE(http::detail::hexToUint<std::size_t>(str.begin(), str.end()) == 161U);
+}
+
+TEST_CASE("Invalid hex", "[parsing]")
+{
+    std::string str = "x";
+    REQUIRE_THROWS_AS(http::detail::hexToUint<std::size_t>(str.begin(), str.end()), http::ResponseError);
+}
+

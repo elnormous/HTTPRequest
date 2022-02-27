@@ -735,6 +735,23 @@ namespace http
                 result += header.first + ": " + header.second + "\r\n";
             return result;
         }
+
+        template <typename T, class Iterator, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
+        constexpr T hexToUint(const Iterator begin, const Iterator end)
+        {
+            T result = 0;
+            for (auto i = begin; i != end; ++i)
+                if (*i >= '0' && *i <= '9')
+                    result = result * T(16) + static_cast<T>(*i - '0');
+                else if (*i >= 'a' && *i <= 'f')
+                    result = result * T(16) + static_cast<T>(*i - 'a') + T(10);
+                else if (*i >= 'A' && *i <= 'F')
+                    result = result * T(16) + static_cast<T>(*i - 'A') + T(10);
+                else
+                    throw ResponseError{"Invalid hex integer"};
+
+            return result;
+        }
     }
 
     class Request final
@@ -975,7 +992,7 @@ namespace http
                                 const std::string line(responseData.begin(), i);
                                 responseData.erase(responseData.begin(), i + 2);
 
-                                expectedChunkSize = static_cast<std::size_t>(std::stoul(line, nullptr, 16));
+                                expectedChunkSize = detail::hexToUint<std::size_t>(line.begin(), line.end());
                                 if (expectedChunkSize == 0)
                                     return response;
                             }
