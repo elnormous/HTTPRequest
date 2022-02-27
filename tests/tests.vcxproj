@@ -19,8 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="encoding.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="tests.cpp" />
+    <ClCompile Include="parsing.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\HTTPRequest.hpp" />

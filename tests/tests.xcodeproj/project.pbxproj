@@ -7,7 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		303E879D251EE589008B7E24 /* tests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 303E879C251EE589008B7E24 /* tests.cpp */; };
+		303E879D251EE589008B7E24 /* parsing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 303E879C251EE589008B7E24 /* parsing.cpp */; };
+		307E6ED527CB02AC00D665C8 /* encoding.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 307E6ED427CB02AC00D665C8 /* encoding.cpp */; };
 		C6C90FD721A5A24D00B5FCB7 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C6C90FD621A5A24D00B5FCB7 /* main.cpp */; };
 /* End PBXBuildFile section */
 
@@ -24,7 +25,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		303E879C251EE589008B7E24 /* tests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = tests.cpp; sourceTree = "<group>"; };
+		303E879C251EE589008B7E24 /* parsing.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = parsing.cpp; sourceTree = "<group>"; };
+		307E6ED427CB02AC00D665C8 /* encoding.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = encoding.cpp; sourceTree = "<group>"; };
 		30977F4B27B496BA00D89E07 /* HTTPRequest.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = HTTPRequest.hpp; path = ../include/HTTPRequest.hpp; sourceTree = "<group>"; };
 		C6C90FD321A5A24D00B5FCB7 /* tests */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = tests; sourceTree = BUILT_PRODUCTS_DIR; };
 		C6C90FD621A5A24D00B5FCB7 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
@@ -44,10 +46,11 @@
 		C6C90FCA21A5A24D00B5FCB7 = {
 			isa = PBXGroup;
 			children = (
+				307E6ED427CB02AC00D665C8 /* encoding.cpp */,
 				30977F4B27B496BA00D89E07 /* HTTPRequest.hpp */,
 				C6C90FD621A5A24D00B5FCB7 /* main.cpp */,
+				303E879C251EE589008B7E24 /* parsing.cpp */,
 				C6C90FD421A5A24D00B5FCB7 /* Products */,
-				303E879C251EE589008B7E24 /* tests.cpp */,
 			);
 			sourceTree = "<group>";
 		};
@@ -116,7 +119,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				C6C90FD721A5A24D00B5FCB7 /* main.cpp in Sources */,
-				303E879D251EE589008B7E24 /* tests.cpp in Sources */,
+				303E879D251EE589008B7E24 /* parsing.cpp in Sources */,
+				307E6ED527CB02AC00D665C8 /* encoding.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
