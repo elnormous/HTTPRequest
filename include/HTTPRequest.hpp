@@ -579,7 +579,7 @@ namespace http
             return std::make_pair(i, HttpVersion{majorVersion, minorVersion});
         }
 
-        // RFC 3986
+        // RFC 3986, 3. Syntax Components
         template <class Iterator>
         Uri parseUri(const Iterator begin, const Iterator end)
         {
@@ -838,52 +838,9 @@ namespace http
     public:
         explicit Request(const std::string& url,
                          const InternetProtocol protocol = InternetProtocol::V4):
-            internetProtocol{protocol}
+            internetProtocol{protocol},
+            uri{parseUri(url.begin(), url.end())}
         {
-            const auto schemeEndPosition = url.find("://");
-
-            if (schemeEndPosition != std::string::npos)
-            {
-                scheme = url.substr(0, schemeEndPosition);
-                path = url.substr(schemeEndPosition + 3);
-            }
-            else
-            {
-                scheme = "http";
-                path = url;
-            }
-
-            const auto fragmentPosition = path.find('#');
-
-            // remove the fragment part
-            if (fragmentPosition != std::string::npos)
-                path.resize(fragmentPosition);
-
-            const auto pathPosition = path.find('/');
-
-            if (pathPosition == std::string::npos)
-            {
-                host = path;
-                path = "/";
-            }
-            else
-            {
-                host = path.substr(0, pathPosition);
-                path = path.substr(pathPosition);
-            }
-
-            const auto portPosition = host.find(':');
-
-            if (portPosition != std::string::npos)
-            {
-                domain = host.substr(0, portPosition);
-                port = host.substr(portPosition + 1);
-            }
-            else
-            {
-                domain = host;
-                port = "80";
-            }
         }
 
         Response send(const std::string& method = "GET",
@@ -904,7 +861,7 @@ namespace http
         {
             const auto stopTime = std::chrono::steady_clock::now() + timeout;
 
-            if (scheme != "http")
+            if (uri.scheme != "http")
                 throw RequestError{"Only HTTP scheme is supported"};
 
             addrinfo hints = {};
@@ -912,14 +869,14 @@ namespace http
             hints.ai_socktype = SOCK_STREAM;
 
             addrinfo* info;
-            if (getaddrinfo(domain.c_str(), port.c_str(), &hints, &info) != 0)
-                throw std::system_error{getLastError(), std::system_category(), "Failed to get address info of " + domain};
+            if (getaddrinfo(uri.host.c_str(), uri.port.c_str(), &hints, &info) != 0)
+                throw std::system_error{getLastError(), std::system_category(), "Failed to get address info of " + uri.authority};
 
             const std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> addressInfo{info, freeaddrinfo};
 
-            const std::string headerData = encodeStatusLine(method, path) +
+            const std::string headerData = encodeStatusLine(method, uri.path) +
                 encodeHeaders({
-                    {"Host", host}, // RFC 7230, 5.4. Host
+                    {"Host", uri.host}, // RFC 7230, 5.4. Host
                     {"Content-Length", std::to_string(body.size())} // RFC 7230, 3.3.2. Content-Length
                 }) +
                 encodeHeaders(headers) +
@@ -1097,11 +1054,7 @@ namespace http
         WinSock winSock;
 #endif // defined(_WIN32) || defined(__CYGWIN__)
         InternetProtocol internetProtocol;
-        std::string scheme;
-        std::string host;
-        std::string domain;
-        std::string port;
-        std::string path;
+        Uri uri;
     };
 }
 
