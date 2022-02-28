@@ -609,6 +609,15 @@ namespace http
                 result.authority.resize(fragmentPosition);
             }
 
+            const auto queryPosition = result.authority.find('?');
+
+            // remove the fragment part
+            if (queryPosition != std::string::npos)
+            {
+                result.query = result.authority.substr(queryPosition + 1);
+                result.authority.resize(queryPosition);
+            }
+
             const auto pathPosition = result.authority.find('/');
 
             if (pathPosition != std::string::npos)
