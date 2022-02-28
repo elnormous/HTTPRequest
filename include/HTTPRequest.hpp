@@ -76,6 +76,7 @@ namespace http
     {
         std::string scheme;
         std::string authority;
+        std::string userinfo;
         std::string host;
         std::string port;
         std::string path;
@@ -595,6 +596,13 @@ namespace http
             }
             else
                 result.host = result.authority;
+
+            const auto hostPosition = result.host.find('@');
+            if (hostPosition != std::string::npos)
+            {
+                result.userinfo = result.host.substr(0, hostPosition);
+                result.host = result.host.substr(hostPosition + 1);
+            }
 
             return result;
         }

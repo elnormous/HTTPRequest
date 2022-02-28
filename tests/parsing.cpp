@@ -344,9 +344,11 @@ TEST_CASE("Parse URL with fragment", "[parsing]")
     http::Uri uri = http::detail::parseUri(str.begin(), str.end());
     REQUIRE(uri.scheme == "http");
     REQUIRE(uri.authority == "www.test.com");
+    REQUIRE(uri.userinfo == "");
     REQUIRE(uri.host == "www.test.com");
     REQUIRE(uri.port == "");
     REQUIRE(uri.path == "/path");
+    REQUIRE(uri.query == "");
     REQUIRE(uri.fragment == "fragment");
 }
 
@@ -356,6 +358,7 @@ TEST_CASE("Parse URL with query and fragment", "[parsing]")
     http::Uri uri = http::detail::parseUri(str.begin(), str.end());
     REQUIRE(uri.scheme == "http");
     REQUIRE(uri.authority == "www.test.com");
+    REQUIRE(uri.userinfo == "");
     REQUIRE(uri.host == "www.test.com");
     REQUIRE(uri.port == "");
     REQUIRE(uri.path == "/path");
@@ -367,4 +370,18 @@ TEST_CASE("Parse URL without scheme", "[parsing]")
 {
     const std::string str = "www.test.com/path?query=1#fragment";
     REQUIRE_THROWS_AS(http::detail::parseUri(str.begin(), str.end()), http::RequestError);
+}
+
+TEST_CASE("Parse URL with userinfo", "[parsing]")
+{
+    const std::string str = "http://test@test.com/";
+    http::Uri uri = http::detail::parseUri(str.begin(), str.end());
+    REQUIRE(uri.scheme == "http");
+    REQUIRE(uri.authority == "test@test.com");
+    REQUIRE(uri.userinfo == "test");
+    REQUIRE(uri.host == "test.com");
+    REQUIRE(uri.port == "");
+    REQUIRE(uri.path == "/");
+    REQUIRE(uri.query == "");
+    REQUIRE(uri.fragment == "");
 }
