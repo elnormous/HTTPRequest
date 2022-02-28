@@ -627,7 +627,7 @@ namespace http
             }
             else
             {
-                result.host = result.host;
+                result.host = result.authority;
                 result.port = "80";
             }
 
