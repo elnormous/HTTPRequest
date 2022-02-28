@@ -604,7 +604,10 @@ namespace http
 
             // remove the fragment part
             if (fragmentPosition != std::string::npos)
+            {
+                result.fragment = result.authority.substr(fragmentPosition + 1);
                 result.authority.resize(fragmentPosition);
+            }
 
             const auto pathPosition = result.authority.find('/');
 
