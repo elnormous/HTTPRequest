@@ -326,3 +326,14 @@ TEST_CASE("Invalid hex string", "[parsing]")
     const std::string str = "ax";
     REQUIRE_THROWS_AS(http::detail::hexToUint<std::size_t>(str.begin(), str.end()), http::ResponseError);
 }
+
+TEST_CASE("Parse URL", "[parsing]")
+{
+    const std::string str = "http://www.test.com:80/path";
+    http::Uri uri = http::detail::parseUri(str.begin(), str.end());
+    REQUIRE(uri.scheme == "http");
+    REQUIRE(uri.authority == "www.test.com:80");
+    REQUIRE(uri.host == "www.test.com");
+    REQUIRE(uri.port == "80");
+    REQUIRE(uri.path == "/path");
+}

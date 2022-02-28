@@ -72,6 +72,17 @@ namespace http
         V6
     };
 
+    struct Uri final
+    {
+        std::string scheme;
+        std::string authority;
+        std::string host;
+        std::string port;
+        std::string path;
+        std::string query;
+        std::string fragment;
+    };
+
     struct HttpVersion final
     {
         uint16_t major;
@@ -568,6 +579,61 @@ namespace http
             return std::make_pair(i, HttpVersion{majorVersion, minorVersion});
         }
 
+        // RFC 3986
+        template <class Iterator>
+        Uri parseUri(const Iterator begin, const Iterator end)
+        {
+            std::string schemeEnd = "://";
+
+            const auto schemeEndIterator = std::search(begin, end, schemeEnd.begin(), schemeEnd.end());
+
+            Uri result;
+
+            if (schemeEndIterator != end)
+            {
+                result.scheme = std::string(begin, schemeEndIterator);
+                result.authority = std::string(schemeEndIterator + 3, end);
+            }
+            else
+            {
+                result.scheme = "http";
+                result.authority = std::string(begin, end);
+            }
+
+            const auto fragmentPosition = result.authority.find('#');
+
+            // remove the fragment part
+            if (fragmentPosition != std::string::npos)
+                result.authority.resize(fragmentPosition);
+
+            const auto pathPosition = result.authority.find('/');
+
+            if (pathPosition != std::string::npos)
+            {
+                result.path = result.authority.substr(pathPosition);
+                result.authority = result.authority.substr(0, pathPosition);
+            }
+            else
+            {
+                result.path = "/";
+            }
+
+            const auto portPosition = result.authority.find(':');
+
+            if (portPosition != std::string::npos)
+            {
+                result.host = result.authority.substr(0, portPosition);
+                result.port = result.authority.substr(portPosition + 1);
+            }
+            else
+            {
+                result.host = result.host;
+                result.port = "80";
+            }
+
+            return result;
+        }
+
         // RFC 7230, 3.1.2. Status Line
         template <class Iterator>
         std::pair<Iterator, std::uint16_t> parseStatusCode(const Iterator begin, const Iterator end)
@@ -736,20 +802,20 @@ namespace http
             return result;
         }
 
+        // RFC 5234, Appendix B.1. Core Rules
         template <typename T, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
         constexpr T hexToUint(char c)
         {
-            // RFC 5234, Appendix B.1. Core Rules
             return (c >= '0' && c <= '9') ? static_cast<T>(c - '0') :
                 (c >= 'A' && c <= 'F') ? static_cast<T>(c - 'A') + T(10) :
                 (c >= 'a' && c <= 'f') ? static_cast<T>(c - 'a') + T(10) : // some services send lower-case hex digits
                 throw ResponseError{"Invalid hex integer"};
         }
 
+        // RFC 7230, 4.1. Chunked Transfer Coding
         template <typename T, class Iterator, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
         constexpr T hexToUint(const Iterator begin, const Iterator end, const T value = 0)
         {
-            // RFC 7230, 4.1. Chunked Transfer Coding
             return begin == end ? value :
                 hexToUint<T>(begin + 1, end, value * 16 + hexToUint<T>(*begin));
         }
