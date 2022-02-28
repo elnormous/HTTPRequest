@@ -540,45 +540,6 @@ namespace http
             return i;
         }
 
-        // RFC 7230, 2.6. Protocol Versioning
-        template <class Iterator>
-        std::pair<Iterator, HttpVersion> parseHttpVersion(const Iterator begin, const Iterator end)
-        {
-            auto i = begin;
-
-            constexpr std::array<char, 4> http{'H', 'T', 'T', 'P'};
-
-            for (std::size_t n = 0; n < http.size(); ++n, ++i)
-                if (i == end || *i != http[n])
-                    throw ResponseError{"Invalid HTTP version"};
-
-            if (i == end || *i != '/')
-                throw ResponseError{"Invalid HTTP version"};
-
-            ++i;
-
-            if (i == end || !isDigitChar(*i))
-                throw ResponseError{"Invalid HTTP version"};
-
-            const auto majorVersion = static_cast<uint16_t>(*i - '0');
-
-            ++i;
-
-            if (i == end || *i != '.')
-                throw ResponseError{"Invalid HTTP version"};
-
-            ++i;
-
-            if (i == end || !isDigitChar(*i))
-                throw ResponseError{"Invalid HTTP version"};
-
-            const auto minorVersion = static_cast<uint16_t>(*i - '0');
-
-            ++i;
-
-            return std::make_pair(i, HttpVersion{majorVersion, minorVersion});
-        }
-
         // RFC 3986, 3. Syntax Components
         template <class Iterator>
         Uri parseUri(const Iterator begin, const Iterator end)
@@ -589,16 +550,11 @@ namespace http
 
             Uri result;
 
-            if (schemeEndIterator != end)
-            {
-                result.scheme = std::string(begin, schemeEndIterator);
-                result.authority = std::string(schemeEndIterator + 3, end);
-            }
-            else
-            {
-                result.scheme = "http";
-                result.authority = std::string(begin, end);
-            }
+            if (schemeEndIterator == end)
+                throw RequestError{"Invalid URI"};
+
+            result.scheme = std::string(begin, schemeEndIterator);
+            result.authority = std::string(schemeEndIterator + 3, end);
 
             const auto fragmentPosition = result.authority.find('#');
 
@@ -638,12 +594,48 @@ namespace http
                 result.port = result.authority.substr(portPosition + 1);
             }
             else
-            {
                 result.host = result.authority;
-                result.port = "80";
-            }
 
             return result;
+        }
+
+        // RFC 7230, 2.6. Protocol Versioning
+        template <class Iterator>
+        std::pair<Iterator, HttpVersion> parseHttpVersion(const Iterator begin, const Iterator end)
+        {
+            auto i = begin;
+
+            constexpr std::array<char, 4> http{'H', 'T', 'T', 'P'};
+
+            for (std::size_t n = 0; n < http.size(); ++n, ++i)
+                if (i == end || *i != http[n])
+                    throw ResponseError{"Invalid HTTP version"};
+
+            if (i == end || *i != '/')
+                throw ResponseError{"Invalid HTTP version"};
+
+            ++i;
+
+            if (i == end || !isDigitChar(*i))
+                throw ResponseError{"Invalid HTTP version"};
+
+            const auto majorVersion = static_cast<uint16_t>(*i - '0');
+
+            ++i;
+
+            if (i == end || *i != '.')
+                throw ResponseError{"Invalid HTTP version"};
+
+            ++i;
+
+            if (i == end || !isDigitChar(*i))
+                throw ResponseError{"Invalid HTTP version"};
+
+            const auto minorVersion = static_cast<uint16_t>(*i - '0');
+
+            ++i;
+
+            return std::make_pair(i, HttpVersion{majorVersion, minorVersion});
         }
 
         // RFC 7230, 3.1.2. Status Line
@@ -868,8 +860,10 @@ namespace http
             hints.ai_family = getAddressFamily(internetProtocol);
             hints.ai_socktype = SOCK_STREAM;
 
+            const char* port = uri.port.empty() ? "80" : uri.port.c_str();
+
             addrinfo* info;
-            if (getaddrinfo(uri.host.c_str(), uri.port.c_str(), &hints, &info) != 0)
+            if (getaddrinfo(uri.host.c_str(), port, &hints, &info) != 0)
                 throw std::system_error{getLastError(), std::system_category(), "Failed to get address info of " + uri.authority};
 
             const std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> addressInfo{info, freeaddrinfo};
