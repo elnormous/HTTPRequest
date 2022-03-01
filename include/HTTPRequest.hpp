@@ -800,7 +800,7 @@ namespace http
         }
 
         // RFC 7230, 3.1.1. Request Line
-        inline std::string encodeStatusLine(const std::string& method, const std::string& path)
+        inline std::string encodeRequestLine(const std::string& method, const std::string& path)
         {
             return method + " " + path + " HTTP/1.1\r\n";
         }
@@ -876,7 +876,7 @@ namespace http
 
             const std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> addressInfo{info, freeaddrinfo};
 
-            const std::string headerData = encodeStatusLine(method, uri.path) +
+            const std::string headerData = encodeRequestLine(method, uri.path) +
                 encodeHeaders({
                     {"Host", uri.host}, // RFC 7230, 5.4. Host
                     {"Content-Length", std::to_string(body.size())} // RFC 7230, 3.3.2. Content-Length

@@ -4,7 +4,7 @@
 
 TEST_CASE("Encode status line", "[serialization]")
 {
-    const auto result = http::detail::encodeStatusLine("GET", "/");
+    const auto result = http::detail::encodeRequestLine("GET", "/");
     REQUIRE(result == "GET / HTTP/1.1\r\n");
 }
 
