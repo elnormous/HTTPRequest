@@ -836,10 +836,10 @@ namespace http
     class Request final
     {
     public:
-        explicit Request(const std::string& url,
+        explicit Request(const std::string& uri,
                          const InternetProtocol protocol = InternetProtocol::V4):
             internetProtocol{protocol},
-            uri{parseUri(url.begin(), url.end())}
+            uri{parseUri(uri.begin(), uri.end())}
         {
         }
 

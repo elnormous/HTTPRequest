@@ -10,7 +10,7 @@ int main(int argc, const char* argv[])
 {
     try
     {
-        std::string url;
+        std::string uri;
         std::string method = "GET";
         std::string arguments;
         std::string output;
@@ -23,9 +23,9 @@ int main(int argc, const char* argv[])
                 std::cout << "example --url <url> [--protocol <protocol>] [--method <method>] [--arguments <arguments>] [--output <output>]\n";
                 return EXIT_SUCCESS;
             }
-            else if (std::string{argv[i]} == "--url")
+            else if (std::string{argv[i]} == "--uri")
             {
-                if (++i < argc) url = argv[i];
+                if (++i < argc) uri = argv[i];
                 else throw std::runtime_error("Missing argument for --url");
             }
             else if (std::string{argv[i]} == "--protocol")
@@ -58,7 +58,7 @@ int main(int argc, const char* argv[])
             }
         }
 
-        http::Request request{url, protocol};
+        http::Request request{uri, protocol};
 
         const auto response = request.send(method, arguments, {
             {"Content-Type", "application/x-www-form-urlencoded"},
