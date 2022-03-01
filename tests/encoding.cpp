@@ -32,3 +32,10 @@ TEST_CASE("Encode headers", "[serialization]")
     });
     REQUIRE(result == "a: b\r\nc: d\r\n");
 }
+
+TEST_CASE("Encode Base64", "[serialization]")
+{
+    const std::string str = "test:test";
+    const auto result = http::detail::encodeBase64(str.begin(), str.end());
+    REQUIRE(result == "dGVzdDp0ZXN0");
+}

@@ -842,6 +842,53 @@ namespace http
             return begin == end ? value :
                 hexToUint<T>(begin + 1, end, value * 16 + hexToUint<T>(*begin));
         }
+
+        // RFC 4648, 4. Base 64 Encoding
+        template <class Iterator>
+        std::string encodeBase64(const Iterator begin, const Iterator end)
+        {
+            static constexpr std::array<char, 64> chars{
+                'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+                'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+                'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+                'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+                '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
+            };
+
+            std::string result;
+            std::size_t c = 0;
+            std::array<std::uint8_t, 3> charArray;
+
+            for (auto i = begin; i != end; ++i)
+            {
+                charArray[c++] = static_cast<std::uint8_t>(*i);
+                if (c == 3)
+                {
+                    result += chars[static_cast<std::uint8_t>((charArray[0] & 0xFC) >> 2)];
+                    result += chars[static_cast<std::uint8_t>(((charArray[0] & 0x03) << 4) + ((charArray[1] & 0xF0) >> 4))];
+                    result += chars[static_cast<std::uint8_t>(((charArray[1] & 0x0F) << 2) + ((charArray[2] & 0xC0) >> 6))];
+                    result += chars[static_cast<std::uint8_t>(charArray[2] & 0x3f)];
+                    c = 0;
+                }
+            }
+
+            if (c)
+            {
+                result += chars[static_cast<std::uint8_t>((charArray[0] & 0xFC) >> 2)];
+
+                if (c == 1)
+                    result += chars[static_cast<std::uint8_t>((charArray[0] & 0x03) << 4)];
+                else // c == 2
+                {
+                    result += chars[static_cast<std::uint8_t>(((charArray[0] & 0x03) << 4) + ((charArray[1] & 0xF0) >> 4))];
+                    result += chars[static_cast<std::uint8_t>((charArray[1] & 0x0F) << 2)];
+                }
+
+                while (++c < 4) result += '='; // padding
+            }
+
+            return result;
+        }
     }
 
     class Request final
@@ -867,7 +914,7 @@ namespace http
 
         Response send(const std::string& method,
                       const std::vector<uint8_t>& body,
-                      const std::vector<std::pair<std::string, std::string>>& headers,
+                      std::vector<std::pair<std::string, std::string>> headers,
                       const std::chrono::milliseconds timeout = std::chrono::milliseconds{-1})
         {
             const auto stopTime = std::chrono::steady_clock::now() + timeout;
@@ -889,11 +936,14 @@ namespace http
 
             // RFC 7230, 5.3. Request Target
             std::string requestTarget = uri.path + '?' + uri.query;
+
+            headers.push_back({"Host", uri.host}); // RFC 7230, 5.4. Host
+            headers.push_back({"Content-Length", std::to_string(body.size())}); // RFC 7230, 3.3.2. Content-Length
+
+            if (!uri.userinfo.empty())
+                headers.push_back({"Authorization", "Basic " + encodeBase64(uri.userinfo.begin(), uri.userinfo.end())});
+
             const std::string headerData = encodeRequestLine(method, requestTarget) +
-                encodeHeaders({
-                    {"Host", uri.host}, // RFC 7230, 5.4. Host
-                    {"Content-Length", std::to_string(body.size())} // RFC 7230, 3.3.2. Content-Length
-                }) +
                 encodeHeaders(headers) +
                 "\r\n";
 
