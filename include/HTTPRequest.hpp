@@ -77,6 +77,8 @@ namespace http
         std::string scheme;
         std::string authority;
         std::string userinfo;
+        std::string user;
+        std::string password;
         std::string host;
         std::string port;
         std::string path;
@@ -547,28 +549,27 @@ namespace http
         {
             std::string schemeEnd = "://";
 
-            const auto schemeEndIterator = std::search(begin, end, schemeEnd.begin(), schemeEnd.end());
-
             Uri result;
 
-            if (schemeEndIterator == end)
+            const auto schemeEndIterator = std::search(begin, end, schemeEnd.begin(), schemeEnd.end());
+            if (schemeEndIterator != end)
+            {
+                result.scheme = std::string(begin, schemeEndIterator);
+                result.authority = std::string(schemeEndIterator + 3, end);
+            }
+            else
                 throw RequestError{"Invalid URI"};
 
-            result.scheme = std::string(begin, schemeEndIterator);
-            result.authority = std::string(schemeEndIterator + 3, end);
-
-            const auto fragmentPosition = result.authority.find('#');
-
             // remove the fragment part
+            const auto fragmentPosition = result.authority.find('#');
             if (fragmentPosition != std::string::npos)
             {
                 result.fragment = result.authority.substr(fragmentPosition + 1);
                 result.authority.resize(fragmentPosition);
             }
 
+            // remove the query part
             const auto queryPosition = result.authority.find('?');
-
-            // remove the fragment part
             if (queryPosition != std::string::npos)
             {
                 result.query = result.authority.substr(queryPosition + 1);
@@ -576,7 +577,6 @@ namespace http
             }
 
             const auto pathPosition = result.authority.find('/');
-
             if (pathPosition != std::string::npos)
             {
                 result.path = result.authority.substr(pathPosition);
@@ -587,22 +587,33 @@ namespace http
                 result.path = "/";
             }
 
-            const auto portPosition = result.authority.find(':');
-
-            if (portPosition != std::string::npos)
+            const auto hostPosition = result.authority.find('@');
+            if (hostPosition != std::string::npos)
             {
-                result.host = result.authority.substr(0, portPosition);
-                result.port = result.authority.substr(portPosition + 1);
+                result.userinfo = result.authority.substr(0, hostPosition);
+
+                const auto passwordPosition = result.userinfo.find(':');
+                if (passwordPosition != std::string::npos)
+                {
+                    result.user = result.userinfo.substr(0, passwordPosition);
+                    result.password = result.userinfo.substr(passwordPosition + 1);
+                }
+                else
+                    result.user = result.userinfo;
+
+                result.host = result.authority.substr(hostPosition + 1);
             }
             else
                 result.host = result.authority;
 
-            const auto hostPosition = result.host.find('@');
-            if (hostPosition != std::string::npos)
+            const auto portPosition = result.host.find(':');
+            if (portPosition != std::string::npos)
             {
-                result.userinfo = result.host.substr(0, hostPosition);
-                result.host = result.host.substr(hostPosition + 1);
+                result.port = result.host.substr(portPosition + 1);
+                result.host = result.host.substr(0, portPosition);
             }
+            else
+                result.host = result.host;
 
             return result;
         }

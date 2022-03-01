@@ -333,9 +333,14 @@ TEST_CASE("Parse URL", "[parsing]")
     http::Uri uri = http::detail::parseUri(str.begin(), str.end());
     REQUIRE(uri.scheme == "http");
     REQUIRE(uri.authority == "www.test.com:80");
+    REQUIRE(uri.userinfo == "");
+    REQUIRE(uri.user == "");
+    REQUIRE(uri.password == "");
     REQUIRE(uri.host == "www.test.com");
     REQUIRE(uri.port == "80");
     REQUIRE(uri.path == "/path");
+    REQUIRE(uri.query == "");
+    REQUIRE(uri.fragment == "");
 }
 
 TEST_CASE("Parse URL with fragment", "[parsing]")
@@ -345,6 +350,8 @@ TEST_CASE("Parse URL with fragment", "[parsing]")
     REQUIRE(uri.scheme == "http");
     REQUIRE(uri.authority == "www.test.com");
     REQUIRE(uri.userinfo == "");
+    REQUIRE(uri.user == "");
+    REQUIRE(uri.password == "");
     REQUIRE(uri.host == "www.test.com");
     REQUIRE(uri.port == "");
     REQUIRE(uri.path == "/path");
@@ -359,6 +366,8 @@ TEST_CASE("Parse URL with query and fragment", "[parsing]")
     REQUIRE(uri.scheme == "http");
     REQUIRE(uri.authority == "www.test.com");
     REQUIRE(uri.userinfo == "");
+    REQUIRE(uri.user == "");
+    REQUIRE(uri.password == "");
     REQUIRE(uri.host == "www.test.com");
     REQUIRE(uri.port == "");
     REQUIRE(uri.path == "/path");
@@ -372,13 +381,31 @@ TEST_CASE("Parse URL without scheme", "[parsing]")
     REQUIRE_THROWS_AS(http::detail::parseUri(str.begin(), str.end()), http::RequestError);
 }
 
-TEST_CASE("Parse URL with userinfo", "[parsing]")
+TEST_CASE("Parse URL with user", "[parsing]")
 {
     const std::string str = "http://test@test.com/";
     http::Uri uri = http::detail::parseUri(str.begin(), str.end());
     REQUIRE(uri.scheme == "http");
     REQUIRE(uri.authority == "test@test.com");
     REQUIRE(uri.userinfo == "test");
+    REQUIRE(uri.user == "test");
+    REQUIRE(uri.password == "");
+    REQUIRE(uri.host == "test.com");
+    REQUIRE(uri.port == "");
+    REQUIRE(uri.path == "/");
+    REQUIRE(uri.query == "");
+    REQUIRE(uri.fragment == "");
+}
+
+TEST_CASE("Parse URL with user and password", "[parsing]")
+{
+    const std::string str = "http://test:test@test.com/";
+    http::Uri uri = http::detail::parseUri(str.begin(), str.end());
+    REQUIRE(uri.scheme == "http");
+    REQUIRE(uri.authority == "test:test@test.com");
+    REQUIRE(uri.userinfo == "test:test");
+    REQUIRE(uri.user == "test");
+    REQUIRE(uri.password == "test");
     REQUIRE(uri.host == "test.com");
     REQUIRE(uri.port == "");
     REQUIRE(uri.path == "/");
