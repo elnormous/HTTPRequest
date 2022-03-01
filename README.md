@@ -4,10 +4,10 @@ HTTPRequest is a single-header library for making HTTP requests. You can just in
 
 ## Usage
 
-### Example of GET request
-```cpp
-#include "HTTPRequest.hpp"
+To use the library simply include the `HTTPRequest.hpp` using `#include "HTTPRequest.hpp"`.
 
+### Example of a GET request
+```cpp
 try
 {
     // you can pass http::InternetProtocol::V6 to Request to make an IPv6 request
@@ -23,10 +23,8 @@ catch (const std::exception& e)
 }
 ```
 
-### Example of POST request with form data
+### Example of a POST request with form data
 ```cpp
-#include "HTTPRequest.hpp"
-
 try
 {
     http::Request request{"http://test.com/test"};
@@ -42,10 +40,8 @@ catch (const std::exception& e)
 }
 ```
 
-### Example of POST request with a JSON body
+### Example of a POST request with a JSON body
 ```cpp
-#include "HTTPRequest.hpp"
-
 try
 {
     http::Request request{"http://test.com/test"};
@@ -53,6 +49,20 @@ try
     const auto response = request.send("POST", parameters, {
         {"Content-Type", "application/json"}
     });
+    std::cout << std::string{response.body.begin(), response.body.end()} << '\n'; // print the result
+}
+catch (const std::exception& e)
+{
+    std::cerr << "Request failed, error: " << e.what() << '\n';
+}
+```
+
+### Example of a GET request using Basic authorization
+```cpp
+try
+{
+    http::Request request{"http://user:password@test.com/test"};
+    const auto response = request.send("GET");
     std::cout << std::string{response.body.begin(), response.body.end()} << '\n'; // print the result
 }
 catch (const std::exception& e)

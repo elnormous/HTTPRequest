@@ -937,9 +937,13 @@ namespace http
             // RFC 7230, 5.3. Request Target
             std::string requestTarget = uri.path + '?' + uri.query;
 
-            headers.push_back({"Host", uri.host}); // RFC 7230, 5.4. Host
-            headers.push_back({"Content-Length", std::to_string(body.size())}); // RFC 7230, 3.3.2. Content-Length
+            // RFC 7230, 5.4. Host
+            headers.push_back({"Host", uri.host});
 
+            // RFC 7230, 3.3.2. Content-Length
+            headers.push_back({"Content-Length", std::to_string(body.size())});
+
+            // RFC 7617, 2. The 'Basic' Authentication Scheme
             if (!uri.userinfo.empty())
                 headers.push_back({"Authorization", "Basic " + encodeBase64(uri.userinfo.begin(), uri.userinfo.end())});
 
