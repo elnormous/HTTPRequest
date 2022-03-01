@@ -800,9 +800,9 @@ namespace http
         }
 
         // RFC 7230, 3.1.1. Request Line
-        inline std::string encodeRequestLine(const std::string& method, const std::string& path)
+        inline std::string encodeRequestLine(const std::string& method, const std::string& target)
         {
-            return method + " " + path + " HTTP/1.1\r\n";
+            return method + " " + target + " HTTP/1.1\r\n";
         }
 
         // RFC 7230, 3.2. Header Fields
@@ -876,7 +876,9 @@ namespace http
 
             const std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> addressInfo{info, freeaddrinfo};
 
-            const std::string headerData = encodeRequestLine(method, uri.path) +
+            // RFC 7230, 5.3. Request Target
+            std::string requestTarget = uri.path + '?' + uri.query;
+            const std::string headerData = encodeRequestLine(method, requestTarget) +
                 encodeHeaders({
                     {"Host", uri.host}, // RFC 7230, 5.4. Host
                     {"Content-Length", std::to_string(body.size())} // RFC 7230, 3.3.2. Content-Length
