@@ -4,7 +4,7 @@ HTTPRequest is a single-header library for making HTTP requests. You can just in
 
 ## Usage
 
-To use the library simply include the `HTTPRequest.hpp` using `#include "HTTPRequest.hpp"`.
+To use the library simply include `HTTPRequest.hpp` using `#include "HTTPRequest.hpp"`.
 
 ### Example of a GET request
 ```cpp
