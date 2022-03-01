@@ -18,17 +18,19 @@ int main(int argc, const char* argv[])
 
         for (int i = 1; i < argc; ++i)
         {
-            if (std::string{argv[i]} == "--help")
+            const auto arg = std::string{argv[i]};
+
+            if (arg == "--help")
             {
                 std::cout << "example --url <url> [--protocol <protocol>] [--method <method>] [--arguments <arguments>] [--output <output>]\n";
                 return EXIT_SUCCESS;
             }
-            else if (std::string{argv[i]} == "--uri")
+            else if (arg == "--uri")
             {
                 if (++i < argc) uri = argv[i];
                 else throw std::runtime_error("Missing argument for --url");
             }
-            else if (std::string{argv[i]} == "--protocol")
+            else if (arg == "--protocol")
             {
                 if (++i < argc)
                 {
@@ -41,21 +43,23 @@ int main(int argc, const char* argv[])
                 }
                 else throw std::runtime_error{"Missing argument for --protocol"};
             }
-            else if (std::string{argv[i]} == "--method")
+            else if (arg == "--method")
             {
                 if (++i < argc) method = argv[i];
                 else throw std::runtime_error{"Missing argument for --method"};
             }
-            else if (std::string{argv[i]} == "--arguments")
+            else if (arg == "--arguments")
             {
                 if (++i < argc) arguments = argv[i];
                 else throw std::runtime_error{"Missing argument for --arguments"};
             }
-            else if (std::string{argv[i]} == "--output")
+            else if (arg == "--output")
             {
                 if (++i < argc) output = argv[i];
                 else throw std::runtime_error{"Missing argument for --output"};
             }
+            else
+                throw std::runtime_error{"Invalid flag: " + arg};
         }
 
         http::Request request{uri, protocol};
@@ -80,9 +84,19 @@ int main(int argc, const char* argv[])
                 std::cout << std::string{response.body.begin(), response.body.end()} << '\n';
         }
     }
+    catch (const http::RequestError& e)
+    {
+        std::cerr << "Request error: " << e.what() << '\n';
+        return EXIT_FAILURE;
+    }
+    catch (const http::ResponseError& e)
+    {
+        std::cerr << "Response error: " << e.what() << '\n';
+        return EXIT_FAILURE;
+    }
     catch (const std::exception& e)
     {
-        std::cerr << "Request failed, error: " << e.what() << '\n';
+        std::cerr << "Error: " << e.what() << '\n';
         return EXIT_FAILURE;
     }
 
