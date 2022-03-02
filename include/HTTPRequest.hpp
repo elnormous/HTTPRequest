@@ -944,7 +944,7 @@ namespace http
             headers.push_back({"Content-Length", std::to_string(body.size())});
 
             // RFC 7617, 2. The 'Basic' Authentication Scheme
-            if (!uri.user.empty() && !uri.password.empty())
+            if (!uri.user.empty() || !uri.password.empty())
             {
                 std::string userinfo = uri.user + ':' + uri.password;
                 headers.push_back({"Authorization", "Basic " + encodeBase64(userinfo.begin(), userinfo.end())});
