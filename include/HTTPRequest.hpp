@@ -610,7 +610,7 @@ namespace http
             if (portPosition != std::string::npos)
             {
                 result.port = result.host.substr(portPosition + 1);
-                result.host = result.host.substr(0, portPosition);
+                result.host.resize(portPosition);
             }
             else
                 result.host = result.host;
