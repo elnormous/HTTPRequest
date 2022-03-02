@@ -745,7 +745,7 @@ namespace http
                 i = obsoleteFoldIterator;
             }
 
-            return std::make_pair(i, std::move(result));;
+            return std::make_pair(i, std::move(result));
         }
 
         // RFC 7230, 3.2. Header Fields
