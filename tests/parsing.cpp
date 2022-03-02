@@ -332,8 +332,6 @@ TEST_CASE("Parse URL", "[parsing]")
     const std::string str = "http://www.test.com:80/path";
     http::Uri uri = http::detail::parseUri(str.begin(), str.end());
     REQUIRE(uri.scheme == "http");
-    REQUIRE(uri.authority == "www.test.com:80");
-    REQUIRE(uri.userinfo == "");
     REQUIRE(uri.user == "");
     REQUIRE(uri.password == "");
     REQUIRE(uri.host == "www.test.com");
@@ -348,8 +346,6 @@ TEST_CASE("Parse URL with fragment", "[parsing]")
     const std::string str = "http://www.test.com/path#fragment";
     http::Uri uri = http::detail::parseUri(str.begin(), str.end());
     REQUIRE(uri.scheme == "http");
-    REQUIRE(uri.authority == "www.test.com");
-    REQUIRE(uri.userinfo == "");
     REQUIRE(uri.user == "");
     REQUIRE(uri.password == "");
     REQUIRE(uri.host == "www.test.com");
@@ -364,8 +360,6 @@ TEST_CASE("Parse URL with query and fragment", "[parsing]")
     const std::string str = "http://www.test.com/path?query=1#fragment";
     http::Uri uri = http::detail::parseUri(str.begin(), str.end());
     REQUIRE(uri.scheme == "http");
-    REQUIRE(uri.authority == "www.test.com");
-    REQUIRE(uri.userinfo == "");
     REQUIRE(uri.user == "");
     REQUIRE(uri.password == "");
     REQUIRE(uri.host == "www.test.com");
@@ -386,8 +380,6 @@ TEST_CASE("Parse URL with user", "[parsing]")
     const std::string str = "http://test@test.com/";
     http::Uri uri = http::detail::parseUri(str.begin(), str.end());
     REQUIRE(uri.scheme == "http");
-    REQUIRE(uri.authority == "test@test.com");
-    REQUIRE(uri.userinfo == "test");
     REQUIRE(uri.user == "test");
     REQUIRE(uri.password == "");
     REQUIRE(uri.host == "test.com");
@@ -402,8 +394,6 @@ TEST_CASE("Parse URL with user and password", "[parsing]")
     const std::string str = "http://test:test@test.com/";
     http::Uri uri = http::detail::parseUri(str.begin(), str.end());
     REQUIRE(uri.scheme == "http");
-    REQUIRE(uri.authority == "test:test@test.com");
-    REQUIRE(uri.userinfo == "test:test");
     REQUIRE(uri.user == "test");
     REQUIRE(uri.password == "test");
     REQUIRE(uri.host == "test.com");

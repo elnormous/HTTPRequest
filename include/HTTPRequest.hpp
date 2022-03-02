@@ -75,8 +75,6 @@ namespace http
     struct Uri final
     {
         std::string scheme;
-        std::string authority;
-        std::string userinfo;
         std::string user;
         std::string password;
         std::string host;
@@ -551,60 +549,62 @@ namespace http
 
             Uri result;
 
+            std::string authority;
             const auto schemeEndIterator = std::search(begin, end, schemeEnd.begin(), schemeEnd.end());
             if (schemeEndIterator != end)
             {
                 result.scheme = std::string(begin, schemeEndIterator);
-                result.authority = std::string(schemeEndIterator + 3, end);
+                authority = std::string(schemeEndIterator + 3, end);
             }
             else
                 throw RequestError{"Invalid URI"};
 
             // remove the fragment part
-            const auto fragmentPosition = result.authority.find('#');
+            const auto fragmentPosition = authority.find('#');
             if (fragmentPosition != std::string::npos)
             {
-                result.fragment = result.authority.substr(fragmentPosition + 1);
-                result.authority.resize(fragmentPosition);
+                result.fragment = authority.substr(fragmentPosition + 1);
+                authority.resize(fragmentPosition);
             }
 
             // remove the query part
-            const auto queryPosition = result.authority.find('?');
+            const auto queryPosition = authority.find('?');
             if (queryPosition != std::string::npos)
             {
-                result.query = result.authority.substr(queryPosition + 1);
-                result.authority.resize(queryPosition);
+                result.query = authority.substr(queryPosition + 1);
+                authority.resize(queryPosition);
             }
 
-            const auto pathPosition = result.authority.find('/');
+            const auto pathPosition = authority.find('/');
             if (pathPosition != std::string::npos)
             {
-                result.path = result.authority.substr(pathPosition);
-                result.authority = result.authority.substr(0, pathPosition);
+                result.path = authority.substr(pathPosition);
+                authority.resize(pathPosition);
             }
             else
             {
                 result.path = "/";
             }
 
-            const auto hostPosition = result.authority.find('@');
+            std::string userinfo;
+            const auto hostPosition = authority.find('@');
             if (hostPosition != std::string::npos)
             {
-                result.userinfo = result.authority.substr(0, hostPosition);
+                userinfo = authority.substr(0, hostPosition);
 
-                const auto passwordPosition = result.userinfo.find(':');
+                const auto passwordPosition = userinfo.find(':');
                 if (passwordPosition != std::string::npos)
                 {
-                    result.user = result.userinfo.substr(0, passwordPosition);
-                    result.password = result.userinfo.substr(passwordPosition + 1);
+                    result.user = userinfo.substr(0, passwordPosition);
+                    result.password = userinfo.substr(passwordPosition + 1);
                 }
                 else
-                    result.user = result.userinfo;
+                    result.user = userinfo;
 
-                result.host = result.authority.substr(hostPosition + 1);
+                result.host = authority.substr(hostPosition + 1);
             }
             else
-                result.host = result.authority;
+                result.host = authority;
 
             const auto portPosition = result.host.find(':');
             if (portPosition != std::string::npos)
@@ -930,7 +930,7 @@ namespace http
 
             addrinfo* info;
             if (getaddrinfo(uri.host.c_str(), port, &hints, &info) != 0)
-                throw std::system_error{getLastError(), std::system_category(), "Failed to get address info of " + uri.authority};
+                throw std::system_error{getLastError(), std::system_category(), "Failed to get address info of " + uri.host};
 
             const std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> addressInfo{info, freeaddrinfo};
 
@@ -944,8 +944,11 @@ namespace http
             headers.push_back({"Content-Length", std::to_string(body.size())});
 
             // RFC 7617, 2. The 'Basic' Authentication Scheme
-            if (!uri.userinfo.empty())
-                headers.push_back({"Authorization", "Basic " + encodeBase64(uri.userinfo.begin(), uri.userinfo.end())});
+            if (!uri.user.empty() && !uri.password.empty())
+            {
+                std::string userinfo = uri.user + ':' + uri.password;
+                headers.push_back({"Authorization", "Basic " + encodeBase64(userinfo.begin(), userinfo.end())});
+            }
 
             const std::string headerData = encodeRequestLine(method, requestTarget) +
                 encodeHeaders(headers) +
