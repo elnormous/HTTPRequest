@@ -490,27 +490,27 @@ namespace http
             Type endpoint = invalid;
         };
 
+        // RFC 7230, 3.2.3. Whitespace
         inline bool isWhitespaceChar(const char c) noexcept
         {
-            // RFC 7230, 3.2.3. Whitespace
             return c == ' ' || c == '\t';
         };
 
+        // RFC 5234, Appendix B.1. Core Rules
         inline bool isDigitChar(const char c) noexcept
         {
-            // RFC 5234, Appendix B.1. Core Rules
             return c >= '0' && c <= '9';
         }
 
+        // RFC 5234, Appendix B.1. Core Rules
         inline bool isAlphaChar(const char c) noexcept
         {
-            // RFC 5234, Appendix B.1. Core Rules
             return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
         }
 
+        // RFC 7230, 3.2.6. Field Value Components
         inline bool isTokenChar(const char c) noexcept
         {
-            // RFC 7230, 3.2.6. Field Value Components
             return c == '!' || c == '#' || c == '$' || c == '%' || c == '&' || c == '\'' || c == '*' ||
                 c == '+' || c == '-' || c == '.' || c == '^' || c == '_' || c == '`' || c == '|' || c == '~' ||
                 isDigitChar(c) ||
@@ -582,9 +582,7 @@ namespace http
                 authority.resize(pathPosition);
             }
             else
-            {
                 result.path = "/";
-            }
 
             std::string userinfo;
             const auto hostPosition = authority.find('@');
@@ -612,8 +610,6 @@ namespace http
                 result.port = result.host.substr(portPosition + 1);
                 result.host.resize(portPosition);
             }
-            else
-                result.host = result.host;
 
             return result;
         }
