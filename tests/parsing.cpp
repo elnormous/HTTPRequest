@@ -270,6 +270,18 @@ TEST_CASE("Parse header field with no colon", "[parsing]")
     REQUIRE_THROWS_AS(http::detail::parseHeaderField(str.begin(), str.end()), http::ResponseError);
 }
 
+TEST_CASE("Parse header with missing line feed", "[parsing]")
+{
+    std::string str = "a:b\rc:d\r\n";
+    REQUIRE_THROWS_AS(http::detail::parseHeaderField(str.begin(), str.end()), http::ResponseError);
+}
+
+TEST_CASE("Parse header with missing carriage return", "[parsing]")
+{
+    std::string str = "a:b\nc:d\r\n";
+    REQUIRE_THROWS_AS(http::detail::parseHeaderField(str.begin(), str.end()), http::ResponseError);
+}
+
 TEST_CASE("Parse header field without CRLF", "[parsing]")
 {
     std::string str = "field:value";

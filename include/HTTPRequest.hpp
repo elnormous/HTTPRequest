@@ -708,8 +708,8 @@ namespace http
             for (; i != end && (isWhitespaceChar(*i) || isVisibleChar(*i) || isObsoleteTextChar(*i)); ++i)
                 result.push_back(*i);
 
-            result.erase(std::find_if(result.rbegin(), result.rend(), [](char c) {
-                    return !isWhitespaceChar(c);
+            result.erase(std::find_if(result.rbegin(), result.rend(), [](const char c) {
+                return !isWhitespaceChar(c);
             }).base(), result.end());
 
             return std::make_pair(i, std::move(result));
