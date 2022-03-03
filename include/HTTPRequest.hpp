@@ -708,7 +708,7 @@ namespace http
             for (; i != end && (isWhitespaceChar(*i) || isVisibleChar(*i) || isObsoleteTextChar(*i)); ++i)
                 result.push_back(*i);
 
-            result.erase(std::find_if(result.rbegin(), result.rend(), [](const char c) {
+            result.erase(std::find_if(result.rbegin(), result.rend(), [](const char c) noexcept {
                 return !isWhitespaceChar(c);
             }).base(), result.end());
 
