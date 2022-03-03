@@ -946,7 +946,7 @@ namespace http
                 headers.push_back({"Authorization", "Basic " + encodeBase64(userinfo.begin(), userinfo.end())});
             }
 
-            const std::string headerData = encodeRequestLine(method, requestTarget) +
+            const auto headerData = encodeRequestLine(method, requestTarget) +
                 encodeHeaders(headers) +
                 "\r\n";
 
@@ -1003,14 +1003,16 @@ namespace http
                 {
                     // RFC 7230, 3. Message Format
                     // Empty line indicates the end of the header section (RFC 7230, 2.1. Client/Server Messaging)
-                    const auto headerEndIterator = std::search(responseData.cbegin(), responseData.cend(), headerEnd.cbegin(), headerEnd.cend());
+                    const auto headerEndIterator = std::search(responseData.cbegin(), responseData.cend(),
+                                                               headerEnd.cbegin(), headerEnd.cend());
                     if (headerEndIterator == responseData.cend()) break;
 
                     // didn't find a newline
                     const std::string headerResponseData(responseData.cbegin(), headerEndIterator + 2);
                     responseData.erase(responseData.cbegin(), headerEndIterator + 4);
 
-                    const auto statusLineResult = parseStatusLine(headerResponseData.cbegin(), headerResponseData.cend());
+                    const auto statusLineResult = parseStatusLine(headerResponseData.cbegin(),
+                                                                  headerResponseData.cend());
                     auto i = statusLineResult.first;
 
                     response.status = std::move(statusLineResult.second);
