@@ -931,7 +931,7 @@ namespace http
             const std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> addressInfo{info, freeaddrinfo};
 
             // RFC 7230, 5.3. Request Target
-            std::string requestTarget = uri.path + '?' + uri.query;
+            const std::string requestTarget = uri.path + (uri.query.empty() ? ""  : '?' + uri.query);
 
             // RFC 7230, 5.4. Host
             headers.push_back({"Host", uri.host});
