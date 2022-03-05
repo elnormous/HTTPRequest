@@ -885,6 +885,40 @@ namespace http
 
             return result;
         }
+
+        inline std::vector<std::uint8_t> encodeHtml(const Uri& uri,
+                                                    const std::string& method,
+                                                    const std::vector<uint8_t>& body,
+                                                    std::vector<std::pair<std::string, std::string>> headers)
+        {
+            if (uri.scheme != "http")
+                throw RequestError{"Only HTTP scheme is supported"};
+
+            // RFC 7230, 5.3. Request Target
+            const std::string requestTarget = uri.path + (uri.query.empty() ? ""  : '?' + uri.query);
+
+            // RFC 7230, 5.4. Host
+            headers.push_back({"Host", uri.host});
+
+            // RFC 7230, 3.3.2. Content-Length
+            headers.push_back({"Content-Length", std::to_string(body.size())});
+
+            // RFC 7617, 2. The 'Basic' Authentication Scheme
+            if (!uri.user.empty() || !uri.password.empty())
+            {
+                std::string userinfo = uri.user + ':' + uri.password;
+                headers.push_back({"Authorization", "Basic " + encodeBase64(userinfo.begin(), userinfo.end())});
+            }
+
+            const auto headerData = encodeRequestLine(method, requestTarget) +
+                encodeHeaders(headers) +
+                "\r\n";
+
+            std::vector<uint8_t> result(headerData.begin(), headerData.end());
+            result.insert(result.end(), body.begin(), body.end());
+
+            return result;
+        }
     }
 
     class Request final
@@ -930,28 +964,7 @@ namespace http
 
             const std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> addressInfo{info, freeaddrinfo};
 
-            // RFC 7230, 5.3. Request Target
-            const std::string requestTarget = uri.path + (uri.query.empty() ? ""  : '?' + uri.query);
-
-            // RFC 7230, 5.4. Host
-            headers.push_back({"Host", uri.host});
-
-            // RFC 7230, 3.3.2. Content-Length
-            headers.push_back({"Content-Length", std::to_string(body.size())});
-
-            // RFC 7617, 2. The 'Basic' Authentication Scheme
-            if (!uri.user.empty() || !uri.password.empty())
-            {
-                std::string userinfo = uri.user + ':' + uri.password;
-                headers.push_back({"Authorization", "Basic " + encodeBase64(userinfo.begin(), userinfo.end())});
-            }
-
-            const auto headerData = encodeRequestLine(method, requestTarget) +
-                encodeHeaders(headers) +
-                "\r\n";
-
-            std::vector<uint8_t> requestData(headerData.begin(), headerData.end());
-            requestData.insert(requestData.end(), body.begin(), body.end());
+            const auto requestData = encodeHtml(uri, method, body, headers);
 
             Socket socket{internetProtocol};
 
