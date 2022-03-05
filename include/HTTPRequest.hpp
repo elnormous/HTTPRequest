@@ -806,21 +806,6 @@ namespace http
             });
         }
 
-        // RFC 7230, 3.1.1. Request Line
-        inline std::string encodeRequestLine(const std::string& method, const std::string& target)
-        {
-            return method + " " + target + " HTTP/1.1\r\n";
-        }
-
-        // RFC 7230, 3.2. Header Fields
-        inline std::string encodeHeaders(const std::vector<std::pair<std::string, std::string>>& headers)
-        {
-            std::string result;
-            for (const auto& header : headers)
-                result += header.first + ": " + header.second + "\r\n";
-            return result;
-        }
-
         // RFC 5234, Appendix B.1. Core Rules
         template <typename T, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
         constexpr T hexToUint(char c)
@@ -837,6 +822,21 @@ namespace http
         {
             return begin == end ? value :
                 hexToUint<T>(begin + 1, end, value * 16 + hexToUint<T>(*begin));
+        }
+
+        // RFC 7230, 3.1.1. Request Line
+        inline std::string encodeRequestLine(const std::string& method, const std::string& target)
+        {
+            return method + " " + target + " HTTP/1.1\r\n";
+        }
+
+        // RFC 7230, 3.2. Header Fields
+        inline std::string encodeHeaders(const std::vector<std::pair<std::string, std::string>>& headers)
+        {
+            std::string result;
+            for (const auto& header : headers)
+                result += header.first + ": " + header.second + "\r\n";
+            return result;
         }
 
         // RFC 4648, 4. Base 64 Encoding
