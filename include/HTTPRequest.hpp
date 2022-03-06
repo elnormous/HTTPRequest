@@ -814,21 +814,41 @@ namespace http
 
         // RFC 5234, Appendix B.1. Core Rules
         template <typename T, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
-        constexpr T hexStringToUint(char c)
+        constexpr T digToUint(char c)
         {
+            // HEXDIG
             return (c >= '0' && c <= '9') ? static_cast<T>(c - '0') :
-                (c >= 'A' && c <= 'F') ? static_cast<T>(c - 'A') + T(10) :
-                (c >= 'a' && c <= 'f') ? static_cast<T>(c - 'a') + T(10) : // some services send lower-case hex digits
-                throw ResponseError{"Invalid hex integer"};
+                throw ResponseError{"Invalid digit"};
         }
 
         // RFC 7230, 4.1. Chunked Transfer Coding
+        template <typename T, class Iterator, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
+        T stringToUint(const Iterator begin, const Iterator end)
+        {
+            T result = 0;
+            for (auto i = begin; i != end; ++i)
+                result = T(10U) * result + digToUint<T>(*i);
+
+            return result;
+        }
+
+        // RFC 5234, Appendix B.1. Core Rules
+        template <typename T, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
+        constexpr T hexDigToUint(char c)
+        {
+            // HEXDIG
+            return (c >= '0' && c <= '9') ? static_cast<T>(c - '0') :
+                (c >= 'A' && c <= 'F') ? static_cast<T>(c - 'A') + T(10) :
+                (c >= 'a' && c <= 'f') ? static_cast<T>(c - 'a') + T(10) : // some services send lower-case hex digits
+                throw ResponseError{"Invalid hex digit"};
+        }
+
         template <typename T, class Iterator, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
         T hexStringToUint(const Iterator begin, const Iterator end)
         {
             T result = 0;
             for (auto i = begin; i != end; ++i)
-                result = T(16) * result + hexStringToUint<T>(*i);
+                result = T(16U) * result + hexDigToUint<T>(*i);
 
             return result;
         }
@@ -1061,7 +1081,7 @@ namespace http
                         else if (fieldName == "content-length")
                         {
                             // RFC 7230, 3.3.2. Content-Length
-                            contentLength = static_cast<std::size_t>(std::stoul(fieldValue));
+                            contentLength = stringToUint<std::size_t>(fieldValue.cbegin(), fieldValue.cend());
                             contentLengthReceived = true;
                             response.body.reserve(contentLength);
                         }
