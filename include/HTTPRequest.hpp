@@ -758,7 +758,7 @@ namespace http
         template <class Iterator>
         std::pair<Iterator, std::pair<std::string, std::string>> parseHeaderField(const Iterator begin, const Iterator end)
         {
-            const auto tokenResult = parseToken(begin, end);
+            auto tokenResult = parseToken(begin, end);
             auto i = tokenResult.first;
             auto fieldName = std::move(tokenResult.second);
 
@@ -767,7 +767,7 @@ namespace http
 
             i = skipWhitespaces(i, end);
 
-            const auto valueResult = parseFieldContent(i, end);
+            auto valueResult = parseFieldContent(i, end);
             i = valueResult.first;
             auto fieldValue = std::move(valueResult.second);
 
@@ -796,7 +796,7 @@ namespace http
             if (i == end || *i++ != ' ')
                 throw ResponseError{"Invalid status line"};
 
-            const auto reasonPhraseResult = parseReasonPhrase(i, end);
+            auto reasonPhraseResult = parseReasonPhrase(i, end);
             i = reasonPhraseResult.first;
 
             if (i == end || *i++ != '\r')
@@ -1029,14 +1029,14 @@ namespace http
                     const auto headerBeginIterator = responseData.cbegin();
                     const auto headerEndIterator = endIterator + 2;
 
-                    const auto statusLineResult = parseStatusLine(headerBeginIterator, headerEndIterator);
+                    auto statusLineResult = parseStatusLine(headerBeginIterator, headerEndIterator);
                     auto i = statusLineResult.first;
 
                     response.status = std::move(statusLineResult.second);
 
                     for (;;)
                     {
-                        const auto headerFieldResult = parseHeaderField(i, headerEndIterator);
+                        auto headerFieldResult = parseHeaderField(i, headerEndIterator);
                         i = headerFieldResult.first;
 
                         auto fieldName = std::move(headerFieldResult.second.first);
