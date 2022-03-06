@@ -814,7 +814,7 @@ namespace http
 
         // RFC 5234, Appendix B.1. Core Rules
         template <typename T, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
-        constexpr T hexToUint(char c)
+        constexpr T hexStringToUint(char c)
         {
             return (c >= '0' && c <= '9') ? static_cast<T>(c - '0') :
                 (c >= 'A' && c <= 'F') ? static_cast<T>(c - 'A') + T(10) :
@@ -824,10 +824,13 @@ namespace http
 
         // RFC 7230, 4.1. Chunked Transfer Coding
         template <typename T, class Iterator, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
-        constexpr T hexToUint(const Iterator begin, const Iterator end, const T value = 0)
+        T hexStringToUint(const Iterator begin, const Iterator end)
         {
-            return begin == end ? value :
-                hexToUint<T>(begin + 1, end, value * 16 + hexToUint<T>(*begin));
+            T result = 0;
+            for (auto i = begin; i != end; ++i)
+                result = T(16) * result + hexStringToUint<T>(*i);
+
+            return result;
         }
 
         // RFC 7230, 3.1.1. Request Line
@@ -1114,7 +1117,7 @@ namespace http
                                 const std::string line(responseData.begin(), i);
                                 responseData.erase(responseData.begin(), i + 2);
 
-                                expectedChunkSize = detail::hexToUint<std::size_t>(line.begin(), line.end());
+                                expectedChunkSize = detail::hexStringToUint<std::size_t>(line.begin(), line.end());
                                 if (expectedChunkSize == 0)
                                     return response;
                             }
