@@ -491,25 +491,29 @@ namespace http
         };
 
         // RFC 7230, 3.2.3. Whitespace
-        inline bool isWhitespaceChar(const char c) noexcept
+        template <typename T>
+        bool isWhitespaceChar(const T c) noexcept
         {
             return c == ' ' || c == '\t';
         };
 
         // RFC 5234, Appendix B.1. Core Rules
-        inline bool isDigitChar(const char c) noexcept
+        template <typename T>
+        bool isDigitChar(const T c) noexcept
         {
             return c >= '0' && c <= '9';
         }
 
         // RFC 5234, Appendix B.1. Core Rules
-        inline bool isAlphaChar(const char c) noexcept
+        template <typename T>
+        bool isAlphaChar(const T c) noexcept
         {
             return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
         }
 
         // RFC 7230, 3.2.6. Field Value Components
-        inline bool isTokenChar(const char c) noexcept
+        template <typename T>
+        bool isTokenChar(const T c) noexcept
         {
             return c == '!' || c == '#' || c == '$' || c == '%' || c == '&' || c == '\'' || c == '*' ||
                 c == '+' || c == '-' || c == '.' || c == '^' || c == '_' || c == '`' || c == '|' || c == '~' ||
@@ -518,13 +522,15 @@ namespace http
         };
 
         // RFC 5234, Appendix B.1. Core Rules
-        inline bool isVisibleChar(const char c) noexcept
+        template <typename T>
+        bool isVisibleChar(const T c) noexcept
         {
             return c >= 0x21 && c <= 0x7E;
         }
 
         // RFC 7230, Appendix B. Collected ABNF
-        inline bool isObsoleteTextChar(const char c) noexcept
+        template <typename T>
+        bool isObsoleteTextChar(const T c) noexcept
         {
             return static_cast<unsigned char>(c) >= 0x80 &&
                 static_cast<unsigned char>(c) <= 0xFF;
@@ -677,7 +683,7 @@ namespace http
 
             auto i = begin;
             for (; i != end && (isWhitespaceChar(*i) || isVisibleChar(*i) || isObsoleteTextChar(*i)); ++i)
-                result.push_back(*i);
+                result.push_back(static_cast<char>(*i));
 
             return std::make_pair(i, std::move(result));
         }
@@ -690,7 +696,7 @@ namespace http
 
             auto i = begin;
             for (; i != end && isTokenChar(*i); ++i)
-                result.push_back(*i);
+                result.push_back(static_cast<char>(*i));
 
             if (result.empty())
                 throw ResponseError{"Invalid token"};
@@ -706,7 +712,7 @@ namespace http
 
             auto i = begin;
             for (; i != end && (isWhitespaceChar(*i) || isVisibleChar(*i) || isObsoleteTextChar(*i)); ++i)
-                result.push_back(*i);
+                result.push_back(static_cast<char>(*i));
 
             result.erase(std::find_if(result.rbegin(), result.rend(), [](const char c) noexcept {
                 return !isWhitespaceChar(c);
@@ -1021,7 +1027,7 @@ namespace http
                     if (headerEndIterator == responseData.cend()) break;
 
                     // didn't find a newline
-                    const std::string headerResponseData(responseData.cbegin(), headerEndIterator + 2);
+                    const std::vector<std::uint8_t> headerResponseData(responseData.cbegin(), headerEndIterator + 2);
                     responseData.erase(responseData.cbegin(), headerEndIterator + 4);
 
                     const auto statusLineResult = parseStatusLine(headerResponseData.cbegin(),
