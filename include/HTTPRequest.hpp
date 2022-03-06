@@ -494,21 +494,27 @@ namespace http
         template <typename C>
         bool isWhitespaceChar(const C c) noexcept
         {
-            return c == ' ' || c == '\t';
+            return c == 0x20 || // space
+                c == 0x09; // tab
         };
 
         // RFC 5234, Appendix B.1. Core Rules
         template <typename C>
         bool isDigitChar(const C c) noexcept
         {
-            return c >= '0' && c <= '9';
+            return c >= 0x30 && // 0
+                c <= 0x39; // 9
         }
 
         // RFC 5234, Appendix B.1. Core Rules
         template <typename C>
         bool isAlphaChar(const C c) noexcept
         {
-            return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+            return
+                (c >= 0x61 && // a
+                 c <= 0x7A) || // z
+                (c >= 0x41 && // A
+                 c <= 0x5A); // Z
         }
 
         // RFC 7230, 3.2.6. Field Value Components
@@ -545,6 +551,26 @@ namespace http
                     break;
 
             return i;
+        }
+
+        // RFC 5234, Appendix B.1. Core Rules
+        template <typename T, typename C, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
+        constexpr T digToUint(const C c)
+        {
+            // HEXDIG
+            return (c >= '0' && c <= '9') ? static_cast<T>(c - '0') :
+                throw ResponseError{"Invalid digit"};
+        }
+
+        // RFC 5234, Appendix B.1. Core Rules
+        template <typename T, typename C, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
+        constexpr T hexDigToUint(const C c)
+        {
+            // HEXDIG
+            return (c >= '0' && c <= '9') ? static_cast<T>(c - '0') :
+                (c >= 'A' && c <= 'F') ? static_cast<T>(c - 'A') + T(10) :
+                (c >= 'a' && c <= 'f') ? static_cast<T>(c - 'a') + T(10) : // some services send lower-case hex digits
+                throw ResponseError{"Invalid hex digit"};
         }
 
         // RFC 3986, 3. Syntax Components
@@ -637,10 +663,10 @@ namespace http
 
             ++i;
 
-            if (i == end || !isDigitChar(*i))
+            if (i == end)
                 throw ResponseError{"Invalid HTTP version"};
 
-            const auto majorVersion = static_cast<uint16_t>(*i - '0');
+            const auto majorVersion = digToUint<std::uint16_t>(*i);
 
             ++i;
 
@@ -649,10 +675,10 @@ namespace http
 
             ++i;
 
-            if (i == end || !isDigitChar(*i))
+            if (i == end)
                 throw ResponseError{"Invalid HTTP version"};
 
-            const auto minorVersion = static_cast<uint16_t>(*i - '0');
+            const auto minorVersion = digToUint<std::uint16_t>(*i);
 
             ++i;
 
@@ -670,7 +696,7 @@ namespace http
                 if (i == end || !isDigitChar(*i))
                     throw ResponseError{"Invalid status code"};
                 else
-                    result = static_cast<uint16_t>(result * 10U + static_cast<uint16_t>(*i - '0'));
+                    result = static_cast<std::uint16_t>(result * 10U) + digToUint<std::uint16_t>(*i);
 
             return std::make_pair(i, result);
         }
@@ -812,15 +838,6 @@ namespace http
             });
         }
 
-        // RFC 5234, Appendix B.1. Core Rules
-        template <typename T, typename C, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
-        constexpr T digToUint(const C c)
-        {
-            // HEXDIG
-            return (c >= '0' && c <= '9') ? static_cast<T>(c - '0') :
-                throw ResponseError{"Invalid digit"};
-        }
-
         // RFC 7230, 4.1. Chunked Transfer Coding
         template <typename T, class Iterator, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
         T stringToUint(const Iterator begin, const Iterator end)
@@ -830,17 +847,6 @@ namespace http
                 result = T(10U) * result + digToUint<T>(*i);
 
             return result;
-        }
-
-        // RFC 5234, Appendix B.1. Core Rules
-        template <typename T, typename C, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
-        constexpr T hexDigToUint(const C c)
-        {
-            // HEXDIG
-            return (c >= '0' && c <= '9') ? static_cast<T>(c - '0') :
-                (c >= 'A' && c <= 'F') ? static_cast<T>(c - 'A') + T(10) :
-                (c >= 'a' && c <= 'f') ? static_cast<T>(c - 'a') + T(10) : // some services send lower-case hex digits
-                throw ResponseError{"Invalid hex digit"};
         }
 
         template <typename T, class Iterator, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
