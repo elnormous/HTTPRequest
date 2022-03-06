@@ -55,3 +55,20 @@ TEST_CASE("Encode HTML", "[serialization]")
     for (std::size_t i = 0; i < check.size(); ++i)
         REQUIRE(static_cast<uint8_t>(check[i]) == result[i]);
 }
+
+TEST_CASE("Encode HTML with data", "[serialization]")
+{
+    http::Uri uri;
+    uri.scheme = "http";
+    uri.path = "/";
+    uri.host = "test.com";
+    std::vector<std::uint8_t> body = {'1'};
+
+    const auto result = http::detail::encodeHtml(uri, "GET", body, {});
+    const std::string check = "GET / HTTP/1.1\r\nHost: test.com\r\nContent-Length: 1\r\n\r\n1";
+
+    REQUIRE(check.size() == result.size());
+
+    for (std::size_t i = 0; i < check.size(); ++i)
+        REQUIRE(static_cast<uint8_t>(check[i]) == result[i]);
+}
