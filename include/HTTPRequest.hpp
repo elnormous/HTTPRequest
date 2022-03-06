@@ -849,7 +849,7 @@ namespace http
         template <class Iterator>
         std::string encodeBase64(const Iterator begin, const Iterator end)
         {
-            static constexpr std::array<char, 64> chars{
+            constexpr std::array<char, 64> chars{
                 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
                 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
                 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
