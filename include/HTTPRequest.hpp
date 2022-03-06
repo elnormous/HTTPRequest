@@ -491,29 +491,29 @@ namespace http
         };
 
         // RFC 7230, 3.2.3. Whitespace
-        template <typename T>
-        bool isWhitespaceChar(const T c) noexcept
+        template <typename C>
+        bool isWhitespaceChar(const C c) noexcept
         {
             return c == ' ' || c == '\t';
         };
 
         // RFC 5234, Appendix B.1. Core Rules
-        template <typename T>
-        bool isDigitChar(const T c) noexcept
+        template <typename C>
+        bool isDigitChar(const C c) noexcept
         {
             return c >= '0' && c <= '9';
         }
 
         // RFC 5234, Appendix B.1. Core Rules
-        template <typename T>
-        bool isAlphaChar(const T c) noexcept
+        template <typename C>
+        bool isAlphaChar(const C c) noexcept
         {
             return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
         }
 
         // RFC 7230, 3.2.6. Field Value Components
-        template <typename T>
-        bool isTokenChar(const T c) noexcept
+        template <typename C>
+        bool isTokenChar(const C c) noexcept
         {
             return c == '!' || c == '#' || c == '$' || c == '%' || c == '&' || c == '\'' || c == '*' ||
                 c == '+' || c == '-' || c == '.' || c == '^' || c == '_' || c == '`' || c == '|' || c == '~' ||
@@ -522,15 +522,15 @@ namespace http
         };
 
         // RFC 5234, Appendix B.1. Core Rules
-        template <typename T>
-        bool isVisibleChar(const T c) noexcept
+        template <typename C>
+        bool isVisibleChar(const C c) noexcept
         {
             return c >= 0x21 && c <= 0x7E;
         }
 
         // RFC 7230, Appendix B. Collected ABNF
-        template <typename T>
-        bool isObsoleteTextChar(const T c) noexcept
+        template <typename C>
+        bool isObsoleteTextChar(const C c) noexcept
         {
             return static_cast<unsigned char>(c) >= 0x80 &&
                 static_cast<unsigned char>(c) <= 0xFF;
@@ -813,8 +813,8 @@ namespace http
         }
 
         // RFC 5234, Appendix B.1. Core Rules
-        template <typename T, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
-        constexpr T digToUint(char c)
+        template <typename T, typename C, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
+        constexpr T digToUint(const C c)
         {
             // HEXDIG
             return (c >= '0' && c <= '9') ? static_cast<T>(c - '0') :
@@ -833,8 +833,8 @@ namespace http
         }
 
         // RFC 5234, Appendix B.1. Core Rules
-        template <typename T, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
-        constexpr T hexDigToUint(char c)
+        template <typename T, typename C, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
+        constexpr T hexDigToUint(const C c)
         {
             // HEXDIG
             return (c >= '0' && c <= '9') ? static_cast<T>(c - '0') :
@@ -1134,10 +1134,9 @@ namespace http
 
                                 if (i == responseData.end()) break;
 
-                                const std::string line(responseData.begin(), i);
+                                expectedChunkSize = detail::hexStringToUint<std::size_t>(responseData.begin(), i);
                                 responseData.erase(responseData.begin(), i + 2);
 
-                                expectedChunkSize = detail::hexStringToUint<std::size_t>(line.begin(), line.end());
                                 if (expectedChunkSize == 0)
                                     return response;
                             }
