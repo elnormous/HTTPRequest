@@ -1022,31 +1022,27 @@ namespace http
                 {
                     // RFC 7230, 3. Message Format
                     // Empty line indicates the end of the header section (RFC 7230, 2.1. Client/Server Messaging)
-                    const auto headerEndIterator = std::search(responseData.cbegin(), responseData.cend(),
-                                                               headerEnd.cbegin(), headerEnd.cend());
-                    if (headerEndIterator == responseData.cend()) break;
+                    const auto endIterator = std::search(responseData.cbegin(), responseData.cend(),
+                                                        headerEnd.cbegin(), headerEnd.cend());
+                    if (endIterator == responseData.cend()) break; // two consecutive CRLFs not found
 
-                    // didn't find a newline
-                    const std::vector<std::uint8_t> headerResponseData(responseData.cbegin(), headerEndIterator + 2);
-                    responseData.erase(responseData.cbegin(), headerEndIterator + 4);
+                    const auto headerBeginIterator = responseData.cbegin();
+                    const auto headerEndIterator = endIterator + 2;
 
-                    const auto statusLineResult = parseStatusLine(headerResponseData.cbegin(),
-                                                                  headerResponseData.cend());
+                    const auto statusLineResult = parseStatusLine(headerBeginIterator, headerEndIterator);
                     auto i = statusLineResult.first;
 
                     response.status = std::move(statusLineResult.second);
 
                     for (;;)
                     {
-                        const auto headerFieldResult = parseHeaderField(i, headerResponseData.cend());
+                        const auto headerFieldResult = parseHeaderField(i, headerEndIterator);
                         i = headerFieldResult.first;
 
                         auto fieldName = std::move(headerFieldResult.second.first);
-
                         const auto toLower = [](const char c) noexcept {
                             return (c >= 'A' && c <= 'Z') ? c - ('A' - 'a') : c;
                         };
-
                         std::transform(fieldName.begin(), fieldName.end(), fieldName.begin(), toLower);
 
                         auto fieldValue = std::move(headerFieldResult.second.second);
@@ -1069,10 +1065,11 @@ namespace http
 
                         response.headers.push_back(std::make_pair(std::move(fieldName), std::move(fieldValue)));
 
-                        if (i == headerResponseData.cend())
+                        if (i == headerEndIterator)
                             break;
                     }
 
+                    responseData.erase(responseData.cbegin(), headerEndIterator + 2);
                     parsingBody = true;
                 }
 
