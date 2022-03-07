@@ -511,10 +511,8 @@ namespace http
         bool isAlphaChar(const C c) noexcept
         {
             return
-                (c >= 0x61 && // a
-                 c <= 0x7A) || // z
-                (c >= 0x41 && // A
-                 c <= 0x5A); // Z
+                (c >= 0x61 && c <= 0x7A) || // a - z
+                (c >= 0x41 && c <= 0x5A); // A - Z
         }
 
         // RFC 7230, 3.2.6. Field Value Components
@@ -558,7 +556,7 @@ namespace http
         constexpr T digToUint(const C c)
         {
             // HEXDIG
-            return (c >= '0' && c <= '9') ? static_cast<T>(c - '0') :
+            return (c >= 0x30 && c <= 0x39) ? static_cast<T>(c - 0x30) : // 0 - 9
                 throw ResponseError{"Invalid digit"};
         }
 
@@ -567,9 +565,9 @@ namespace http
         constexpr T hexDigToUint(const C c)
         {
             // HEXDIG
-            return (c >= '0' && c <= '9') ? static_cast<T>(c - '0') :
-                (c >= 'A' && c <= 'F') ? static_cast<T>(c - 'A') + T(10) :
-                (c >= 'a' && c <= 'f') ? static_cast<T>(c - 'a') + T(10) : // some services send lower-case hex digits
+            return (c >= 0x30 && c <= 0x39) ? static_cast<T>(c - 0x30) : // 0 - 9
+                (c >= 0x41 && c <= 0x46) ? static_cast<T>(c - 0x41) + T(10) : // A - Z
+                (c >= 0x61 && c <= 0x66) ? static_cast<T>(c - 0x61) + T(10) : // a - z, some services send lower-case hex digits
                 throw ResponseError{"Invalid hex digit"};
         }
 
