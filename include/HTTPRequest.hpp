@@ -566,16 +566,16 @@ namespace http
 
         // RFC 5234, Appendix B.1. Core Rules
         template <typename T, typename C, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
-        constexpr T digToUint(const C c)
+        constexpr T digitToUint(const C c)
         {
-            // HEXDIG
+            // DIGIT
             return (c >= 0x30 && c <= 0x39) ? static_cast<T>(c - 0x30) : // 0 - 9
                 throw ResponseError{"Invalid digit"};
         }
 
         // RFC 5234, Appendix B.1. Core Rules
         template <typename T, typename C, typename std::enable_if<std::is_unsigned<T>::value>::type* = nullptr>
-        constexpr T hexDigToUint(const C c)
+        constexpr T hexDigitToUint(const C c)
         {
             // HEXDIG
             return (c >= 0x30 && c <= 0x39) ? static_cast<T>(c - 0x30) : // 0 - 9
@@ -677,7 +677,7 @@ namespace http
             if (i == end)
                 throw ResponseError{"Invalid HTTP version"};
 
-            const auto majorVersion = digToUint<std::uint16_t>(*i);
+            const auto majorVersion = digitToUint<std::uint16_t>(*i);
 
             ++i;
 
@@ -689,7 +689,7 @@ namespace http
             if (i == end)
                 throw ResponseError{"Invalid HTTP version"};
 
-            const auto minorVersion = digToUint<std::uint16_t>(*i);
+            const auto minorVersion = digitToUint<std::uint16_t>(*i);
 
             ++i;
 
@@ -707,7 +707,7 @@ namespace http
                 if (i == end || !isDigitChar(*i))
                     throw ResponseError{"Invalid status code"};
                 else
-                    result = static_cast<std::uint16_t>(result * 10U) + digToUint<std::uint16_t>(*i);
+                    result = static_cast<std::uint16_t>(result * 10U) + digitToUint<std::uint16_t>(*i);
 
             return std::make_pair(i, result);
         }
@@ -855,7 +855,7 @@ namespace http
         {
             T result = 0;
             for (auto i = begin; i != end; ++i)
-                result = T(10U) * result + digToUint<T>(*i);
+                result = T(10U) * result + digitToUint<T>(*i);
 
             return result;
         }
@@ -865,7 +865,7 @@ namespace http
         {
             T result = 0;
             for (auto i = begin; i != end; ++i)
-                result = T(16U) * result + hexDigToUint<T>(*i);
+                result = T(16U) * result + hexDigitToUint<T>(*i);
 
             return result;
         }

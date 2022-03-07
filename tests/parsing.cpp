@@ -300,13 +300,13 @@ TEST_CASE("Parse header field with obsolete fold", "[parsing]")
 TEST_CASE("Digit to unsigned int", "[parsing]")
 {
     const char c = '1';
-    REQUIRE(http::digToUint<std::size_t>(c) == 1U);
+    REQUIRE(http::digitToUint<std::size_t>(c) == 1U);
 }
 
 TEST_CASE("Invalid digit", "[parsing]")
 {
     const char c = 'a';
-    REQUIRE_THROWS_AS(http::digToUint<std::size_t>(c), http::ResponseError);
+    REQUIRE_THROWS_AS(http::digitToUint<std::size_t>(c), http::ResponseError);
 }
 
 TEST_CASE("Digits to unsigned int", "[parsing]")
@@ -330,25 +330,25 @@ TEST_CASE("Hex digit and letter to unsigned int", "[parsing]")
 TEST_CASE("Hex digit to unsigned int", "[parsing]")
 {
     const char c = '1';
-    REQUIRE(http::hexDigToUint<std::size_t>(c) == 1U);
+    REQUIRE(http::hexDigitToUint<std::size_t>(c) == 1U);
 }
 
 TEST_CASE("Hex lowercase letter to unsigned int", "[parsing]")
 {
     const char c = 'a';
-    REQUIRE(http::hexDigToUint<std::size_t>(c) == 10U);
+    REQUIRE(http::hexDigitToUint<std::size_t>(c) == 10U);
 }
 
 TEST_CASE("Hex uppercase letter to unsigned int", "[parsing]")
 {
     const char c = 'A';
-    REQUIRE(http::hexDigToUint<std::size_t>(c) == 10U);
+    REQUIRE(http::hexDigitToUint<std::size_t>(c) == 10U);
 }
 
 TEST_CASE("Invalid hex", "[parsing]")
 {
     const char c = 'x';
-    REQUIRE_THROWS_AS(http::hexDigToUint<std::size_t>(c), http::ResponseError);
+    REQUIRE_THROWS_AS(http::hexDigitToUint<std::size_t>(c), http::ResponseError);
 }
 
 TEST_CASE("Hex digits with a letter last to unsigned int", "[parsing]")
