@@ -519,8 +519,21 @@ namespace http
         template <typename C>
         bool isTokenChar(const C c) noexcept
         {
-            return c == '!' || c == '#' || c == '$' || c == '%' || c == '&' || c == '\'' || c == '*' ||
-                c == '+' || c == '-' || c == '.' || c == '^' || c == '_' || c == '`' || c == '|' || c == '~' ||
+            return c == 0x21 || // !
+                c == 0x23 || // #
+                c == 0x24 || // $
+                c == 0x25 || // %
+                c == 0x26 || // &
+                c == 0x27 || // '
+                c == 0x2A || // *
+                c == 0x2B || // +
+                c == 0x2D || // -
+                c == 0x2E || // .
+                c == 0x5E || // ^
+                c == 0x5F || // _
+                c == 0x60 || // `
+                c == 0x7C || // |
+                c == 0x7E || // ~
                 isDigitChar(c) ||
                 isAlphaChar(c);
         };
