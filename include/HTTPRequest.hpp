@@ -685,7 +685,7 @@ namespace http
 
             const auto minorVersion = digitToUint<std::uint16_t>(*i++);
 
-            return std::make_pair(i, HttpVersion{majorVersion, minorVersion});
+            return {i, HttpVersion{majorVersion, minorVersion}};
         }
 
         // RFC 7230, 3.1.2. Status Line
@@ -701,7 +701,7 @@ namespace http
                 else
                     result = static_cast<std::uint16_t>(result * 10U) + digitToUint<std::uint16_t>(*i);
 
-            return std::make_pair(i, result);
+            return {i, result};
         }
 
         // RFC 7230, 3.1.2. Status Line
@@ -714,7 +714,7 @@ namespace http
             for (; i != end && (isWhitespaceChar(*i) || isVisibleChar(*i) || isObsoleteTextChar(*i)); ++i)
                 result.push_back(static_cast<char>(*i));
 
-            return std::make_pair(i, std::move(result));
+            return {i, std::move(result)};
         }
 
         // RFC 7230, 3.2.6. Field Value Components
@@ -730,7 +730,7 @@ namespace http
             if (result.empty())
                 throw ResponseError{"Invalid token"};
 
-            return std::make_pair(i, std::move(result));
+            return {i, std::move(result)};
         }
 
         // RFC 7230, 3.2. Header Fields
@@ -748,7 +748,7 @@ namespace http
                 return !isWhitespaceChar(c);
             }).base(), result.end());
 
-            return std::make_pair(i, std::move(result));
+            return {i, std::move(result)};
         }
 
         // RFC 7230, 3.2. Header Fields
@@ -781,7 +781,7 @@ namespace http
                 i = obsoleteFoldIterator;
             }
 
-            return std::make_pair(i, std::move(result));
+            return {i, std::move(result)};
         }
 
         // RFC 7230, 3.2. Header Fields
@@ -807,7 +807,7 @@ namespace http
             if (i == end || *i++ != '\n')
                 throw ResponseError{"Invalid header"};
 
-            return std::make_pair(i, std::make_pair(std::move(fieldName), std::move(fieldValue)));
+            return {i, {std::move(fieldName), std::move(fieldValue)}};
         }
 
         // RFC 7230, 3.1.2. Status Line
@@ -835,11 +835,11 @@ namespace http
             if (i == end || *i++ != '\n')
                 throw ResponseError{"Invalid status line"};
 
-            return std::make_pair(i, Status{
+            return {i, Status{
                 httpVersionResult.second,
                 statusCodeResult.second,
                 std::move(reasonPhraseResult.second)
-            });
+            }};
         }
 
         // RFC 7230, 4.1. Chunked Transfer Coding
@@ -1096,7 +1096,7 @@ namespace http
                             response.body.reserve(contentLength);
                         }
 
-                        response.headers.push_back(std::make_pair(std::move(fieldName), std::move(fieldValue)));
+                        response.headers.push_back({std::move(fieldName), std::move(fieldValue)});
 
                         if (i == headerEndIterator)
                             break;
