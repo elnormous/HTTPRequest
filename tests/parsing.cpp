@@ -371,9 +371,9 @@ TEST_CASE("Invalid hex string", "[parsing]")
 
 TEST_CASE("Parse URL", "[parsing]")
 {
-    const std::string str = "http://www.test.com:80/path";
+    const std::string str = "tt://www.test.com:80/path";
     const http::Uri uri = http::parseUri(str.begin(), str.end());
-    REQUIRE(uri.scheme == "http");
+    REQUIRE(uri.scheme == "tt");
     REQUIRE(uri.user == "");
     REQUIRE(uri.password == "");
     REQUIRE(uri.host == "www.test.com");
@@ -385,9 +385,9 @@ TEST_CASE("Parse URL", "[parsing]")
 
 TEST_CASE("Parse URL with fragment", "[parsing]")
 {
-    const std::string str = "http://www.test.com/path#fragment";
+    const std::string str = "tt://www.test.com/path#fragment";
     const http::Uri uri = http::parseUri(str.begin(), str.end());
-    REQUIRE(uri.scheme == "http");
+    REQUIRE(uri.scheme == "tt");
     REQUIRE(uri.user == "");
     REQUIRE(uri.password == "");
     REQUIRE(uri.host == "www.test.com");
@@ -399,9 +399,9 @@ TEST_CASE("Parse URL with fragment", "[parsing]")
 
 TEST_CASE("Parse URL with query and fragment", "[parsing]")
 {
-    const std::string str = "http://www.test.com/path?query=1#fragment";
+    const std::string str = "tt://www.test.com/path?query=1#fragment";
     const http::Uri uri = http::parseUri(str.begin(), str.end());
-    REQUIRE(uri.scheme == "http");
+    REQUIRE(uri.scheme == "tt");
     REQUIRE(uri.user == "");
     REQUIRE(uri.password == "");
     REQUIRE(uri.host == "www.test.com");
@@ -419,9 +419,9 @@ TEST_CASE("Parse URL without scheme", "[parsing]")
 
 TEST_CASE("Parse URL with user", "[parsing]")
 {
-    const std::string str = "http://test@test.com/";
+    const std::string str = "tt://test@test.com/";
     const http::Uri uri = http::parseUri(str.begin(), str.end());
-    REQUIRE(uri.scheme == "http");
+    REQUIRE(uri.scheme == "tt");
     REQUIRE(uri.user == "test");
     REQUIRE(uri.password == "");
     REQUIRE(uri.host == "test.com");
@@ -433,9 +433,9 @@ TEST_CASE("Parse URL with user", "[parsing]")
 
 TEST_CASE("Parse URL with user and password", "[parsing]")
 {
-    const std::string str = "http://test:test@test.com/";
+    const std::string str = "tt://test:test@test.com/";
     const http::Uri uri = http::parseUri(str.begin(), str.end());
-    REQUIRE(uri.scheme == "http");
+    REQUIRE(uri.scheme == "tt");
     REQUIRE(uri.user == "test");
     REQUIRE(uri.password == "test");
     REQUIRE(uri.host == "test.com");
