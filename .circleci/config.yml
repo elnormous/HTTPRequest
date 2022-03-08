@@ -12,7 +12,7 @@ jobs:
           command: |
             mkdir -p $HOME/.sonar
             wget https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip -P $HOME/.sonar
-            unzip -o build-wrapper-linux-x86.zip -d $HOME/.sonar/
+            unzip -o $HOME/.sonar/build-wrapper-linux-x86.zip -d $HOME/.sonar/
       - run:
           name: Build and run
           command: |
