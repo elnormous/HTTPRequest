@@ -62,7 +62,7 @@ TEST_CASE("Encode HTML with data", "[serialization]")
     uri.scheme = "http";
     uri.path = "/";
     uri.host = "test.com";
-    std::vector<std::uint8_t> body = {'1'};
+    const std::vector<std::uint8_t> body = {'1'};
 
     const auto result = http::detail::encodeHtml(uri, "GET", body, {});
     const std::string check = "GET / HTTP/1.1\r\nHost: test.com\r\nContent-Length: 1\r\n\r\n1";
