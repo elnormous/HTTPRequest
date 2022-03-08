@@ -10,13 +10,14 @@ jobs:
       - run:
           name: Download SonarCloud
           command: |
-            apt update && apt install -y curl
-            wget https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip
-            unzip build-wrapper-linux-x86.zip
+            mkdir -p $HOME/.sonar
+            wget https://sonarcloud.io/static/cpp/build-wrapper-linux-x86.zip -P $HOME/.sonar
+            unzip -o build-wrapper-linux-x86.zip -d $HOME/.sonar/
       - run:
           name: Build and run
           command: |
-            ./build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir bw-output make -C tests/
+            export PATH=$HOME/.sonar/build-wrapper-linux-x86:$PATH
+            build-wrapper-linux-x86-64 --out-dir bw-output make -C tests/
             tests/tests
       - sonarcloud/scan
 
