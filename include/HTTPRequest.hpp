@@ -671,29 +671,21 @@ namespace http
                 throw ResponseError{"Invalid HTTP version"};
             if (i == end || *i++ != 'P')
                 throw ResponseError{"Invalid HTTP version"};
-            if (i == end || *i != '/')
+            if (i == end || *i++ != '/')
                 throw ResponseError{"Invalid HTTP version"};
-
-            ++i;
 
             if (i == end)
                 throw ResponseError{"Invalid HTTP version"};
 
-            const auto majorVersion = digitToUint<std::uint16_t>(*i);
+            const auto majorVersion = digitToUint<std::uint16_t>(*i++);
 
-            ++i;
-
-            if (i == end || *i != '.')
+            if (i == end || *i++ != '.')
                 throw ResponseError{"Invalid HTTP version"};
-
-            ++i;
 
             if (i == end)
                 throw ResponseError{"Invalid HTTP version"};
 
-            const auto minorVersion = digitToUint<std::uint16_t>(*i);
-
-            ++i;
+            const auto minorVersion = digitToUint<std::uint16_t>(*i++);
 
             return std::make_pair(i, HttpVersion{majorVersion, minorVersion});
         }
