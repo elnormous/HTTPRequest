@@ -17,5 +17,5 @@ orbs:
 workflows:
   main:
     jobs:
-      - build:
+      - test:
           context: SonarCloud
