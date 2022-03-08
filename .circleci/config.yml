@@ -7,7 +7,7 @@ jobs:
     steps:
       - checkout
       - run: git submodule update --init
-      - run: make -C tests/
+      - run: build-wrapper --out-dir bw-output make -C tests/
       - run: tests/tests
       - sonarcloud/scan
 
