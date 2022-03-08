@@ -494,16 +494,14 @@ namespace http
         template <typename C>
         bool isWhitespaceChar(const C c) noexcept
         {
-            return c == 0x20 || // space
-                c == 0x09; // tab
+            return c == 0x20 || c == 0x09; // space or tab
         };
 
         // RFC 5234, Appendix B.1. Core Rules
         template <typename C>
         bool isDigitChar(const C c) noexcept
         {
-            return c >= 0x30 && // 0
-                c <= 0x39; // 9
+            return c >= 0x30 && c <= 0x39; // 0 - 9
         }
 
         // RFC 5234, Appendix B.1. Core Rules
