@@ -16,7 +16,7 @@ orbs:
 
 workflows:
   version: 2
-  main:
+  dist-compile:
     jobs:
       - test:
           context: SonarCloud
