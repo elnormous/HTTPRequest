@@ -663,12 +663,14 @@ namespace http
         {
             auto i = begin;
 
-            constexpr std::array<char, 4> http{'H', 'T', 'T', 'P'};
-
-            for (std::size_t n = 0; n < http.size(); ++n, ++i)
-                if (i == end || *i != http[n])
-                    throw ResponseError{"Invalid HTTP version"};
-
+            if (i == end || *i++ != 'H')
+                throw ResponseError{"Invalid HTTP version"};
+            if (i == end || *i++ != 'T')
+                throw ResponseError{"Invalid HTTP version"};
+            if (i == end || *i++ != 'T')
+                throw ResponseError{"Invalid HTTP version"};
+            if (i == end || *i++ != 'P')
+                throw ResponseError{"Invalid HTTP version"};
             if (i == end || *i != '/')
                 throw ResponseError{"Invalid HTTP version"};
 
@@ -751,6 +753,7 @@ namespace http
             for (; i != end && (isWhitespaceChar(*i) || isVisibleChar(*i) || isObsoleteTextChar(*i)); ++i)
                 result.push_back(static_cast<char>(*i));
 
+            // trim white spaces
             result.erase(std::find_if(result.rbegin(), result.rend(), [](const char c) noexcept {
                 return !isWhitespaceChar(c);
             }).base(), result.end());
