@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 
 jobs:
   test:
@@ -15,7 +15,6 @@ orbs:
   sonarcloud: sonarsource/sonarcloud@1.0.3
 
 workflows:
-  version: 2
   main:
     jobs:
       - test:
