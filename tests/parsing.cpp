@@ -110,7 +110,7 @@ TEST_CASE("No minor version in HTTP version", "[parsing]")
 TEST_CASE("Parse status code", "[parsing]")
 {
     const std::string str = "333";
-    auto result = http::parseStatusCode(str.begin(), str.end());
+    const auto result = http::parseStatusCode(str.begin(), str.end());
     REQUIRE(result.first == str.end());
     REQUIRE(result.second == 333);
 }
