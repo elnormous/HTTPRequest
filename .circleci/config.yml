@@ -15,10 +15,10 @@ jobs:
             unzip build-wrapper-linux-x86.zip
             cp build-wrapper-linux-x86/libinterceptor-x86_64.so build-wrapper-linux-x86/libinterceptor-haswell.so
       - run:
-        name: Build and run
-        command: |
-          ./build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir bw-output make -C tests/
-          tests/tests
+          name: Build and run
+          command: |
+            ./build-wrapper-linux-x86/build-wrapper-linux-x86-64 --out-dir bw-output make -C tests/
+            tests/tests
       - sonarcloud/scan
 
 orbs:
