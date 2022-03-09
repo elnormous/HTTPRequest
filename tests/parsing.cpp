@@ -4,8 +4,8 @@
 
 TEST_CASE("Whitespace", "[parsing]")
 {
-    REQUIRE(http::isWhitespaceChar(' '));
-    REQUIRE(http::isWhitespaceChar('\t'));
+    for (int c = 0; c < 256; ++c)
+        REQUIRE(http::isWhitespaceChar(static_cast<char>(c)) == (c == ' ' || c == '\t'));
 }
 
 TEST_CASE("Digit", "[parsing]")
