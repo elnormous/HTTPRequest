@@ -19,7 +19,11 @@ jobs:
             export PATH=$HOME/.sonar/build-wrapper-linux-x86:$PATH
             build-wrapper-linux-x86-64 --out-dir bw-output make -C tests/
             tests/tests
-            gcov tests/encoding.cpp tests/main.cpp tests/parsing.cpp
+      - run:
+          name: Generate coverage
+          command: |
+            cd tests
+            gcov encoding.cpp main.cpp parsing.cpp
       - sonarcloud/scan
 
 orbs:
