@@ -55,15 +55,13 @@ namespace http
     class RequestError final: public std::logic_error
     {
     public:
-        explicit RequestError(const char* str): std::logic_error{str} {}
-        explicit RequestError(const std::string& str): std::logic_error{str} {}
+        using std::logic_error::logic_error;
     };
 
     class ResponseError final: public std::runtime_error
     {
     public:
-        explicit ResponseError(const char* str): std::runtime_error{str} {}
-        explicit ResponseError(const std::string& str): std::runtime_error{str} {}
+        using std::runtime_error::runtime_error;
     };
 
     enum class InternetProtocol: std::uint8_t
