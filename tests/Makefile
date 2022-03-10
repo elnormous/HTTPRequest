@@ -6,6 +6,7 @@ OBJECTS=$(BASE_NAMES:=.o)
 DEPENDENCIES=$(OBJECTS:.o=.d)
 EXECUTABLE=tests
 
+.PHONY: all
 all: $(EXECUTABLE)
 ifeq ($(DEBUG),1)
 all: CXXFLAGS+=-DDEBUG -g
