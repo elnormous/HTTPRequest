@@ -10,7 +10,7 @@ TEST_CASE("Encode status line", "[serialization]")
 
 TEST_CASE("Encode header", "[serialization]")
 {
-    const auto result = http::encodeHeaders({
+    const auto result = http::encodeHeaderFields({
         {"a", "b"}
     });
     REQUIRE(result == "a: b\r\n");
@@ -18,7 +18,7 @@ TEST_CASE("Encode header", "[serialization]")
 
 TEST_CASE("Encode header without value", "[serialization]")
 {
-    const auto result = http::encodeHeaders({
+    const auto result = http::encodeHeaderFields({
         {"a", ""}
     });
     REQUIRE(result == "a: \r\n");
@@ -26,7 +26,7 @@ TEST_CASE("Encode header without value", "[serialization]")
 
 TEST_CASE("Encode headers", "[serialization]")
 {
-    const auto result = http::encodeHeaders({
+    const auto result = http::encodeHeaderFields({
         {"a", "b"},
         {"c", "d"}
     });
