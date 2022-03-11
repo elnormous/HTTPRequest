@@ -171,7 +171,7 @@ namespace http
     struct Response final
     {
         Status status;
-        HeaderFields headers;
+        HeaderFields headerFields;
         std::vector<std::uint8_t> body;
     };
 
@@ -871,11 +871,11 @@ namespace http
         }
 
         // RFC 7230, 3.2. Header Fields
-        inline std::string encodeHeaders(const HeaderFields& headers)
+        inline std::string encodeHeaderFields(const HeaderFields& headerFields)
         {
             std::string result;
-            for (const auto& header : headers)
-                result += header.first + ": " + header.second + "\r\n";
+            for (const auto& headerField : headerFields)
+                result += headerField.first + ": " + headerField.second + "\r\n";
             return result;
         }
 
@@ -929,7 +929,7 @@ namespace http
         inline std::vector<std::uint8_t> encodeHtml(const Uri& uri,
                                                     const std::string& method,
                                                     const std::vector<uint8_t>& body,
-                                                    HeaderFields headers)
+                                                    HeaderFields headerFields)
         {
             if (uri.scheme != "http")
                 throw RequestError{"Only HTTP scheme is supported"};
@@ -938,20 +938,20 @@ namespace http
             const std::string requestTarget = uri.path + (uri.query.empty() ? ""  : '?' + uri.query);
 
             // RFC 7230, 5.4. Host
-            headers.push_back({"Host", uri.host});
+            headerFields.push_back({"Host", uri.host});
 
             // RFC 7230, 3.3.2. Content-Length
-            headers.push_back({"Content-Length", std::to_string(body.size())});
+            headerFields.push_back({"Content-Length", std::to_string(body.size())});
 
             // RFC 7617, 2. The 'Basic' Authentication Scheme
             if (!uri.user.empty() || !uri.password.empty())
             {
                 std::string userinfo = uri.user + ':' + uri.password;
-                headers.push_back({"Authorization", "Basic " + encodeBase64(userinfo.begin(), userinfo.end())});
+                headerFields.push_back({"Authorization", "Basic " + encodeBase64(userinfo.begin(), userinfo.end())});
             }
 
             const auto headerData = encodeRequestLine(method, requestTarget) +
-                encodeHeaders(headers) +
+                encodeHeaderFields(headerFields) +
                 "\r\n";
 
             std::vector<uint8_t> result(headerData.begin(), headerData.end());
@@ -973,18 +973,18 @@ namespace http
 
         Response send(const std::string& method = "GET",
                       const std::string& body = "",
-                      const HeaderFields& headers = {},
+                      const HeaderFields& headerFields = {},
                       const std::chrono::milliseconds timeout = std::chrono::milliseconds{-1})
         {
             return send(method,
                         std::vector<uint8_t>(body.begin(), body.end()),
-                        headers,
+                        headerFields,
                         timeout);
         }
 
         Response send(const std::string& method,
                       const std::vector<uint8_t>& body,
-                      HeaderFields headers,
+                      HeaderFields headerFields,
                       const std::chrono::milliseconds timeout = std::chrono::milliseconds{-1})
         {
             const auto stopTime = std::chrono::steady_clock::now() + timeout;
@@ -1004,7 +1004,7 @@ namespace http
 
             const std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> addressInfo{info, freeaddrinfo};
 
-            const auto requestData = encodeHtml(uri, method, body, headers);
+            const auto requestData = encodeHtml(uri, method, body, headerFields);
 
             Socket socket{internetProtocol};
 
@@ -1097,7 +1097,7 @@ namespace http
                             response.body.reserve(contentLength);
                         }
 
-                        response.headers.push_back({std::move(fieldName), std::move(fieldValue)});
+                        response.headerFields.push_back({std::move(fieldName), std::move(fieldValue)});
 
                         if (i == headerEndIterator)
                             break;
