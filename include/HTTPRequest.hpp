@@ -165,10 +165,13 @@ namespace http
         std::string reason;
     };
 
+    using HeaderField = std::pair<std::string, std::string>;
+    using HeaderFields = std::vector<HeaderField>;
+
     struct Response final
     {
         Status status;
-        std::vector<std::pair<std::string, std::string>> headers;
+        HeaderFields headers;
         std::vector<std::uint8_t> body;
     };
 
@@ -784,7 +787,7 @@ namespace http
 
         // RFC 7230, 3.2. Header Fields
         template <class Iterator>
-        std::pair<Iterator, std::pair<std::string, std::string>> parseHeaderField(const Iterator begin, const Iterator end)
+        std::pair<Iterator, HeaderField> parseHeaderField(const Iterator begin, const Iterator end)
         {
             auto tokenResult = parseToken(begin, end);
             auto i = tokenResult.first;
@@ -868,7 +871,7 @@ namespace http
         }
 
         // RFC 7230, 3.2. Header Fields
-        inline std::string encodeHeaders(const std::vector<std::pair<std::string, std::string>>& headers)
+        inline std::string encodeHeaders(const HeaderFields& headers)
         {
             std::string result;
             for (const auto& header : headers)
@@ -926,7 +929,7 @@ namespace http
         inline std::vector<std::uint8_t> encodeHtml(const Uri& uri,
                                                     const std::string& method,
                                                     const std::vector<uint8_t>& body,
-                                                    std::vector<std::pair<std::string, std::string>> headers)
+                                                    HeaderFields headers)
         {
             if (uri.scheme != "http")
                 throw RequestError{"Only HTTP scheme is supported"};
@@ -970,7 +973,7 @@ namespace http
 
         Response send(const std::string& method = "GET",
                       const std::string& body = "",
-                      const std::vector<std::pair<std::string, std::string>>& headers = {},
+                      const HeaderFields& headers = {},
                       const std::chrono::milliseconds timeout = std::chrono::milliseconds{-1})
         {
             return send(method,
@@ -981,7 +984,7 @@ namespace http
 
         Response send(const std::string& method,
                       const std::vector<uint8_t>& body,
-                      std::vector<std::pair<std::string, std::string>> headers,
+                      HeaderFields headers,
                       const std::chrono::milliseconds timeout = std::chrono::milliseconds{-1})
         {
             const auto stopTime = std::chrono::steady_clock::now() + timeout;
