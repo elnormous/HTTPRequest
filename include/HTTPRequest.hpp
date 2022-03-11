@@ -744,7 +744,7 @@ namespace http
             for (; i != end && (isWhitespaceChar(*i) || isVisibleChar(*i) || isObsoleteTextChar(*i)); ++i)
                 result.push_back(static_cast<char>(*i));
 
-            // trim white spaces
+            // trim whitespaces
             result.erase(std::find_if(result.rbegin(), result.rend(), [](const char c) noexcept {
                 return !isWhitespaceChar(c);
             }).base(), result.end());
@@ -767,7 +767,7 @@ namespace http
                 result += fieldValueResult.second;
 
                 // Handle obsolete fold as per RFC 7230, 3.2.4. Field Parsing
-                // Obsolete folding is known as linear white space (LWS) in RFC 2616, 2.2 Basic Rules
+                // Obsolete folding is known as linear whitespace (LWS) in RFC 2616, 2.2 Basic Rules
                 auto obsoleteFoldIterator = i;
                 if (obsoleteFoldIterator == end || *obsoleteFoldIterator++ != '\r')
                     break;
