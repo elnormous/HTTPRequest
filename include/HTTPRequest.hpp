@@ -876,6 +876,9 @@ namespace http
             std::string result;
             for (const auto& headerField : headerFields)
             {
+                if (headerField.first.empty())
+                    throw RequestError{"Invalid header field name"};
+
                 for (const auto c : headerField.first)
                     if (!isTokenChar(c))
                         throw RequestError{"Invalid header field name"};

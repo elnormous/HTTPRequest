@@ -33,6 +33,13 @@ TEST_CASE("Encode headers", "[serialization]")
     REQUIRE(result == "a: b\r\nc: d\r\n");
 }
 
+TEST_CASE("Encode header with an empty name", "[serialization]")
+{
+    REQUIRE_THROWS_AS(http::encodeHeaderFields({
+        {"", "b"}
+    }), http::RequestError);
+}
+
 TEST_CASE("Encode header with a new-line in name", "[serialization]")
 {
     REQUIRE_THROWS_AS(http::encodeHeaderFields({
