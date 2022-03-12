@@ -33,6 +33,20 @@ TEST_CASE("Encode headers", "[serialization]")
     REQUIRE(result == "a: b\r\nc: d\r\n");
 }
 
+TEST_CASE("Encode header with a new-line in name", "[serialization]")
+{
+    REQUIRE_THROWS_AS(http::encodeHeaderFields({
+        {"a\n", ""}
+    }), http::RequestError);
+}
+
+TEST_CASE("Encode header with a new-line in value", "[serialization]")
+{
+    REQUIRE_THROWS_AS(http::encodeHeaderFields({
+        {"a", "\n"}
+    }), http::RequestError);
+}
+
 TEST_CASE("Encode Base64", "[serialization]")
 {
     const std::string str = "test:test";

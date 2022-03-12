@@ -875,7 +875,18 @@ namespace http
         {
             std::string result;
             for (const auto& headerField : headerFields)
+            {
+                for (const auto c : headerField.first)
+                    if (!isTokenChar(c))
+                        throw RequestError{"Invalid header field name"};
+
+                for (const auto c : headerField.second)
+                    if (!isWhitespaceChar(c) && !isVisibleChar(c) && !isObsoleteTextChar(c))
+                        throw RequestError{"Invalid header field value"};
+
                 result += headerField.first + ": " + headerField.second + "\r\n";
+            }
+
             return result;
         }
 
