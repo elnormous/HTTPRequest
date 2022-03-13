@@ -998,7 +998,7 @@ namespace http
 
         Response send(const std::string& method,
                       const std::vector<uint8_t>& body,
-                      HeaderFields headerFields,
+                      const HeaderFields& headerFields = {},
                       const std::chrono::milliseconds timeout = std::chrono::milliseconds{-1})
         {
             const auto stopTime = std::chrono::steady_clock::now() + timeout;
