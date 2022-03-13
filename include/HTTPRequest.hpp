@@ -695,16 +695,11 @@ namespace http
         {
             std::uint16_t result = 0;
 
-            std::size_t n = 0;
             auto i = begin;
-
             while (i != end && isDigitChar(*i))
-            {
                 result = static_cast<std::uint16_t>(result * 10U) + digitToUint<std::uint16_t>(*i++);
-                ++n;
-            }
 
-            if (n != 3)
+            if (std::distance(begin, i) != 3)
                 throw ResponseError{"Invalid status code"};
 
             return {i, result};
