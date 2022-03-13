@@ -121,7 +121,13 @@ TEST_CASE("Too short status code", "[parsing]")
     REQUIRE_THROWS_AS(http::parseStatusCode(str.begin(), str.end()), http::ResponseError);
 }
 
-TEST_CASE("Invalid short status code", "[parsing]")
+TEST_CASE("Too long status code", "[parsing]")
+{
+    const std::string str = "3333";
+    REQUIRE_THROWS_AS(http::parseStatusCode(str.begin(), str.end()), http::ResponseError);
+}
+
+TEST_CASE("Invalid status code", "[parsing]")
 {
     const std::string str = "33a";
     REQUIRE_THROWS_AS(http::parseStatusCode(str.begin(), str.end()), http::ResponseError);

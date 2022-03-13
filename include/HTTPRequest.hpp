@@ -695,12 +695,17 @@ namespace http
         {
             std::uint16_t result = 0;
 
+            std::size_t n = 0;
             auto i = begin;
-            for (std::size_t n = 0; n < 3; ++n, ++i)
-                if (i == end || !isDigitChar(*i))
-                    throw ResponseError{"Invalid status code"};
-                else
-                    result = static_cast<std::uint16_t>(result * 10U) + digitToUint<std::uint16_t>(*i);
+
+            while (i != end && isDigitChar(*i))
+            {
+                result = static_cast<std::uint16_t>(result * 10U) + digitToUint<std::uint16_t>(*i++);
+                ++n;
+            }
+
+            if (n != 3)
+                throw ResponseError{"Invalid status code"};
 
             return {i, result};
         }
@@ -1071,7 +1076,7 @@ namespace http
                     // RFC 7230, 3. Message Format
                     // Empty line indicates the end of the header section (RFC 7230, 2.1. Client/Server Messaging)
                     const auto endIterator = std::search(responseData.cbegin(), responseData.cend(),
-                                                        headerEnd.cbegin(), headerEnd.cend());
+                                                         headerEnd.cbegin(), headerEnd.cend());
                     if (endIterator == responseData.cend()) break; // two consecutive CRLFs not found
 
                     const auto headerBeginIterator = responseData.cbegin();
