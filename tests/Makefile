@@ -1,5 +1,5 @@
 DEBUG=0
-CXXFLAGS=-std=c++17 -Wall -Wextra -Wshadow -Wno-c++98-compat -I../external/Catch2/single_include -I../include
+CXXFLAGS=-std=c++17 -Wall -Wextra -Wshadow -I../external/Catch2/single_include -I../include
 SOURCES=encoding.cpp main.cpp parsing.cpp
 BASE_NAMES=$(basename $(SOURCES))
 OBJECTS=$(BASE_NAMES:=.o)
