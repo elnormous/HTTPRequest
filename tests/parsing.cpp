@@ -400,9 +400,7 @@ TEST_CASE("Parse URL with non-alpha non-digit characters in scheme", "[parsing]"
 TEST_CASE("Parse URL with invalid character in scheme", "[parsing]")
 {
     const std::string str = "tt!://foo";
-    const http::Uri uri = http::parseUri(str.begin(), str.end());
-    REQUIRE(uri.scheme == "t.t+-");
-    REQUIRE(uri.host == "foo");
+    REQUIRE_THROWS_AS(http::parseUri(str.begin(), str.end()), http::RequestError);
 }
 
 TEST_CASE("Parse URL with fragment", "[parsing]")
