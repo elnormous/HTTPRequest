@@ -591,7 +591,10 @@ namespace http
 
             Uri result;
 
+            // RFC 3986, 3.2. Authority
             std::string authority;
+
+            // RFC 3986, 3.1. Scheme
             const auto schemeEndIterator = std::search(begin, end, schemeEnd.begin(), schemeEnd.end());
             if (schemeEndIterator != end)
             {
@@ -601,22 +604,23 @@ namespace http
             else
                 throw RequestError{"Invalid URI"};
 
-            // remove the fragment part
+            // RFC 3986, 3.5. Fragment
             const auto fragmentPosition = authority.find('#');
             if (fragmentPosition != std::string::npos)
             {
                 result.fragment = authority.substr(fragmentPosition + 1);
-                authority.resize(fragmentPosition);
+                authority.resize(fragmentPosition); // remove the fragment part
             }
 
-            // remove the query part
+            // RFC 3986, 3.4. Query
             const auto queryPosition = authority.find('?');
             if (queryPosition != std::string::npos)
             {
                 result.query = authority.substr(queryPosition + 1);
-                authority.resize(queryPosition);
+                authority.resize(queryPosition); // remove the query part
             }
 
+            // RFC 3986, 3.3. Path
             const auto pathPosition = authority.find('/');
             if (pathPosition != std::string::npos)
             {
@@ -626,6 +630,7 @@ namespace http
             else
                 result.path = "/";
 
+            // RFC 3986, 3.2.1. User Information
             std::string userinfo;
             const auto hostPosition = authority.find('@');
             if (hostPosition != std::string::npos)
@@ -646,9 +651,11 @@ namespace http
             else
                 result.host = authority;
 
+            // RFC 3986, 3.2.2. Host
             const auto portPosition = result.host.find(':');
             if (portPosition != std::string::npos)
             {
+                // RFC 3986, 3.2.3. Port
                 result.port = result.host.substr(portPosition + 1);
                 result.host.resize(portPosition);
             }
