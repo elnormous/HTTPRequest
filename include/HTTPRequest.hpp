@@ -587,22 +587,27 @@ namespace http
         template <class Iterator>
         Uri parseUri(const Iterator begin, const Iterator end)
         {
-            std::string schemeEnd = "://";
-
             Uri result;
 
-            // RFC 3986, 3.2. Authority
-            std::string authority;
-
             // RFC 3986, 3.1. Scheme
-            const auto schemeEndIterator = std::search(begin, end, schemeEnd.begin(), schemeEnd.end());
-            if (schemeEndIterator != end)
-            {
-                result.scheme = std::string(begin, schemeEndIterator);
-                authority = std::string(schemeEndIterator + 3, end);
-            }
-            else
-                throw RequestError{"Invalid URI"};
+            auto i = begin;
+            if (i == end || !isAlphaChar(*begin))
+                throw RequestError{"Invalid scheme"};
+
+            result.scheme.push_back(*i++);
+
+            for (; i != end && (isAlphaChar(*i) || isDigitChar(*i) || *i == '+' || *i == '-' || *i == '.'); ++i)
+                result.scheme.push_back(*i);
+
+            if (i == end || *i++ != ':')
+                throw RequestError{"Invalid scheme"};
+            if (i == end || *i++ != '/')
+                throw RequestError{"Invalid scheme"};
+            if (i == end || *i++ != '/')
+                throw RequestError{"Invalid scheme"};
+
+            // RFC 3986, 3.2. Authority
+            std::string authority = std::string(i, end);
 
             // RFC 3986, 3.5. Fragment
             const auto fragmentPosition = authority.find('#');
@@ -624,6 +629,7 @@ namespace http
             const auto pathPosition = authority.find('/');
             if (pathPosition != std::string::npos)
             {
+                // RFC 3986, 3.3. Path
                 result.path = authority.substr(pathPosition);
                 authority.resize(pathPosition);
             }

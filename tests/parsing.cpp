@@ -389,6 +389,22 @@ TEST_CASE("Parse URL", "[parsing]")
     REQUIRE(uri.fragment == "");
 }
 
+TEST_CASE("Parse URL with non-alpha non-digit characters in scheme", "[parsing]")
+{
+    const std::string str = "t.t+-://foo";
+    const http::Uri uri = http::parseUri(str.begin(), str.end());
+    REQUIRE(uri.scheme == "t.t+-");
+    REQUIRE(uri.host == "foo");
+}
+
+TEST_CASE("Parse URL with invalid character in scheme", "[parsing]")
+{
+    const std::string str = "tt!://foo";
+    const http::Uri uri = http::parseUri(str.begin(), str.end());
+    REQUIRE(uri.scheme == "t.t+-");
+    REQUIRE(uri.host == "foo");
+}
+
 TEST_CASE("Parse URL with fragment", "[parsing]")
 {
     const std::string str = "tt://www.test.com/path#fragment";
