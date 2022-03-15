@@ -991,10 +991,10 @@ namespace http
     class Request final
     {
     public:
-        explicit Request(const std::string& uri,
+        explicit Request(const std::string& uriString,
                          const InternetProtocol protocol = InternetProtocol::V4):
             internetProtocol{protocol},
-            uri{parseUri(uri.begin(), uri.end())}
+            uri{parseUri(uriString.begin(), uriString.end())}
         {
         }
 
