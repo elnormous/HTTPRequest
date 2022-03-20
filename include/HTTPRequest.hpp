@@ -491,9 +491,9 @@ namespace http
             Type endpoint = invalid;
         };
 
-        // RFC 7230, 3.2.3. Whitespace
+        // RFC 7230, 3.2.3. WhiteSpace
         template <typename C>
-        bool isWhitespaceChar(const C c) noexcept
+        bool isWhiteSpaceChar(const C c) noexcept
         {
             return c == 0x20 || c == 0x09; // space or tab
         };
@@ -553,11 +553,11 @@ namespace http
         }
 
         template <class Iterator>
-        Iterator skipWhitespaces(const Iterator begin, const Iterator end)
+        Iterator skipWhiteSpaces(const Iterator begin, const Iterator end)
         {
             auto i = begin;
             for (i = begin; i != end; ++i)
-                if (!isWhitespaceChar(*i))
+                if (!isWhiteSpaceChar(*i))
                     break;
 
             return i;
@@ -725,7 +725,7 @@ namespace http
             std::string result;
 
             auto i = begin;
-            for (; i != end && (isWhitespaceChar(*i) || isVisibleChar(*i) || isObsoleteTextChar(*i)); ++i)
+            for (; i != end && (isWhiteSpaceChar(*i) || isVisibleChar(*i) || isObsoleteTextChar(*i)); ++i)
                 result.push_back(static_cast<char>(*i));
 
             return {i, std::move(result)};
@@ -754,12 +754,12 @@ namespace http
             std::string result;
 
             auto i = begin;
-            for (; i != end && (isWhitespaceChar(*i) || isVisibleChar(*i) || isObsoleteTextChar(*i)); ++i)
+            for (; i != end && (isWhiteSpaceChar(*i) || isVisibleChar(*i) || isObsoleteTextChar(*i)); ++i)
                 result.push_back(static_cast<char>(*i));
 
-            // trim whitespaces
+            // trim white spaces
             result.erase(std::find_if(result.rbegin(), result.rend(), [](const char c) noexcept {
-                return !isWhitespaceChar(c);
+                return !isWhiteSpaceChar(c);
             }).base(), result.end());
 
             return {i, std::move(result)};
@@ -780,7 +780,7 @@ namespace http
                 result += fieldValueResult.second;
 
                 // Handle obsolete fold as per RFC 7230, 3.2.4. Field Parsing
-                // Obsolete folding is known as linear whitespace (LWS) in RFC 2616, 2.2 Basic Rules
+                // Obsolete folding is known as linear white space (LWS) in RFC 2616, 2.2 Basic Rules
                 auto obsoleteFoldIterator = i;
                 if (obsoleteFoldIterator == end || *obsoleteFoldIterator++ != '\r')
                     break;
@@ -788,7 +788,7 @@ namespace http
                 if (obsoleteFoldIterator == end || *obsoleteFoldIterator++ != '\n')
                     break;
 
-                if (obsoleteFoldIterator == end || !isWhitespaceChar(*obsoleteFoldIterator++))
+                if (obsoleteFoldIterator == end || !isWhiteSpaceChar(*obsoleteFoldIterator++))
                     break;
 
                 result.push_back(' ');
@@ -809,7 +809,7 @@ namespace http
             if (i == end || *i++ != ':')
                 throw ResponseError{"Invalid header"};
 
-            i = skipWhitespaces(i, end);
+            i = skipWhiteSpaces(i, end);
 
             auto valueResult = parseFieldContent(i, end);
             i = valueResult.first;
@@ -897,7 +897,7 @@ namespace http
                         throw RequestError{"Invalid header field name"};
 
                 for (const auto c : headerField.second)
-                    if (!isWhitespaceChar(c) && !isVisibleChar(c) && !isObsoleteTextChar(c))
+                    if (!isWhiteSpaceChar(c) && !isVisibleChar(c) && !isObsoleteTextChar(c))
                         throw RequestError{"Invalid header field value"};
 
                 result += headerField.first + ": " + headerField.second + "\r\n";

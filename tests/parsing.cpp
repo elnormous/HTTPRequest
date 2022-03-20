@@ -2,10 +2,10 @@
 #include "catch2/catch.hpp"
 #include "HTTPRequest.hpp"
 
-TEST_CASE("Whitespace", "[parsing]")
+TEST_CASE("White space", "[parsing]")
 {
     for (int c = 0; c < 256; ++c)
-        REQUIRE(http::isWhitespaceChar(static_cast<char>(c)) == (c == ' ' || c == '\t'));
+        REQUIRE(http::isWhiteSpaceChar(static_cast<char>(c)) == (c == ' ' || c == '\t'));
 }
 
 TEST_CASE("Digit", "[parsing]")
@@ -43,32 +43,32 @@ TEST_CASE("OBS text char", "[parsing]")
         REQUIRE(http::isObsoleteTextChar(static_cast<char>(c)) == (c >= 0x80 && c <= 0xFF));
 }
 
-TEST_CASE("Skip empty whitespaces", "[parsing]")
+TEST_CASE("Skip empty whites paces", "[parsing]")
 {
     const std::string str = "";
-    const auto i = http::skipWhitespaces(str.begin(), str.end());
+    const auto i = http::skipWhiteSpaces(str.begin(), str.end());
     REQUIRE(i == str.begin());
     REQUIRE(i == str.end());
 }
 
-TEST_CASE("Skip one whitespace", "[parsing]")
+TEST_CASE("Skip one white space", "[parsing]")
 {
     const std::string str = " ";
-    const auto i = http::skipWhitespaces(str.begin(), str.end());
+    const auto i = http::skipWhiteSpaces(str.begin(), str.end());
     REQUIRE(i == str.end());
 }
 
-TEST_CASE("Skip one whitespace at the beggining", "[parsing]")
+TEST_CASE("Skip one white space at the beggining", "[parsing]")
 {
     const std::string str = " a";
-    const auto i = http::skipWhitespaces(str.begin(), str.end());
+    const auto i = http::skipWhiteSpaces(str.begin(), str.end());
     REQUIRE(i == str.begin() + 1);
 }
 
-TEST_CASE("Don't skip whitespaces", "[parsing]")
+TEST_CASE("Don't skip white spaces", "[parsing]")
 {
     const std::string str = "a ";
-    const auto i = http::skipWhitespaces(str.begin(), str.end());
+    const auto i = http::skipWhiteSpaces(str.begin(), str.end());
     REQUIRE(i == str.begin());
 }
 
@@ -176,7 +176,7 @@ TEST_CASE("Parse field value with a space", "[parsing]")
     REQUIRE(result.second == "value s");
 }
 
-TEST_CASE("Parse field value with trailing whitespaces", "[parsing]")
+TEST_CASE("Parse field value with trailing white spaces", "[parsing]")
 {
     const std::string str = "value \t";
     const auto result = http::parseFieldValue(str.begin(), str.end());
@@ -200,7 +200,7 @@ TEST_CASE("Parse field content with obsolete folding", "[parsing]")
     REQUIRE(result.second == "content t");
 }
 
-TEST_CASE("Parse field content with obsolete folding and whitespace", "[parsing]")
+TEST_CASE("Parse field content with obsolete folding and white space", "[parsing]")
 {
     const std::string str = "content\r\n  t";
     const auto result = http::parseFieldContent(str.begin(), str.end());
@@ -261,7 +261,7 @@ TEST_CASE("Parse header field with no value", "[parsing]")
     REQUIRE(result.second.second == "");
 }
 
-TEST_CASE("Parse header field with trailing whitespace", "[parsing]")
+TEST_CASE("Parse header field with trailing white space", "[parsing]")
 {
     const std::string str = "field:value \r\n";
     auto result = http::parseHeaderField(str.begin(), str.end());
