@@ -1,7 +1,8 @@
 
 add_executable(HTTPRequest_tests
   main.cpp
-  tests.cpp
+  encoding.cpp
+  parsing.cpp
 )
 
 target_link_libraries(HTTPRequest_tests
