@@ -1,4 +1,3 @@
-
 add_executable(HTTPRequest_tests
   main.cpp
   encoding.cpp
