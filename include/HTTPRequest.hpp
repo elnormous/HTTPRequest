@@ -493,21 +493,21 @@ namespace http
 
         // RFC 7230, 3.2.3. WhiteSpace
         template <typename C>
-        bool isWhiteSpaceChar(const C c) noexcept
+        constexpr bool isWhiteSpaceChar(const C c) noexcept
         {
             return c == 0x20 || c == 0x09; // space or tab
         };
 
         // RFC 5234, Appendix B.1. Core Rules
         template <typename C>
-        bool isDigitChar(const C c) noexcept
+        constexpr bool isDigitChar(const C c) noexcept
         {
             return c >= 0x30 && c <= 0x39; // 0 - 9
         }
 
         // RFC 5234, Appendix B.1. Core Rules
         template <typename C>
-        bool isAlphaChar(const C c) noexcept
+        constexpr bool isAlphaChar(const C c) noexcept
         {
             return
                 (c >= 0x61 && c <= 0x7A) || // a - z
@@ -516,7 +516,7 @@ namespace http
 
         // RFC 7230, 3.2.6. Field Value Components
         template <typename C>
-        bool isTokenChar(const C c) noexcept
+        constexpr bool isTokenChar(const C c) noexcept
         {
             return c == 0x21 || // !
                 c == 0x23 || // #
@@ -539,14 +539,14 @@ namespace http
 
         // RFC 5234, Appendix B.1. Core Rules
         template <typename C>
-        bool isVisibleChar(const C c) noexcept
+        constexpr bool isVisibleChar(const C c) noexcept
         {
             return c >= 0x21 && c <= 0x7E;
         }
 
         // RFC 7230, Appendix B. Collected ABNF
         template <typename C>
-        bool isObsoleteTextChar(const C c) noexcept
+        constexpr bool isObsoleteTextChar(const C c) noexcept
         {
             return static_cast<unsigned char>(c) >= 0x80 &&
                 static_cast<unsigned char>(c) <= 0xFF;
