@@ -46,7 +46,7 @@ try
 {
     http::Request request{"http://test.com/test"};
     const std::string body = "{\"foo\": 1, \"bar\": \"baz\"}";
-    const auto response = request.send("POST", parameters, {
+    const auto response = request.send("POST", body, {
         {"Content-Type", "application/json"}
     });
     std::cout << std::string{response.body.begin(), response.body.end()} << '\n'; // print the result
