@@ -27,3 +27,6 @@ tests/tests.VC.db
 tests/tests.VC.VC.opendb
 tests/tests
 tests/tests.exe
+*.gcov
+*.gcda
+*.gcno
