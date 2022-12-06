@@ -14,7 +14,7 @@ int main(int argc, const char* argv[])
         std::string method = "GET";
         std::string arguments;
         std::string output;
-        auto protocol = http::InternetProtocol::V4;
+        auto protocol = http::InternetProtocol::v4;
 
         for (int i = 1; i < argc; ++i)
         {
@@ -35,9 +35,9 @@ int main(int argc, const char* argv[])
                 if (++i < argc)
                 {
                     if (std::string{argv[i]} == "ipv4")
-                        protocol = http::InternetProtocol::V4;
+                        protocol = http::InternetProtocol::v4;
                     else if (std::string{argv[i]} == "ipv6")
-                        protocol = http::InternetProtocol::V6;
+                        protocol = http::InternetProtocol::v6;
                     else
                         throw std::runtime_error{"Invalid protocol"};
                 }

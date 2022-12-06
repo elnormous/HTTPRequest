@@ -66,8 +66,8 @@ namespace http
 
     enum class InternetProtocol: std::uint8_t
     {
-        V4,
-        V6
+        v4,
+        v6
     };
 
     struct Uri final
@@ -233,8 +233,8 @@ namespace http
 
         constexpr int getAddressFamily(const InternetProtocol internetProtocol)
         {
-            return (internetProtocol == InternetProtocol::V4) ? AF_INET :
-                (internetProtocol == InternetProtocol::V6) ? AF_INET6 :
+            return (internetProtocol == InternetProtocol::v4) ? AF_INET :
+                (internetProtocol == InternetProtocol::v6) ? AF_INET6 :
                 throw RequestError{"Unsupported protocol"};
         }
 
@@ -992,7 +992,7 @@ namespace http
     {
     public:
         explicit Request(const std::string& uriString,
-                         const InternetProtocol protocol = InternetProtocol::V4):
+                         const InternetProtocol protocol = InternetProtocol::v4):
             internetProtocol{protocol},
             uri{parseUri(uriString.begin(), uriString.end())}
         {
