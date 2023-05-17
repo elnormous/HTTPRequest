@@ -178,58 +178,166 @@ namespace http
     inline namespace detail
     {
 #if defined(_WIN32) || defined(__CYGWIN__)
-        class WinSock final
+        namespace winsock
         {
-        public:
-            WinSock()
+            class ErrorCategory final: public std::error_category
             {
-                WSADATA wsaData;
-                const auto error = WSAStartup(MAKEWORD(2, 2), &wsaData);
-                if (error != 0)
-                    throw std::system_error{error, std::system_category(), "WSAStartup failed"};
-
-                if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2)
+            public:
+                const char* name() const noexcept override
                 {
-                    WSACleanup();
-                    throw std::runtime_error{"Invalid WinSock version"};
+                    return "Windows Sockets API";
                 }
 
-                started = true;
-            }
+                std::string message(const int condition) const override
+                {
+                    switch (condition)
+                    {
+                        case WSA_INVALID_HANDLE: return "Specified event object handle is invalid";
+                        case WSA_NOT_ENOUGH_MEMORY: return "Insufficient memory available";
+                        case WSA_INVALID_PARAMETER: return "One or more parameters are invalid";
+                        case WSA_OPERATION_ABORTED: return "Overlapped operation aborted";
+                        case WSA_IO_INCOMPLETE: return "Overlapped I/O event object not in signaled state";
+                        case WSA_IO_PENDING: return "Overlapped operations will complete later";
+                        case WSAEINTR: return "Interrupted function call";
+                        case WSAEBADF: return "File handle is not valid";
+                        case WSAEACCES: return "Permission denied";
+                        case WSAEFAULT: return "Bad address";
+                        case WSAEINVAL: return "Invalid argument";
+                        case WSAEMFILE: return "Too many open files";
+                        case WSAEWOULDBLOCK: return "Resource temporarily unavailable";
+                        case WSAEINPROGRESS: return "Operation now in progress";
+                        case WSAEALREADY: return "Operation already in progress";
+                        case WSAENOTSOCK: return "Socket operation on nonsocket";
+                        case WSAEDESTADDRREQ: return "Destination address required";
+                        case WSAEMSGSIZE: return "Message too long";
+                        case WSAEPROTOTYPE: return "Protocol wrong type for socket";
+                        case WSAENOPROTOOPT: return "Bad protocol option";
+                        case WSAEPROTONOSUPPORT: return "Protocol not supported";
+                        case WSAESOCKTNOSUPPORT: return "Socket type not supported";
+                        case WSAEOPNOTSUPP: return "Operation not supported";
+                        case WSAEPFNOSUPPORT: return "Protocol family not supported";
+                        case WSAEAFNOSUPPORT: return "Address family not supported by protocol family";
+                        case WSAEADDRINUSE: return "Address already in use";
+                        case WSAEADDRNOTAVAIL: return "Cannot assign requested address";
+                        case WSAENETDOWN: return "Network is down";
+                        case WSAENETUNREACH: return "Network is unreachable";
+                        case WSAENETRESET: return "Network dropped connection on reset";
+                        case WSAECONNABORTED: return "Software caused connection abort";
+                        case WSAECONNRESET: return "Connection reset by peer";
+                        case WSAENOBUFS: return "No buffer space available";
+                        case WSAEISCONN: return "Socket is already connected";
+                        case WSAENOTCONN: return "Socket is not connected";
+                        case WSAESHUTDOWN: return "Cannot send after socket shutdown";
+                        case WSAETOOMANYREFS: return "Too many references";
+                        case WSAETIMEDOUT: return "Connection timed out";
+                        case WSAECONNREFUSED: return "Connection refused";
+                        case WSAELOOP: return "Cannot translate name";
+                        case WSAENAMETOOLONG: return "Name too long";
+                        case WSAEHOSTDOWN: return "Host is down";
+                        case WSAEHOSTUNREACH: return "No route to host";
+                        case WSAENOTEMPTY: return "Directory not empty";
+                        case WSAEPROCLIM: return "Too many processes";
+                        case WSAEUSERS: return "User quota exceeded";
+                        case WSAEDQUOT: return "Disk quota exceeded";
+                        case WSAESTALE: return "Stale file handle reference";
+                        case WSAEREMOTE: return "Item is remote";
+                        case WSASYSNOTREADY: return "Network subsystem is unavailable";
+                        case WSAVERNOTSUPPORTED: return "Winsock.dll version out of range";
+                        case WSANOTINITIALISED: return "Successful WSAStartup not yet performed";
+                        case WSAEDISCON: return "Graceful shutdown in progress";
+                        case WSAENOMORE: return "No more results";
+                        case WSAECANCELLED: return "Call has been canceled";
+                        case WSAEINVALIDPROCTABLE: return "Procedure call table is invalid";
+                        case WSAEINVALIDPROVIDER: return "Service provider is invalid";
+                        case WSAEPROVIDERFAILEDINIT: return "Service provider failed to initialize";
+                        case WSASYSCALLFAILURE: return "System call failure";
+                        case WSASERVICE_NOT_FOUND: return "Service not found";
+                        case WSATYPE_NOT_FOUND: return "Class type not found";
+                        case WSA_E_NO_MORE: return "No more results";
+                        case WSA_E_CANCELLED: return "Call was canceled";
+                        case WSAEREFUSED: return "Database query was refused";
+                        case WSAHOST_NOT_FOUND: return "Host not found";
+                        case WSATRY_AGAIN: return "Nonauthoritative host not found";
+                        case WSANO_RECOVERY: return "This is a nonrecoverable error";
+                        case WSANO_DATA: return "Valid name, no data record of requested type";
+                        case WSA_QOS_RECEIVERS: return "QoS receivers";
+                        case WSA_QOS_SENDERS: return "QoS senders";
+                        case WSA_QOS_NO_SENDERS: return "No QoS senders";
+                        case WSA_QOS_NO_RECEIVERS: return "QoS no receivers";
+                        case WSA_QOS_REQUEST_CONFIRMED: return "QoS request confirmed";
+                        case WSA_QOS_ADMISSION_FAILURE: return "QoS admission error";
+                        case WSA_QOS_POLICY_FAILURE: return "QoS policy failure";
+                        case WSA_QOS_BAD_STYLE: return "QoS bad style";
+                        case WSA_QOS_BAD_OBJECT: return "QoS bad object";
+                        case WSA_QOS_TRAFFIC_CTRL_ERROR: return "QoS traffic control error";
+                        case WSA_QOS_GENERIC_ERROR: return "QoS generic error";
+                        case WSA_QOS_ESERVICETYPE: return "QoS service type error";
+                        case WSA_QOS_EFLOWSPEC: return "QoS flowspec error";
+                        case WSA_QOS_EPROVSPECBUF: return "Invalid QoS provider buffer";
+                        case WSA_QOS_EFILTERSTYLE: return "Invalid QoS filter style";
+                        case WSA_QOS_EFILTERTYPE: return "Invalid QoS filter type";
+                        case WSA_QOS_EFILTERCOUNT: return "Incorrect QoS filter count";
+                        case WSA_QOS_EOBJLENGTH: return "Invalid QoS object length";
+                        case WSA_QOS_EFLOWCOUNT: return "Incorrect QoS flow count";
+                        case WSA_QOS_EUNKOWNPSOBJ: return "Unrecognized QoS object";
+                        case WSA_QOS_EPOLICYOBJ: return "Invalid QoS policy object";
+                        case WSA_QOS_EFLOWDESC: return "Invalid QoS flow descriptor";
+                        case WSA_QOS_EPSFLOWSPEC: return "Invalid QoS provider-specific flowspec";
+                        case WSA_QOS_EPSFILTERSPEC: return "Invalid QoS provider-specific filterspec";
+                        case WSA_QOS_ESDMODEOBJ: return "Invalid QoS shape discard mode object";
+                        case WSA_QOS_ESHAPERATEOBJ: return "Invalid QoS shaping rate object";
+                        case WSA_QOS_RESERVED_PETYPE: return "Reserved policy QoS element type";
+                        default: return "Unknown error (" + std::to_string(condition) + ")";
+                    }
+                }
+            };
 
-            ~WinSock()
+            inline const ErrorCategory errorCategory;
+
+            class Api final
             {
-                if (started) WSACleanup();
-            }
+            public:
+                Api()
+                {
+                    WSADATA wsaData;
+                    const auto error = WSAStartup(MAKEWORD(2, 2), &wsaData);
+                    if (error != 0)
+                        throw std::system_error{error, errorCategory, "WSAStartup failed"};
 
-            WinSock(WinSock&& other) noexcept:
-                started{other.started}
-            {
-                other.started = false;
-            }
+                    if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2)
+                    {
+                        WSACleanup();
+                        throw std::runtime_error{"Invalid WinSock version"};
+                    }
 
-            WinSock& operator=(WinSock&& other) noexcept
-            {
-                if (&other == this) return *this;
-                if (started) WSACleanup();
-                started = other.started;
-                other.started = false;
-                return *this;
-            }
+                    started = true;
+                }
 
-        private:
-            bool started = false;
-        };
-#endif // defined(_WIN32) || defined(__CYGWIN__)
+                ~Api()
+                {
+                    if (started) WSACleanup();
+                }
 
-        inline int getLastError() noexcept
-        {
-#if defined(_WIN32) || defined(__CYGWIN__)
-            return WSAGetLastError();
-#else
-            return errno;
-#endif // defined(_WIN32) || defined(__CYGWIN__)
+                Api(Api&& other) noexcept:
+                    started{other.started}
+                {
+                    other.started = false;
+                }
+
+                Api& operator=(Api&& other) noexcept
+                {
+                    if (&other == this) return *this;
+                    if (started) WSACleanup();
+                    started = other.started;
+                    other.started = false;
+                    return *this;
+                }
+
+            private:
+                bool started = false;
+            };
         }
+#endif // defined(_WIN32) || defined(__CYGWIN__)
 
         constexpr int getAddressFamily(const InternetProtocol internetProtocol)
         {
@@ -253,14 +361,18 @@ namespace http
                 endpoint{socket(getAddressFamily(internetProtocol), SOCK_STREAM, IPPROTO_TCP)}
             {
                 if (endpoint == invalid)
-                    throw std::system_error{getLastError(), std::system_category(), "Failed to create socket"};
+#if defined(_WIN32) || defined(__CYGWIN__)
+                    throw std::system_error{WSAGetLastError(), winsock::errorCategory, "Failed to create socket"};
+#else
+                    throw std::system_error{errno, std::system_category(), "Failed to create socket"};
+#endif // defined(_WIN32) || defined(__CYGWIN__)
 
 #if defined(_WIN32) || defined(__CYGWIN__)
                 ULONG mode = 1;
                 if (ioctlsocket(endpoint, FIONBIO, &mode) != 0)
                 {
                     close();
-                    throw std::system_error{WSAGetLastError(), std::system_category(), "Failed to get socket flags"};
+                    throw std::system_error{WSAGetLastError(), winsock::errorCategory, "Failed to get socket flags"};
                 }
 #else
                 const auto flags = fcntl(endpoint, F_GETFL);
@@ -323,16 +435,16 @@ namespace http
                         char socketErrorPointer[sizeof(int)];
                         socklen_t optionLength = sizeof(socketErrorPointer);
                         if (getsockopt(endpoint, SOL_SOCKET, SO_ERROR, socketErrorPointer, &optionLength) == -1)
-                            throw std::system_error{WSAGetLastError(), std::system_category(), "Failed to get socket option"};
+                            throw std::system_error{WSAGetLastError(), winsock::errorCategory, "Failed to get socket option"};
 
                         int socketError;
                         std::memcpy(&socketError, socketErrorPointer, sizeof(socketErrorPointer));
 
                         if (socketError != 0)
-                            throw std::system_error{socketError, std::system_category(), "Failed to connect"};
+                            throw std::system_error{socketError, winsock::errorCategory, "Failed to connect"};
                     }
                     else
-                        throw std::system_error{WSAGetLastError(), std::system_category(), "Failed to connect"};
+                        throw std::system_error{WSAGetLastError(), winsock::errorCategory, "Failed to connect"};
                 }
 #else
                 auto result = ::connect(endpoint, address, addressSize);
@@ -371,7 +483,7 @@ namespace http
                                     static_cast<int>(length), 0);
 
                 if (result == -1)
-                    throw std::system_error{WSAGetLastError(), std::system_category(), "Failed to send data"};
+                    throw std::system_error{WSAGetLastError(), winsock::errorCategory, "Failed to send data"};
 #else
                 auto result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
                                      length, noSignal);
@@ -398,7 +510,7 @@ namespace http
                                     static_cast<int>(length), 0);
 
                 if (result == -1)
-                    throw std::system_error{WSAGetLastError(), std::system_category(), "Failed to read data"};
+                    throw std::system_error{WSAGetLastError(), winsock::errorCategory, "Failed to read data"};
 #else
                 auto result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
                                      length, noSignal);
@@ -445,7 +557,7 @@ namespace http
                                      (timeout >= 0) ? &selectTimeout : nullptr);
 
                 if (count == -1)
-                    throw std::system_error{WSAGetLastError(), std::system_category(), "Failed to select socket"};
+                    throw std::system_error{WSAGetLastError(), winsock::errorCategory, "Failed to select socket"};
                 else if (count == 0)
                     throw ResponseError{"Request timed out"};
 #else
@@ -1027,7 +1139,11 @@ namespace http
 
             addrinfo* info;
             if (getaddrinfo(uri.host.c_str(), port, &hints, &info) != 0)
-                throw std::system_error{getLastError(), std::system_category(), "Failed to get address info of " + uri.host};
+#if defined(_WIN32) || defined(__CYGWIN__)
+                throw std::system_error{WSAGetLastError(), winsock::errorCategory, "Failed to get address info of " + uri.host};
+#else
+                throw std::system_error{errno, std::system_category(), "Failed to get address info of " + uri.host};
+#endif // defined(_WIN32) || defined(__CYGWIN__)
 
             const std::unique_ptr<addrinfo, decltype(&freeaddrinfo)> addressInfo{info, freeaddrinfo};
 
@@ -1197,7 +1313,7 @@ namespace http
 
     private:
 #if defined(_WIN32) || defined(__CYGWIN__)
-        WinSock winSock;
+        winsock::Api winSock;
 #endif // defined(_WIN32) || defined(__CYGWIN__)
         InternetProtocol internetProtocol;
         Uri uri;
