@@ -605,6 +605,19 @@ namespace http
             Type endpoint = invalid;
         };
 
+        inline char toLower(const char c) noexcept
+        {
+            return (c >= 'A' && c <= 'Z') ? c - ('A' - 'a') : c;
+        }
+
+        template <class T>
+        T toLower(const T& s)
+        {
+            T result = s;
+            for (auto& c : result) c = toLower(c);
+            return result;
+        }
+
         // RFC 7230, 3.2.3. WhiteSpace
         template <typename C>
         constexpr bool isWhiteSpaceChar(const C c) noexcept
@@ -1099,19 +1112,6 @@ namespace http
             result.insert(result.end(), body.begin(), body.end());
 
             return result;
-        }
-
-        template <class T>
-        T toLower(const T& s)
-        {
-            T result = s;
-            for (auto& c : result) c = toLower(c);
-            return result;
-        }
-
-        inline char toLower(const char c) noexcept
-        {
-            return (c >= 'A' && c <= 'Z') ? c - ('A' - 'a') : c;
         }
     }
 
