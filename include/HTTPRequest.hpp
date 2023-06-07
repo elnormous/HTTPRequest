@@ -918,7 +918,7 @@ namespace http
         {
             auto tokenResult = parseToken(begin, end);
             auto i = tokenResult.first;
-            auto fieldName = toLower(tokenResult.second);
+            auto fieldName = detail::toLower(tokenResult.second);
 
             if (i == end || *i++ != ':')
                 throw ResponseError{"Invalid header"};
