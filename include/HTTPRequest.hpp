@@ -918,7 +918,7 @@ namespace http
         {
             auto tokenResult = parseToken(begin, end);
             auto i = tokenResult.first;
-            auto fieldName = detail::toLower(tokenResult.second);
+            auto fieldName = toLower(tokenResult.second);
 
             if (i == end || *i++ != ':')
                 throw ResponseError{"Invalid header"};
@@ -1101,18 +1101,17 @@ namespace http
             return result;
         }
 
-
-        inline char toLower(const char c) noexcept
-        {
-            return (c >= 'A' && c <= 'Z') ? c - ('A' - 'a') : c;
-        }
-
         template <class T>
-        inline T toLower(const T& s)
+        T toLower(const T& s)
         {
             T result = s;
             for (auto& c : result) c = toLower(c);
             return result;
+        }
+
+        inline char toLower(const char c) noexcept
+        {
+            return (c >= 'A' && c <= 'Z') ? c - ('A' - 'a') : c;
         }
     }
 
