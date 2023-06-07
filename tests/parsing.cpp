@@ -2,6 +2,24 @@
 #include "catch2/catch.hpp"
 #include "HTTPRequest.hpp"
 
+TEST_CASE("To lower", "[parsing]")
+{
+    REQUIRE(http::toLower('x') == 'x');
+    REQUIRE(http::toLower('Y') == 'y');
+
+    std::string empty = "";
+    REQUIRE(http::toLower(empty) == "");
+
+    std::string lower = "abc";
+    REQUIRE(http::toLower(lower) == "abc");
+
+    std::string upper = "DEF";
+    REQUIRE(http::toLower(upper) == "def");
+
+    std::string mixed = "GhI";
+    REQUIRE(http::toLower(mixed) == "ghi");
+}
+
 TEST_CASE("White space", "[parsing]")
 {
     for (int c = 0; c < 256; ++c)
@@ -230,7 +248,7 @@ TEST_CASE("Parse header field upper case", "[parsing]")
     const std::string str = "Field:Value\r\n";
     const auto result = http::parseHeaderField(str.begin(), str.end());
     REQUIRE(result.first == str.end());
-    REQUIRE(result.second.first == "Field");
+    REQUIRE(result.second.first == "field");
     REQUIRE(result.second.second == "Value");
 }
 

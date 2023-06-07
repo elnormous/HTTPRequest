@@ -56,12 +56,14 @@ namespace http
     {
     public:
         using logic_error::logic_error;
+        using logic_error::operator=;
     };
 
     class ResponseError final: public std::runtime_error
     {
     public:
         using runtime_error::runtime_error;
+        using runtime_error::operator=;
     };
 
     enum class InternetProtocol: std::uint8_t
@@ -916,7 +918,7 @@ namespace http
         {
             auto tokenResult = parseToken(begin, end);
             auto i = tokenResult.first;
-            auto fieldName = std::move(tokenResult.second);
+            auto fieldName = toLower(tokenResult.second);
 
             if (i == end || *i++ != ':')
                 throw ResponseError{"Invalid header"};
@@ -1098,6 +1100,20 @@ namespace http
 
             return result;
         }
+
+
+        inline char toLower(const char c) noexcept
+        {
+            return (c >= 'A' && c <= 'Z') ? c - ('A' - 'a') : c;
+        }
+
+        template <class T>
+        inline T toLower(const T& s)
+        {
+            T result = s;
+            for (auto& c : result) c = toLower(c);
+            return result;
+        }
     }
 
     class Request final
@@ -1217,11 +1233,6 @@ namespace http
                         i = headerFieldResult.first;
 
                         auto fieldName = std::move(headerFieldResult.second.first);
-                        const auto toLower = [](const char c) noexcept {
-                            return (c >= 'A' && c <= 'Z') ? c - ('A' - 'a') : c;
-                        };
-                        std::transform(fieldName.begin(), fieldName.end(), fieldName.begin(), toLower);
-
                         auto fieldValue = std::move(headerFieldResult.second.second);
 
                         if (fieldName == "transfer-encoding")
