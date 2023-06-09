@@ -84,7 +84,7 @@ namespace http
         std::string fragment;
     };
 
-    struct HttpVersion final
+    struct Version final
     {
         uint16_t major;
         uint16_t minor;
@@ -162,7 +162,7 @@ namespace http
             NetworkAuthenticationRequired = 511
         };
 
-        HttpVersion httpVersion;
+        Version version;
         std::uint16_t code;
         std::string reason;
     };
@@ -798,7 +798,7 @@ namespace http
 
         // RFC 7230, 2.6. Protocol Versioning
         template <class Iterator>
-        std::pair<Iterator, HttpVersion> parseHttpVersion(const Iterator begin, const Iterator end)
+        std::pair<Iterator, Version> parseVersion(const Iterator begin, const Iterator end)
         {
             auto i = begin;
 
@@ -826,7 +826,7 @@ namespace http
 
             const auto minorVersion = digitToUint<std::uint16_t>(*i++);
 
-            return {i, HttpVersion{majorVersion, minorVersion}};
+            return {i, Version{majorVersion, minorVersion}};
         }
 
         // RFC 7230, 3.1.2. Status Line
@@ -955,8 +955,8 @@ namespace http
         template <class Iterator>
         std::pair<Iterator, Status> parseStatusLine(const Iterator begin, const Iterator end)
         {
-            const auto httpVersionResult = parseHttpVersion(begin, end);
-            auto i = httpVersionResult.first;
+            const auto versionResult = parseVersion(begin, end);
+            auto i = versionResult.first;
 
             if (i == end || *i++ != ' ')
                 throw ResponseError{"Invalid status line"};
@@ -977,7 +977,7 @@ namespace http
                 throw ResponseError{"Invalid status line"};
 
             return {i, Status{
-                httpVersionResult.second,
+                versionResult.second,
                 statusCodeResult.second,
                 std::move(reasonPhraseResult.second)
             }};

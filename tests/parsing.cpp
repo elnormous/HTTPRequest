@@ -101,7 +101,7 @@ TEST_CASE("Parse token", "[parsing]")
 TEST_CASE("Parse HTTP version", "[parsing]")
 {
     const std::string str = "HTTP/1.1";
-    const auto result = http::parseHttpVersion(str.begin(), str.end());
+    const auto result = http::parseVersion(str.begin(), str.end());
     REQUIRE(result.first == str.end());
     REQUIRE(result.second.major == 1U);
     REQUIRE(result.second.minor == 1U);
@@ -110,19 +110,19 @@ TEST_CASE("Parse HTTP version", "[parsing]")
 TEST_CASE("Invalid HTTP in version", "[parsing]")
 {
     const std::string str = "TTP/1.1";
-    REQUIRE_THROWS_AS(http::parseHttpVersion(str.begin(), str.end()), http::ResponseError);
+    REQUIRE_THROWS_AS(http::parseVersion(str.begin(), str.end()), http::ResponseError);
 }
 
 TEST_CASE("No slash in HTTP version", "[parsing]")
 {
     const std::string str = "HTTP1.1";
-    REQUIRE_THROWS_AS(http::parseHttpVersion(str.begin(), str.end()), http::ResponseError);
+    REQUIRE_THROWS_AS(http::parseVersion(str.begin(), str.end()), http::ResponseError);
 }
 
 TEST_CASE("No minor version in HTTP version", "[parsing]")
 {
     const std::string str = "HTTP/1.";
-    REQUIRE_THROWS_AS(http::parseHttpVersion(str.begin(), str.end()), http::ResponseError);
+    REQUIRE_THROWS_AS(http::parseVersion(str.begin(), str.end()), http::ResponseError);
 }
 
 TEST_CASE("Parse status code", "[parsing]")
@@ -172,8 +172,8 @@ TEST_CASE("Parse status", "[parsing]")
     const std::string str = "HTTP/1.1 123 test\r\n";
     const auto result = http::parseStatusLine(str.begin(), str.end());
     REQUIRE(result.first == str.end());
-    REQUIRE(result.second.httpVersion.major == 1);
-    REQUIRE(result.second.httpVersion.minor == 1);
+    REQUIRE(result.second.version.major == 1);
+    REQUIRE(result.second.version.minor == 1);
     REQUIRE(result.second.code == 123);
     REQUIRE(result.second.reason == "test");
 }
