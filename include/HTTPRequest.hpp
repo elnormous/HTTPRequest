@@ -371,7 +371,7 @@ namespace http
 
 #if defined(_WIN32) || defined(__CYGWIN__)
                 ULONG mode = 1;
-                if (ioctlsocket(endpoint, FIONBIO, &mode) != 0)
+                if (ioctlsocket(endpoint, FIONBIO, &mode) == SOCKET_ERROR)
                 {
                     close();
                     throw std::system_error{WSAGetLastError(), winsock::errorCategory, "Failed to get socket flags"};
@@ -436,7 +436,7 @@ namespace http
 
                         char socketErrorPointer[sizeof(int)];
                         socklen_t optionLength = sizeof(socketErrorPointer);
-                        if (getsockopt(endpoint, SOL_SOCKET, SO_ERROR, socketErrorPointer, &optionLength) == -1)
+                        if (getsockopt(endpoint, SOL_SOCKET, SO_ERROR, socketErrorPointer, &optionLength) == SOCKET_ERROR)
                             throw std::system_error{WSAGetLastError(), winsock::errorCategory, "Failed to get socket option"};
 
                         int socketError;
@@ -480,11 +480,11 @@ namespace http
                 auto result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
                                      static_cast<int>(length), 0);
 
-                while (result == -1 && WSAGetLastError() == WSAEINTR)
+                while (result == SOCKET_ERROR && WSAGetLastError() == WSAEINTR)
                     result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
                                     static_cast<int>(length), 0);
 
-                if (result == -1)
+                if (result == SOCKET_ERROR)
                     throw std::system_error{WSAGetLastError(), winsock::errorCategory, "Failed to send data"};
 #else
                 auto result = ::send(endpoint, reinterpret_cast<const char*>(buffer),
@@ -507,11 +507,11 @@ namespace http
                 auto result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
                                      static_cast<int>(length), 0);
 
-                while (result == -1 && WSAGetLastError() == WSAEINTR)
+                while (result == SOCKET_ERROR && WSAGetLastError() == WSAEINTR)
                     result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
                                     static_cast<int>(length), 0);
 
-                if (result == -1)
+                if (result == SOCKET_ERROR)
                     throw std::system_error{WSAGetLastError(), winsock::errorCategory, "Failed to read data"};
 #else
                 auto result = ::recv(endpoint, reinterpret_cast<char*>(buffer),
@@ -551,14 +551,14 @@ namespace http
                                       nullptr,
                                       (timeout >= 0) ? &selectTimeout : nullptr);
 
-                while (count == -1 && WSAGetLastError() == WSAEINTR)
+                while (count == SOCKET_ERROR && WSAGetLastError() == WSAEINTR)
                     count = ::select(0,
                                      (type == SelectType::read) ? &descriptorSet : nullptr,
                                      (type == SelectType::write) ? &descriptorSet : nullptr,
                                      nullptr,
                                      (timeout >= 0) ? &selectTimeout : nullptr);
 
-                if (count == -1)
+                if (count == SOCKET_ERROR)
                     throw std::system_error{WSAGetLastError(), winsock::errorCategory, "Failed to select socket"};
                 else if (count == 0)
                     throw ResponseError{"Request timed out"};
