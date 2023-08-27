@@ -19,6 +19,7 @@
 #include <string>
 #include <system_error>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -321,17 +322,15 @@ namespace http
                 }
 
                 Api(Api&& other) noexcept:
-                    started{other.started}
+                    started{std::exchange(other.started, false)}
                 {
-                    other.started = false;
                 }
 
                 Api& operator=(Api&& other) noexcept
                 {
                     if (&other == this) return *this;
                     if (started) WSACleanup();
-                    started = other.started;
-                    other.started = false;
+                    started = std::exchange(other.started, false);
                     return *this;
                 }
 
@@ -407,17 +406,15 @@ namespace http
             }
 
             Socket(Socket&& other) noexcept:
-                endpoint{other.endpoint}
+                endpoint{std::exchange(other.endpoint, invalid)}
             {
-                other.endpoint = invalid;
             }
 
             Socket& operator=(Socket&& other) noexcept
             {
                 if (&other == this) return *this;
                 if (endpoint != invalid) close();
-                endpoint = other.endpoint;
-                other.endpoint = invalid;
+                endpoint = std::exchange(other.endpoint, invalid);
                 return *this;
             }
 
