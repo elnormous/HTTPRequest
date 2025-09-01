@@ -781,13 +781,31 @@ namespace http
             else
                 result.host = authority;
 
-            // RFC 3986, 3.2.2. Host
-            const auto portPosition = result.host.find(':');
-            if (portPosition != std::string::npos)
+            // RFC 3986, 3.2.2. Host (support IPv6 literals in brackets)
+            if (!result.host.empty() && result.host.front() == '[')
             {
-                // RFC 3986, 3.2.3. Port
-                result.port = result.host.substr(portPosition + 1);
-                result.host.resize(portPosition);
+                const auto closingBracket = result.host.find(']');
+                if (closingBracket == std::string::npos)
+                    throw RequestError{"Invalid host"};
+
+                const bool hasPort = (closingBracket + 1 < result.host.size()) && result.host[closingBracket + 1] == ':';
+                if (hasPort)
+                {
+                    result.port = result.host.substr(closingBracket + 2);
+                }
+
+                // Extract host without brackets
+                result.host = result.host.substr(1, closingBracket - 1);
+            }
+            else
+            {
+                const auto portPosition = result.host.find(':');
+                if (portPosition != std::string::npos)
+                {
+                    // RFC 3986, 3.2.3. Port
+                    result.port = result.host.substr(portPosition + 1);
+                    result.host.resize(portPosition);
+                }
             }
 
             return result;
@@ -1233,11 +1251,37 @@ namespace http
 
                         if (fieldName == "transfer-encoding")
                         {
-                            // RFC 7230, 3.3.1. Transfer-Encoding
-                            if (fieldValue == "chunked")
+                            // RFC 7230, 3.3.1. Transfer-Encoding (case-insensitive, comma-separated list)
+                            bool foundChunked = false;
+                            std::string valueLower = toLower(fieldValue);
+
+                            std::size_t start = 0;
+                            while (start <= valueLower.size())
+                            {
+                                const auto comma = valueLower.find(',', start);
+                                const auto endPos = (comma == std::string::npos) ? valueLower.size() : comma;
+
+                                // trim spaces around token
+                                std::size_t tokenBegin = start;
+                                while (tokenBegin < endPos && isWhiteSpaceChar(valueLower[tokenBegin])) ++tokenBegin;
+                                std::size_t tokenEnd = endPos;
+                                while (tokenEnd > tokenBegin && isWhiteSpaceChar(valueLower[tokenEnd - 1])) --tokenEnd;
+
+                                const std::string token = valueLower.substr(tokenBegin, tokenEnd - tokenBegin);
+                                if (!token.empty())
+                                {
+                                    if (token == "chunked")
+                                        foundChunked = true;
+                                    else
+                                        throw ResponseError{"Unsupported transfer encoding: " + token};
+                                }
+
+                                if (comma == std::string::npos) break;
+                                start = comma + 1;
+                            }
+
+                            if (foundChunked)
                                 chunkedResponse = true;
-                            else
-                                throw ResponseError{"Unsupported transfer encoding: " + fieldValue};
                         }
                         else if (fieldName == "content-length")
                         {
@@ -1295,7 +1339,10 @@ namespace http
 
                                 if (i == responseData.end()) break;
 
-                                expectedChunkSize = detail::hexStringToUint<std::size_t>(responseData.begin(), i);
+                                // Ignore optional chunk extensions after ';' per RFC 7230 4.1.1
+                                const auto semicolon = std::find(responseData.begin(), i, ';');
+                                const auto sizeEnd = (semicolon == i) ? i : semicolon;
+                                expectedChunkSize = detail::hexStringToUint<std::size_t>(responseData.begin(), sizeEnd);
                                 responseData.erase(responseData.begin(), i + 2);
 
                                 if (expectedChunkSize == 0)

@@ -1,0 +1,21 @@
+Start testing: Sep 01 17:13 UTC
+----------------------------------------------------------
+1/1 Testing: test
+1/1 Test: test
+Command: "/workspace/build/tests/HTTPRequest_tests"
+Directory: /workspace/build/tests
+"test" start time: Sep 01 17:13 UTC
+Output:
+----------------------------------------------------------
+===============================================================================
+All tests passed (1781 assertions in 71 test cases)
+
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"test" end time: Sep 01 17:13 UTC
+"test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Sep 01 17:13 UTC
